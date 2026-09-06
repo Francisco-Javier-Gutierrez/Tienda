@@ -89,4 +89,14 @@ export class HistorialVentasPage implements OnInit {
       this.cargando = false;
     }
   }
+
+  /* =========================================
+     FORMATEAR FOLIO (ID ENCRIPTADO)
+  ========================================= */
+
+  formatearFolio(id: string | null | undefined): string {
+    if (!id) return '---';
+    const limpio = id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return limpio.length > 8 ? limpio.substring(0, 8) : limpio;
+  }
 }

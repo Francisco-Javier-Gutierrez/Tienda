@@ -716,7 +716,7 @@
 
     min-height: 0;
 
-    margin: 12px auto 24px;
+    margin: calc(12px + env(safe-area-inset-top, 0px)) auto 24px;
 
     overflow: visible;
 

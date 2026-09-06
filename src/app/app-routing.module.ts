@@ -11,6 +11,7 @@ const routes: Routes = [
   },
   { path: 'login', loadChildren: () => import('./login/login.module').then((m) => m.LoginPageModule) },
   { path: 'catalogo', loadChildren: () => import('./catalogo/catalogo.module').then((m) => m.CatalogoPageModule) },
+  { path: 'catalogos', redirectTo: 'catalogo', pathMatch: 'full' },
   { path: 'carrito', loadChildren: () => import('./carrito/carrito.module').then((m) => m.CarritoPageModule) },
   {
     path: 'checkout',

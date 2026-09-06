@@ -1,448 +1,400 @@
-<app-admin-shell menuId="admin-sale-detail-menu" contentId="sale-detail-main" activeSection="ventas">
-  <ion-header class="sales-header">
-    <ion-toolbar>
-      <ion-buttons slot="start">
-        <ion-menu-button class="mobile-menu-button" menu="admin-sale-detail-menu"></ion-menu-button>
-        <ion-back-button defaultHref="/ventas"></ion-back-button>
-      </ion-buttons>
+<app-admin-shell menuId="admin-sale-detail-menu" contentId="sale-detail-main" activeSection="ventas" customTitle="Detalle de venta">
+  <div header-actions class="flex items-center gap-2">
+    <a routerLink="/ventas" class="flex items-center gap-1 text-xs font-sans font-semibold text-primary hover:bg-surface-container-high px-3 py-1.5 rounded-full transition-colors active:scale-95">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+      <span>Volver</span>
+    </a>
+    <a routerLink="/cajero" class="flex items-center gap-1 text-xs font-sans font-semibold bg-primary text-on-primary px-3 py-1.5 rounded-full hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+      <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
+      <span class="hidden sm:inline">Punto de venta</span>
+    </a>
+  </div>
 
-      <ion-title> Detalle de venta </ion-title>
+  <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24 print:hidden">
 
-      <ion-buttons slot="end">
-        <ion-button routerLink="/cajero">
-          <ion-icon slot="start" name="cart-outline"></ion-icon>
-
-          <span class="desktop-action"> Punto de venta </span>
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content class="sales-content">
-    <main class="sales-shell">
-      <!-- =========================================
-         CARGANDO
-    ========================================== -->
-
-      <div class="sales-loading" *ngIf="cargando">
-        <ion-spinner></ion-spinner>
-        <p>Cargando venta...</p>
+    <!-- Skeleton durante carga -->
+    <div class="space-y-6 animate-pulse" *ngIf="cargando">
+      <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 space-y-4">
+        <div class="h-6 bg-surface-variant/50 rounded w-48"></div>
+        <div class="h-4 bg-surface-variant/40 rounded w-72"></div>
       </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-40"></div>
+          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-64"></div>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-48"></div>
+        </div>
+      </div>
+    </div>
 
-      <ng-container *ngIf="venta as v">
-        <!-- =========================================
-           CABECERA
-      ========================================== -->
-
-        <header class="detail-heading">
-          <div>
-            <span
-              class="detail-status-label"
-              [class.cancelled]="
-              v.estado === 'CANCELADA'
-            "
-            >
-              <span class="state-dot"></span>
-
-              {{ v.estado === 'CANCELADA' ? 'Venta cancelada' : 'Venta completada' }}
+    <ng-container *ngIf="!cargando && venta as v">
+      
+      <!-- Encabezado de la venta -->
+      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30">
+        <div>
+          <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">
+            {{ v.origen === 'ONLINE' ? 'Pedido online' : 'Venta en caja' }}
+          </span>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary font-mono tracking-wide">
+              Folio #{{ formatearFolio(v.id) }}
+            </h1>
+            <span class="font-mono text-xs text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-surface-variant/30 select-all" [title]="'ID completo: ' + v.id">
+              ID: {{ v.id }}
             </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-xs text-on-surface-variant mt-2">
+            <span class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[15px] text-primary">calendar_today</span>
+              {{ v.fecha }}
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[15px] text-primary">schedule</span>
+              {{ v.hora }}
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[15px] text-primary">person</span>
+              {{ v.cajero }}
+            </span>
+          </div>
+        </div>
 
-            <h1>Folio #{{ v.id }}</h1>
+        <div class="flex flex-col sm:items-end gap-2 shrink-0">
+          <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
+                [ngClass]="v.estado === 'CANCELADA' ? 'bg-error-container text-on-error-container' : 'bg-tertiary-fixed text-tertiary'">
+            <span class="material-symbols-outlined text-[16px]">{{ v.estado === 'CANCELADA' ? 'cancel' : 'check_circle' }}</span>
+            <span>{{ v.estado === 'CANCELADA' ? 'Cancelada' : 'Completada' }}</span>
+          </span>
+          <div class="text-left sm:text-right">
+            <span class="font-sans text-[11px] text-on-surface-variant block">Total de la venta</span>
+            <strong class="font-heading font-bold text-2xl md:text-3xl text-primary">
+              {{ v.total | currency:'MXN' }}
+            </strong>
+          </div>
+        </div>
+      </header>
 
-            <div class="detail-subtitle">
-              <span>
-                <ion-icon name="calendar-outline"></ion-icon>
-                {{ v.fecha }}
-              </span>
+      <!-- Banner de Cancelación si aplica -->
+      <section *ngIf="v.estado === 'CANCELADA'" class="bg-error-container/30 border border-error-container rounded-[24px] p-5 md:p-6 text-on-error-container space-y-3 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-error-container text-error flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-lg">warning</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-error">Esta venta fue cancelada</h2>
+            <p class="font-sans text-xs text-on-surface-variant">Los productos fueron devueltos automáticamente al inventario disponible.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-error-container/40 text-xs">
+          <div>
+            <span class="font-sans text-on-surface-variant block font-medium">Fecha de cancelación:</span>
+            <strong class="font-sans text-on-surface">{{ v.fechaCancelacion || 'No disponible' }}</strong>
+          </div>
+          <div>
+            <span class="font-sans text-on-surface-variant block font-medium">Cancelado por:</span>
+            <strong class="font-sans text-on-surface">{{ v.cajeroCancela || 'No disponible' }}</strong>
+          </div>
+          <div class="sm:col-span-1">
+            <span class="font-sans text-on-surface-variant block font-medium">Motivo:</span>
+            <strong class="font-sans text-on-surface">{{ v.motivoCancelacion || 'Sin motivo disponible' }}</strong>
+          </div>
+        </div>
+      </section>
 
-              <span>
-                <ion-icon name="time-outline"></ion-icon>
-                {{ v.hora }}
-              </span>
+      <!-- Layout Principal en Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-              <span>
-                <ion-icon name="person-outline"></ion-icon>
-                {{ v.cajero }}
-              </span>
+        <!-- Columna Izquierda: Metadatos y Productos (2 cols) -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Métricas de Pago / Origen -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">{{ v.origen === 'ONLINE' ? 'shopping_bag' : 'storefront' }}</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Origen</span>
+                <strong class="font-sans font-bold text-xs md:text-sm text-on-surface block truncate">
+                  {{ v.origen === 'ONLINE' ? 'Online' : 'Caja física' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">
+                  {{ v.metodoPago === 'EFECTIVO' ? 'payments' : (v.metodoPago === 'TARJETA' ? 'credit_card' : 'phone_android') }}
+                </span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Pago</span>
+                <strong class="font-sans font-bold text-xs md:text-sm text-on-surface block truncate">
+                  {{ v.metodoPago }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">wallet</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Recibido</span>
+                <strong class="font-sans font-bold text-xs md:text-sm text-on-surface block truncate">
+                  {{ v.montoRecibido === null ? 'N/A' : (v.montoRecibido | currency:'MXN') }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">change_circle</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Cambio</span>
+                <strong class="font-sans font-bold text-xs md:text-sm text-on-surface block truncate">
+                  {{ v.cambio | currency:'MXN' }}
+                </strong>
+              </div>
             </div>
           </div>
 
-          <div class="detail-heading-total">
-            <small>Total de la venta</small>
-
-            <strong> {{ v.total | currency:'MXN' }} </strong>
-          </div>
-        </header>
-
-        <section class="sale-detail">
-          <!-- =========================================
-             DATOS PRINCIPALES
-        ========================================== -->
-
-          <div class="detail-meta">
-            <article>
-              <div class="meta-icon">
-                <ion-icon [name]="v.origen==='ONLINE'?'bag-check-outline':'storefront-outline'"></ion-icon>
-              </div>
-              <div>
-                <small>Origen</small><strong>{{v.origen==='ONLINE'?'Venta online':'Punto de venta'}}</strong
-                >
-              </div>
-            </article>
-
-            <article>
-              <div class="meta-icon">
-                <ion-icon
-                  [name]="
-                  v.metodoPago === 'EFECTIVO'
-                    ? 'cash-outline'
-                    : v.metodoPago === 'TARJETA'
-                    ? 'card-outline'
-                    : 'phone-portrait-outline'
-                "
-                ></ion-icon>
-              </div>
-
-              <div>
-                <small>Método de pago</small>
-                <strong> {{ v.metodoPago }} </strong>
-              </div>
-            </article>
-
-            <article>
-              <div class="meta-icon">
-                <ion-icon
-                  [name]="
-                  v.estado === 'CANCELADA'
-                    ? 'close-circle-outline'
-                    : 'checkmark-circle-outline'
-                "
-                ></ion-icon>
-              </div>
-
-              <div>
-                <small>Estado</small>
-
-                <strong> {{ v.estado === 'CANCELADA' ? 'Cancelada' : 'Completada' }} </strong>
-              </div>
-            </article>
-
-            <article>
-              <div class="meta-icon">
-                <ion-icon name="wallet-outline"></ion-icon>
-              </div>
-
-              <div>
-                <small>Monto recibido</small>
-
-                <strong> {{ v.montoRecibido === null ? 'No aplica' : (v.montoRecibido | currency:'MXN') }} </strong>
-              </div>
-            </article>
-
-            <article>
-              <div class="meta-icon">
-                <ion-icon name="return-down-back-outline"></ion-icon>
-              </div>
-
-              <div>
-                <small>Cambio</small>
-
-                <strong> {{ v.cambio | currency:'MXN' }} </strong>
-              </div>
-            </article>
-          </div>
-
-          <!-- =========================================
-             CANCELACIÓN
-        ========================================== -->
-
-          <section
-            class="cancellation-info"
-            *ngIf="
-            v.estado === 'CANCELADA'
-          "
-          >
-            <div class="cancellation-icon">
-              <ion-icon name="warning-outline"></ion-icon>
-            </div>
-
-            <div class="cancellation-copy">
-              <span class="sales-eyebrow"> Cancelación </span>
-
-              <h2>Esta venta fue cancelada</h2>
-
-              <p>Los productos fueron devueltos al inventario.</p>
-
-              <div class="cancellation-grid">
+          <!-- Artículos Vendidos -->
+          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+            <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">inventory_2</span>
+                </div>
                 <div>
-                  <small>Fecha de cancelación</small>
-
-                  <strong> {{ v.fechaCancelacion || 'No disponible' }} </strong>
-                </div>
-
-                <div>
-                  <small>Administrador</small>
-
-                  <strong> {{ v.cajeroCancela || 'No disponible' }} </strong>
-                </div>
-
-                <div class="reason-row">
-                  <small>Motivo</small>
-
-                  <strong> {{ v.motivoCancelacion || 'Sin motivo disponible' }} </strong>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Detalle</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Artículos en esta venta</h2>
                 </div>
               </div>
-            </div>
-          </section>
-
-          <!-- =========================================
-             PRODUCTOS
-        ========================================== -->
-
-          <section class="products-detail">
-            <div class="section-heading">
-              <div>
-                <span class="sales-eyebrow"> Productos </span>
-
-                <h2>Artículos vendidos</h2>
-              </div>
-
-              <span class="items-count">
-                {{ v.items.length }} {{ v.items.length === 1 ? 'producto' : 'productos' }}
+              <span class="font-sans text-xs text-on-surface-variant font-medium bg-surface-container px-3 py-1 rounded-full">
+                {{ v.items.length }} {{ v.items.length === 1 ? 'artículo' : 'artículos' }}
               </span>
             </div>
 
-            <div class="detail-items">
-              <article *ngFor="let item of v.items">
-                <div class="detail-item-main">
-                  <div class="item-icon">
-                    <ion-icon name="cube-outline"></ion-icon>
+            <div class="divide-y divide-surface-variant/20">
+              <article *ngFor="let item of v.items" class="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <div class="w-10 h-10 rounded-xl bg-surface-container-low border border-surface-variant/30 flex items-center justify-center shrink-0 text-outline">
+                    <span class="material-symbols-outlined text-xl">package_2</span>
                   </div>
-
-                  <div>
-                    <strong> {{ item.nombre }} </strong>
-
-                    <small> {{ item.cantidad }} × {{ item.precioUnitario | currency:'MXN' }} c/u </small>
+                  <div class="min-w-0">
+                    <strong class="font-sans font-semibold text-sm text-on-surface block truncate">{{ item.nombre }}</strong>
+                    <span class="font-sans text-xs text-on-surface-variant">
+                      {{ item.cantidad }} × {{ item.precioUnitario | currency:'MXN' }} c/u
+                    </span>
                   </div>
                 </div>
-
-                <strong class="item-subtotal"> {{ item.subtotal | currency:'MXN' }} </strong>
+                <strong class="font-heading font-bold text-sm md:text-base text-on-surface shrink-0">
+                  {{ item.subtotal | currency:'MXN' }}
+                </strong>
               </article>
             </div>
 
-            <div class="detail-total">
+            <!-- Footer de Totales -->
+            <footer class="border-t border-surface-variant/30 pt-4 flex items-center justify-between">
               <div>
-                <small> Importe final </small>
-
-                <span>Total</span>
+                <span class="font-sans text-xs text-on-surface-variant block">Importe liquidado</span>
+                <span class="font-heading font-bold text-base text-on-surface">Total</span>
               </div>
+              <strong class="font-heading font-bold text-2xl text-primary">
+                {{ v.total | currency:'MXN' }}
+              </strong>
+            </footer>
+          </section>
 
-              <strong> {{ v.total | currency:'MXN' }} </strong>
+        </div>
+
+        <!-- Columna Derecha: Acciones de Comprobante y Zona de Peligro (1 col) -->
+        <div class="space-y-6">
+
+          <!-- Acciones de Comprobante / Ticket -->
+          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+            <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+              <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">receipt_long</span>
+              </div>
+              <div>
+                <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Comprobante</span>
+                <h2 class="font-heading font-bold text-base text-on-surface">Ticket de compra</h2>
+              </div>
+            </div>
+
+            <p class="font-sans text-xs text-on-surface-variant">
+              Imprime en impresora térmica, comparte digitalmente o descarga en PDF.
+            </p>
+
+            <div class="space-y-2 pt-1">
+              <button
+                type="button"
+                (click)="ticket.imprimir()"
+                class="w-full bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span class="material-symbols-outlined text-[18px]">print</span>
+                <span>Ver / Imprimir ticket</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="compartir()"
+                class="w-full bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-surface-variant/30"
+              >
+                <span class="material-symbols-outlined text-[18px]">share</span>
+                <span>Compartir ticket</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="descargar()"
+                class="w-full bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-surface-variant/30"
+              >
+                <span class="material-symbols-outlined text-[18px]">download</span>
+                <span>Descargar PDF</span>
+              </button>
             </div>
           </section>
 
-          <!-- =========================================
-             COMPROBANTE
-        ========================================== -->
-
-          <section class="receipt-actions-section">
-            <div>
-              <span class="sales-eyebrow"> Comprobante </span>
-
-              <h2>Ticket de compra</h2>
-
-              <p>Puedes imprimir, compartir o descargar el comprobante de esta venta.</p>
-            </div>
-
-            <div class="ticket-actions">
-              <ion-button (click)="ticket.imprimir()">
-                <ion-icon slot="start" name="print-outline"></ion-icon>
-
-                Ver / imprimir
-              </ion-button>
-
-              <ion-button fill="outline" (click)="compartir()">
-                <ion-icon slot="start" name="share-social-outline"></ion-icon>
-
-                Compartir
-              </ion-button>
-
-              <ion-button fill="outline" (click)="descargar()">
-                <ion-icon slot="start" name="download-outline"></ion-icon>
-
-                Descargar PDF
-              </ion-button>
-            </div>
-          </section>
-
-          <!-- =========================================
-             CANCELAR
-        ========================================== -->
-
+          <!-- Zona de Peligro: Cancelación -->
           <section
-            class="admin-danger-zone"
-            *ngIf="
-            auth.tieneRol('ADMINISTRADOR') &&
-            v.estado === 'COMPLETADA' &&
-            v.origen !== 'ONLINE'
-          "
+            *ngIf="auth.tieneRol('ADMINISTRADOR') && v.estado === 'COMPLETADA' && v.origen !== 'ONLINE'"
+            class="bg-error-container/20 border border-error-container/60 rounded-[24px] p-5 md:p-6 shadow-sm space-y-4"
           >
-            <div>
-              <span> Administración </span>
-
-              <strong> Cancelar esta venta </strong>
-
-              <p>La cancelación devolverá las existencias de los productos al inventario.</p>
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-error-container text-error flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
+              </div>
+              <div>
+                <span class="font-sans font-semibold text-[11px] text-error uppercase tracking-wider block">Administración</span>
+                <h2 class="font-heading font-bold text-base text-on-surface">Cancelar esta venta</h2>
+              </div>
             </div>
 
-            <ion-button class="cancel-sale" color="danger" fill="outline" (click)="abrirCancelacion()">
-              <ion-icon slot="start" name="close-circle-outline"></ion-icon>
+            <p class="font-sans text-xs text-on-surface-variant leading-relaxed">
+              La cancelación devolverá las existencias de los productos vendidos al inventario de la tienda.
+            </p>
 
-              Cancelar venta
-            </ion-button>
+            <button
+              type="button"
+              (click)="abrirCancelacion()"
+              class="w-full border border-error/50 text-error hover:bg-error hover:text-on-error font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <span class="material-symbols-outlined text-[18px]">cancel</span>
+              <span>Cancelar venta</span>
+            </button>
           </section>
 
-          <!-- =========================================
-             TICKET PARA IMPRESIÓN
-        ========================================== -->
+        </div>
 
-          <section class="print-ticket">
-            
+      </div>
 
-            <h2>{{ v.sucursal || 'Tienda de abarrotes' }}</h2>
+    </ng-container>
 
-            
+  </div>
 
-            
+  <!-- =========================================
+       TICKET IMPRESIÓN TÉRMICA (PRINT-ONLY)
+  ========================================== -->
+  <section class="print-ticket" *ngIf="venta as v">
+    <h2>{{ v.sucursal || 'Tienda de abarrotes' }}</h2>
+    <div class="ticket-divider"></div>
+    <strong>COMPROBANTE DE COMPRA</strong>
+    <h3 class="ticket-cancelled" *ngIf="v.estado === 'CANCELADA'">
+      *** VENTA CANCELADA ***
+    </h3>
+    <p>Folio: {{ v.id }}</p>
+    <p>{{ v.fecha }} · {{ v.hora }}</p>
+    <p>Cajero: {{ v.cajero }}</p>
+    <div class="ticket-divider"></div>
 
-            
+    <div class="ticket-item" *ngFor="let item of v.items">
+      <span>
+        {{ item.cantidad }} × {{ item.nombre }}
+        <small>{{ item.precioUnitario | currency:'MXN' }} c/u</small>
+      </span>
+      <b>{{ item.subtotal | currency:'MXN' }}</b>
+    </div>
 
-            <div class="ticket-divider"></div>
+    <div class="ticket-divider"></div>
 
-            <strong> COMPROBANTE DE COMPRA </strong>
+    <div class="ticket-total">
+      <span>TOTAL</span>
+      <strong>{{ v.total | currency:'MXN' }}</strong>
+    </div>
 
-            <h3
-              class="ticket-cancelled"
-              *ngIf="
-              v.estado === 'CANCELADA'
-            "
-            >
-              VENTA CANCELADA
-            </h3>
+    <p>Pago: {{ v.metodoPago }}</p>
+    <ng-container *ngIf="v.metodoPago === 'EFECTIVO'">
+      <p>Recibido: {{ v.montoRecibido | currency:'MXN' }}</p>
+      <p>Cambio: {{ v.cambio | currency:'MXN' }}</p>
+    </ng-container>
 
-            <p>Folio #{{ v.id }}</p>
-
-            <p>{{ v.fecha }} · {{ v.hora }}</p>
-
-            <p>Cajero: {{ v.cajero }}</p>
-
-            <div class="ticket-divider"></div>
-
-            <div class="ticket-item" *ngFor="let item of v.items">
-              <span>
-                {{ item.cantidad }} × {{ item.nombre }}
-                <small> {{ item.precioUnitario | currency:'MXN' }} c/u </small>
-              </span>
-
-              <b> {{ item.subtotal | currency:'MXN' }} </b>
-            </div>
-
-            <div class="ticket-divider"></div>
-
-            <div class="ticket-total">
-              <span>TOTAL</span>
-
-              <strong> {{ v.total | currency:'MXN' }} </strong>
-            </div>
-
-            <p>Pago: {{ v.metodoPago }}</p>
-
-            <ng-container
-              *ngIf="
-              v.metodoPago === 'EFECTIVO'
-            "
-            >
-              <p>Recibido: {{ v.montoRecibido | currency:'MXN' }}</p>
-
-              <p>Cambio: {{ v.cambio | currency:'MXN' }}</p>
-            </ng-container>
-
-            <div class="ticket-divider"></div>
-
-            <p class="thanks">Gracias por su compra</p>
-
-            <small> Comprobante no fiscal </small>
-          </section>
-        </section>
-      </ng-container>
-    </main>
-  </ion-content>
+    <div class="ticket-divider"></div>
+    <p class="thanks">Gracias por su compra</p>
+    <small>Comprobante no fiscal</small>
+  </section>
 
   <!-- =============================================
-     MODAL CANCELAR VENTA
-============================================== -->
-
-  <ion-modal cssClass="cancel-sale-modal" [isOpen]="mostrarCancelacion" (didDismiss)="mostrarCancelacion = false">
-    <ng-template>
-      <ion-header>
-        <ion-toolbar>
-          <ion-title> Cancelar venta #{{ venta?.id }} </ion-title>
-
-          <ion-buttons slot="end">
-            <ion-button [disabled]="cancelandoVenta" (click)="mostrarCancelacion = false"> Volver </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content class="ion-padding">
-        <div class="cancel-dialog">
-          <div class="cancel-warning-icon">
-            <ion-icon name="warning-outline"></ion-icon>
-          </div>
-
-          <span class="sales-eyebrow"> Acción administrativa </span>
-
-          <h2>¿Cancelar esta venta?</h2>
-
-          <p>La venta conservará su historial, pero sus productos volverán al inventario.</p>
-
-          <div class="cancel-warning">
-            <ion-icon name="information-circle-outline"></ion-icon>
-
-            <span> Esta acción no elimina la venta. La marcará como CANCELADA. </span>
-          </div>
-
-          <ion-textarea
-            fill="outline"
-            label="Motivo de cancelación"
-            labelPlacement="stacked"
-            placeholder="Explica brevemente por qué se cancela la venta"
-            [maxlength]="255"
-            [autoGrow]="true"
-            [(ngModel)]="motivoCancelacion"
-          ></ion-textarea>
-
-          <small class="character-count"> {{ motivoCancelacion.trim().length }} / 255 caracteres </small>
-
-          <ion-button
-            class="confirm-cancellation"
-            color="danger"
-            expand="block"
-            [disabled]="
-            cancelandoVenta ||
-            motivoCancelacion.trim().length < 3
-          "
-            (click)="cancelar()"
-          >
-            <ion-spinner *ngIf="cancelandoVenta" name="crescent"></ion-spinner>
-
-            <ion-icon *ngIf="!cancelandoVenta" slot="start" name="close-circle-outline"></ion-icon>
-
-            <span> {{ cancelandoVenta ? 'Cancelando...' : 'Confirmar cancelación' }} </span>
-          </ion-button>
+       MODAL CANCELAR VENTA
+  ============================================== -->
+  <app-modal-shell
+    [isOpen]="mostrarCancelacion"
+    [title]="'Cancelar venta #' + formatearFolio(venta?.id)"
+    [size]="'sm'"
+    (closed)="mostrarCancelacion = false"
+  >
+    <div class="p-5 md:p-6 space-y-4">
+      <div class="flex items-start gap-3 bg-amber-50 border border-amber-200/60 rounded-2xl p-4 text-amber-900">
+        <span class="material-symbols-outlined text-amber-600 text-xl shrink-0 mt-0.5">info</span>
+        <div class="text-xs font-sans space-y-1">
+          <p class="font-bold">Esta acción no elimina el registro de la venta.</p>
+          <p class="text-amber-800">La venta se marcará como CANCELADA y todos sus productos volverán automáticamente al inventario.</p>
         </div>
-      </ion-content>
-    </ng-template>
-  </ion-modal>
-</app-admin-shell>
+      </div>
 
+      <div class="space-y-1.5">
+        <label class="font-sans font-semibold text-xs text-on-surface block">
+          Motivo de cancelación <span class="text-error">*</span>
+        </label>
+        <textarea
+          rows="3"
+          maxlength="255"
+          [(ngModel)]="motivoCancelacion"
+          placeholder="Explica brevemente por qué se cancela la venta..."
+          class="w-full bg-surface-container border border-surface-variant/40 rounded-xl p-3 text-xs font-sans text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+        ></textarea>
+        <div class="flex justify-end">
+          <span class="text-[11px] font-sans text-on-surface-variant">
+            {{ motivoCancelacion.trim().length }} / 255 caracteres
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          (click)="mostrarCancelacion = false"
+          [disabled]="cancelandoVenta"
+          class="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs text-on-surface-variant hover:bg-surface-container transition-all active:scale-95 disabled:opacity-50"
+        >
+          Descartar
+        </button>
+        <button
+          type="button"
+          (click)="cancelar()"
+          [disabled]="cancelandoVenta || motivoCancelacion.trim().length < 3"
+          class="px-5 py-2.5 rounded-xl bg-error hover:bg-error/90 text-on-error font-sans font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+        >
+          <ion-spinner *ngIf="cancelandoVenta" name="crescent" class="w-4 h-4"></ion-spinner>
+          <span *ngIf="!cancelandoVenta" class="material-symbols-outlined text-[16px]">cancel</span>
+          <span>{{ cancelandoVenta ? 'Cancelando...' : 'Confirmar cancelación' }}</span>
+        </button>
+      </div>
+    </div>
+  </app-modal-shell>
+</app-admin-shell>

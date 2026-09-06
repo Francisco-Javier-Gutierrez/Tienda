@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Technical Wireframe: Tienda Doña Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#e2e2e2",
+                    "outline-variant": "#cfc4c5",
+                    "on-primary-container": "#848484",
+                    "surface": "#f9f9fa",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#1b1b1b",
+                    "on-secondary": "#ffffff",
+                    "outline": "#7e7576",
+                    "surface-dim": "#dadadb",
+                    "secondary-fixed-dim": "#c6c5cf",
+                    "on-surface-variant": "#4c4546",
+                    "on-secondary-fixed-variant": "#46464e",
+                    "surface-tint": "#5e5e5e",
+                    "tertiary-container": "#1b1b1b",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#63646c",
+                    "primary-fixed": "#e2e2e2",
+                    "surface-bright": "#f9f9fa",
+                    "tertiary": "#000000",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "surface-container-high": "#e8e8e9",
+                    "on-tertiary-container": "#848484",
+                    "secondary": "#5d5e66",
+                    "secondary-container": "#e3e1ec",
+                    "on-surface": "#1a1c1d",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "surface-container": "#eeeeef",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "on-background": "#1a1c1d",
+                    "inverse-surface": "#2f3132",
+                    "primary": "#000000",
+                    "primary-container": "#1b1b1b",
+                    "surface-container-highest": "#e2e2e3",
+                    "secondary-fixed": "#e3e1ec",
+                    "primary-fixed-dim": "#c6c6c6",
+                    "surface-variant": "#e2e2e3",
+                    "on-secondary-fixed": "#1a1b22",
+                    "on-primary-fixed-variant": "#474747",
+                    "inverse-primary": "#c6c6c6",
+                    "surface-container-lowest": "#ffffff",
+                    "background": "#f9f9fa",
+                    "surface-container-low": "#f3f3f4",
+                    "inverse-on-surface": "#f0f1f2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "16px",
+                    "stack-md": "16px",
+                    "stack-sm": "8px",
+                    "margin-page": "40px",
+                    "gutter": "24px",
+                    "unit": "4px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "body-md": ["JetBrains Mono"],
+                    "headline-md": ["JetBrains Mono"],
+                    "headline-lg": ["JetBrains Mono"],
+                    "label-caps": ["JetBrains Mono"],
+                    "code-inline": ["JetBrains Mono"],
+                    "body-lg": ["JetBrains Mono"],
+                    "headline-sm": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "code-inline": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Utility for wireframe styling */
+        body { background-color: #FFFFFF; color: #000000; font-family: 'JetBrains Mono', monospace; }
+        .wf-border { border: 1px solid #000000; }
+        .wf-border-b { border-bottom: 1px solid #000000; }
+        .wf-border-t { border-top: 1px solid #000000; }
+        .wf-border-r { border-right: 1px solid #000000; }
+        .wf-bg-dark { background-color: #000000; color: #FFFFFF; }
+        .wf-bg-light { background-color: #F4F4F5; }
+        .wf-dashed { border: 1px dashed #000000; }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #000;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            background: #fff;
+            color: #000;
+        }
+        
+        .placeholder-x {
+            position: relative;
+            overflow: hidden;
+            background-color: #f9f9fa;
+        }
+        .placeholder-x::before, .placeholder-x::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-top: 1px solid #cfc4c5;
+            transform-origin: center;
+        }
+        .placeholder-x::before { transform: rotate(45deg); width: 141%; top: 50%; left: -20%; }
+        .placeholder-x::after { transform: rotate(-45deg); width: 141%; top: 50%; left: -20%; }
+        
+        .wireframe-container {
+            position: relative;
+        }
+        
+        /* Leader lines (simplified with CSS for structural visual) */
+        .leader-line {
+            position: absolute;
+            border-top: 1px dashed #000;
+            height: 1px;
+            z-index: 10;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="p-margin-page bg-surface-container-lowest min-h-screen text-on-surface font-body-md">
+<div class="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-gutter items-start">
+<!-- Left Column: Wireframe -->
+<div class="wf-border p-container-padding bg-surface-container-lowest relative wireframe-container shadow-none">
+<div class="absolute top-2 right-2 font-label-caps text-label-caps border border-primary px-1">WF-01</div>
+<h2 class="font-headline-sm text-headline-sm mb-stack-md wf-border-b pb-unit">SCREEN: HOME (MOBILE VIEWPORT)</h2>
+<!-- Mobile device frame simulator -->
+<div class="wf-border w-[375px] mx-auto h-[700px] flex flex-col bg-surface-container-lowest relative overflow-hidden">
+<!-- 1. HEADER -->
+<div class="wf-border-b flex justify-between items-center px-container-padding py-stack-sm w-full bg-surface-container-lowest relative">
+<div class="absolute -left-10 top-1/2 -translate-y-1/2 flex items-center">
+<span class="badge">[1]</span>
+<div class="w-8 border-t border-dashed border-primary"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">location_on</span>
+<div>
+<div class="font-headline-sm text-headline-sm uppercase font-bold tracking-tighter">TIENDA DOÑA PATY</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Av. Hidalgo #101</div>
+</div>
+</div>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">barcode_scanner</span>
+</div>
+<div class="flex-1 overflow-y-auto pb-[130px] p-container-padding flex flex-col gap-stack-md relative">
+<!-- 2. SEARCH -->
+<div class="relative">
+<div class="absolute -left-14 top-1/2 -translate-y-1/2 flex items-center z-10">
+<span class="badge">[2]</span>
+<div class="w-12 border-t border-dashed border-primary"></div>
+</div>
+<div class="wf-border flex items-center px-2 py-1 bg-surface-container-lowest focus-within:border-black focus-within:border-2">
+<span class="material-symbols-outlined text-outline mr-2" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="flex-1 bg-transparent border-none outline-none font-body-md text-body-md placeholder:text-outline p-0" placeholder="Buscar producto..." type="text"/>
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">barcode_scanner</span>
+</div>
+</div>
+<!-- 3. PROMO BANNER -->
+<div class="relative">
+<div class="absolute -right-14 top-1/2 -translate-y-1/2 flex items-center z-10 flex-row-reverse">
+<span class="badge">[3]</span>
+<div class="w-12 border-t border-dashed border-primary"></div>
+</div>
+<div class="wf-border h-32 placeholder-x flex items-center justify-center relative">
+<div class="absolute bg-surface-container-lowest px-2 py-1 font-headline-md text-headline-md wf-border z-10">
+                                15% de Descuento
+                            </div>
+<div class="absolute top-1 right-1 font-label-caps text-label-caps border border-primary px-1 bg-surface-container-lowest z-10">IMG_PH</div>
+</div>
+</div>
+<!-- 4. CATEGORIES -->
+<div class="relative">
+<div class="absolute -left-14 top-1/2 -translate-y-1/2 flex items-center z-10">
+<span class="badge">[4]</span>
+<div class="w-12 border-t border-dashed border-primary"></div>
+</div>
+<div class="flex gap-2 overflow-x-hidden pb-1">
+<div class="wf-border px-3 py-1 bg-primary text-on-primary font-label-caps text-label-caps">Todos</div>
+<div class="wf-border px-3 py-1 bg-surface-container-lowest font-label-caps text-label-caps">Bebidas</div>
+<div class="wf-border px-3 py-1 bg-surface-container-lowest font-label-caps text-label-caps">Abarrotes</div>
+</div>
+</div>
+<!-- 5. PRODUCT GRID -->
+<div class="relative flex-1">
+<div class="absolute -right-14 top-16 flex items-center z-10 flex-row-reverse">
+<span class="badge">[5]</span>
+<div class="w-12 border-t border-dashed border-primary"></div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<!-- Card 1 -->
+<div class="wf-border p-2 flex flex-col gap-1 relative">
+<div class="absolute top-1 right-1 font-label-caps text-label-caps border border-primary px-1 z-10 bg-surface-container-lowest">A1</div>
+<div class="wf-border h-24 placeholder-x w-full"></div>
+<div class="font-body-md text-body-md mt-1 truncate">Coca-Cola 3L</div>
+<div class="flex justify-between items-center mt-auto">
+<div class="font-code-inline text-code-inline font-bold">$50.00</div>
+<button class="wf-border w-6 h-6 flex items-center justify-center hover:bg-surface-container-high transition-none">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="wf-border p-2 flex flex-col gap-1 relative">
+<div class="absolute top-1 right-1 font-label-caps text-label-caps border border-primary px-1 z-10 bg-surface-container-lowest">A2</div>
+<div class="wf-border h-24 placeholder-x w-full"></div>
+<div class="font-body-md text-body-md mt-1 truncate">Sabritas 170g</div>
+<div class="flex justify-between items-center mt-auto">
+<div class="font-code-inline text-code-inline font-bold">$22.00</div>
+<button class="wf-border w-6 h-6 flex items-center justify-center hover:bg-surface-container-high transition-none">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="wf-border p-2 flex flex-col gap-1 relative">
+<div class="absolute top-1 right-1 font-label-caps text-label-caps border border-primary px-1 z-10 bg-surface-container-lowest">B1</div>
+<div class="wf-border h-24 placeholder-x w-full"></div>
+<div class="font-body-md text-body-md mt-1 truncate">Pan Bimbo</div>
+<div class="flex justify-between items-center mt-auto">
+<div class="font-code-inline text-code-inline font-bold">$45.00</div>
+<button class="wf-border w-6 h-6 flex items-center justify-center hover:bg-surface-container-high transition-none">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 6. FLOATING CART -->
+<div class="absolute bottom-16 left-0 w-full px-container-padding z-40">
+<div class="relative">
+<div class="absolute -right-14 top-1/2 -translate-y-1/2 flex items-center z-10 flex-row-reverse">
+<span class="badge">[6]</span>
+<div class="w-12 border-t border-dashed border-primary"></div>
+</div>
+<div class="wf-border bg-primary text-on-primary p-2 flex justify-between items-center font-code-inline text-code-inline shadow-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">shopping_cart</span>
+<span>3 items</span>
+</div>
+<div class="font-bold">$122.00 →</div>
+</div>
+</div>
+</div>
+<!-- 7. NAVIGATION -->
+<div class="wf-border-t bg-surface-container-lowest absolute bottom-0 left-0 w-full flex justify-around items-stretch h-16 z-50">
+<div class="absolute -left-10 top-1/2 -translate-y-1/2 flex items-center z-10">
+<span class="badge">[7]</span>
+<div class="w-8 border-t border-dashed border-primary"></div>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary text-on-primary p-1 h-full w-full">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps uppercase">HOME</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-1 h-full w-full border-l border-primary">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">search</span>
+<span class="font-label-caps text-label-caps uppercase">SEARCH</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-1 h-full w-full border-l border-primary">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">package_2</span>
+<span class="font-label-caps text-label-caps uppercase">ORDERS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-1 h-full w-full border-l border-primary">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-caps text-label-caps uppercase">PROFILE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Technical Spec -->
+<div class="flex flex-col gap-stack-md h-full">
+<div class="wf-border p-container-padding bg-surface-container-lowest relative flex-1">
+<div class="absolute top-2 right-2 font-label-caps text-label-caps border border-primary px-1">DOC-01</div>
+<h1 class="font-headline-lg text-headline-lg mb-unit uppercase tracking-tight">Software Requirements Spec</h1>
+<h2 class="font-headline-sm text-headline-sm mb-stack-lg text-on-surface-variant pb-unit wf-border-b">Module: Front-End Architecture</h2>
+<p class="font-body-md text-body-md mb-stack-md">
+                    The following table details the technical implementation requirements for the Home Screen wireframe (WF-01). Data binding and reactive states must strictly adhere to these API contracts.
+                </p>
+<table class="w-full text-left border-collapse wf-border font-code-inline text-code-inline">
+<thead>
+<tr>
+<th class="wf-border p-2 bg-surface-container-high w-16">ID</th>
+<th class="wf-border p-2 bg-surface-container-high w-1/3">Requirement</th>
+<th class="wf-border p-2 bg-surface-container-high">Specification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[1]</span></td>
+<td class="wf-border p-2 font-bold">RF-01 Header</td>
+<td class="wf-border p-2">Branch selector (`GET /sucursales`), status 'OPEN'.</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[2]</span></td>
+<td class="wf-border p-2 font-bold">RF-02 Search</td>
+<td class="wf-border p-2">Debounce (300ms), Camera trigger for barcode (`GET /productos?q=`).</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[3]</span></td>
+<td class="wf-border p-2 font-bold">RF-03 Promo</td>
+<td class="wf-border p-2">Dynamic slider (`GET /promociones`).</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[4]</span></td>
+<td class="wf-border p-2 font-bold">RF-04 Taxonomy</td>
+<td class="wf-border p-2">Category chips (`GET /categorias`) with SQLite local filter.</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[5]</span></td>
+<td class="wf-border p-2 font-bold">RF-05 Grid</td>
+<td class="wf-border p-2">Pagination, reactive sum to CarritoService.</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[6]</span></td>
+<td class="wf-border p-2 font-bold">RF-06 Totals</td>
+<td class="wf-border p-2">Reactive badge, item count, subtotal.</td>
+</tr>
+<tr>
+<td class="wf-border p-2 text-center"><span class="badge">[7]</span></td>
+<td class="wf-border p-2 font-bold">RF-07 Nav</td>
+<td class="wf-border p-2">Angular router to `/catalogo`, `/mis-pedidos`, etc.</td>
+</tr>
+</tbody>
+</table>
+<div class="mt-stack-lg p-container-padding wf-bg-light wf-dashed">
+<div class="font-label-caps text-label-caps uppercase mb-2">Technical Note</div>
+<div class="font-code-inline text-code-inline text-on-surface-variant">
+                        All icons map to Material Symbols Outlined. Images are suppressed pending asset delivery. Placeholder components (`.placeholder-x`) must be replaced with `img` elements implementing standard lazy loading attributes in production build.
+                    </div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

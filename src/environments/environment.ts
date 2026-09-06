@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  API_BASE_URL: 'http://192.168.1.15:3000',
+  API_BASE_URL: 'http://192.168.1.67:3000',
   GOOGLE_WEB_CLIENT_ID: '504014423676-kk9967n8ohhmq7fp3cpgvhvl8lpqe5vo.apps.googleusercontent.com',
 };
 

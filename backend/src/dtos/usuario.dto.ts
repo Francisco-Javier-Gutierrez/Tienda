@@ -13,6 +13,7 @@ export const toEmpleadoDto = (empleado: any) => {
     fechaIngreso: empleado.fechaIngreso,
     fotoPerfil: empleado.fotoPerfil,
     estado: empleado.estadoEmp,
+    estadoEmp: empleado.estadoEmp,
     cargo: empleado.cargo?.nombreCargo || empleado.cargo || null,
     sucursal: empleado.cargo?.sucursal?.nombreSuc || empleado.nombreSuc || null,
   };

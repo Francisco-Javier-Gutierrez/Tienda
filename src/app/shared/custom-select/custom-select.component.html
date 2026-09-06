@@ -1,0 +1,112 @@
+<div class="relative w-full font-sans select-none">
+  <!-- Trigger Button -->
+  <button
+    type="button"
+    [disabled]="disabled"
+    (click)="toggleDropdown()"
+    class="w-full flex items-center justify-between text-left transition-all duration-200 outline-none group"
+    [ngClass]="[
+      compact ? 'py-2 px-3 text-xs rounded-lg' : 'py-3 px-4 text-sm rounded-xl',
+      isOpen ? 'ring-2 ring-primary/20 border-primary bg-surface-container-lowest shadow-sm' : 'border border-outline-variant/30 bg-surface-container hover:border-outline-variant/60 focus:border-primary',
+      disabled ? 'opacity-50 cursor-not-allowed bg-surface-variant/40' : 'cursor-pointer'
+    ]"
+  >
+    <div class="flex items-center gap-2 overflow-hidden truncate">
+      <!-- Selected label or placeholder -->
+      <span 
+        class="truncate" 
+        [ngClass]="selectedLabel ? 'text-on-surface font-medium' : 'text-on-surface-variant/60'"
+      >
+        {{ selectedLabel || placeholder }}
+      </span>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0 ml-2">
+      <!-- Clear button (if clearable and has value) -->
+      <span
+        *ngIf="clearable && selectedValue != null && !disabled"
+        (click)="clearSelection($event)"
+        class="material-symbols-outlined text-[16px] text-on-surface-variant/50 hover:text-error hover:bg-error/10 p-0.5 rounded-full transition-colors"
+        title="Limpiar selección"
+      >
+        close
+      </span>
+
+      <!-- Chevron -->
+      <span
+        class="material-symbols-outlined text-xl text-on-surface-variant/70 transition-transform duration-200"
+        [class.rotate-180]="isOpen"
+      >
+        expand_more
+      </span>
+    </div>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div
+    *ngIf="isOpen"
+    class="absolute left-0 right-0 z-[60] mt-1.5 bg-surface-container-lowest border border-surface-variant/30 rounded-2xl shadow-xl overflow-hidden py-1.5 animate-scaleUp origin-top"
+  >
+    <!-- Search Bar (if searchable or long list) -->
+    <div *ngIf="searchable || normalizedOptions.length > 7" class="p-2 border-b border-surface-variant/30">
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-2.5 text-lg text-on-surface-variant/60 pointer-events-none">
+          search
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Buscar..."
+          (click)="$event.stopPropagation()"
+          class="w-full bg-surface-container pl-8 pr-3 py-1.5 text-xs text-on-surface rounded-lg border-none outline-none focus:ring-1 focus:ring-primary font-sans"
+        />
+      </div>
+    </div>
+
+    <!-- Options List -->
+    <div class="max-h-56 overflow-y-auto custom-scrollbar divide-y divide-surface-variant/10">
+      <button
+        *ngFor="let opt of filteredOptions"
+        type="button"
+        [disabled]="opt.disabled"
+        (click)="selectOption(opt)"
+        class="w-full flex items-center justify-between px-3.5 py-2.5 text-left transition-colors text-sm group"
+        [ngClass]="[
+          isSelected(opt) ? 'bg-primary/5 text-primary font-semibold' : 'text-on-surface hover:bg-surface-container/60',
+          opt.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+        ]"
+      >
+        <div class="flex items-center gap-2.5 truncate">
+          <span *ngIf="opt.icon" class="material-symbols-outlined text-lg text-primary/70 shrink-0">
+            {{ opt.icon }}
+          </span>
+          <span class="truncate">{{ opt.label }}</span>
+        </div>
+
+        <span
+          *ngIf="isSelected(opt)"
+          class="material-symbols-outlined text-primary text-base font-bold shrink-0 ml-2"
+        >
+          check
+        </span>
+      </button>
+
+      <!-- Empty state when searching -->
+      <div *ngIf="filteredOptions.length === 0" class="px-4 py-4 text-center text-xs text-on-surface-variant/70 font-sans">
+        No se encontraron opciones
+      </div>
+    </div>
+
+    <!-- Quick action create -->
+    <div *ngIf="allowCreate" class="p-2 border-t border-surface-variant/30 bg-surface-container/40">
+      <button
+        type="button"
+        (click)="handleCreate($event)"
+        class="w-full py-2 px-3 text-xs font-sans font-semibold text-primary hover:bg-primary-container/20 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+      >
+        <span class="material-symbols-outlined text-[16px]">add_circle</span>
+        <span>{{ searchQuery.trim() ? ('Crear "' + searchQuery.trim() + '"') : (createLabel || 'Crear nuevo') }}</span>
+      </button>
+    </div>
+  </div>
+</div>

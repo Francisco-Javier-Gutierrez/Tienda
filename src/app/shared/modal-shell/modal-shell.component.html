@@ -1,0 +1,62 @@
+<ion-modal
+  [isOpen]="isOpen"
+  [backdropDismiss]="backdropDismiss"
+  [initialBreakpoint]="initialBreakpoint"
+  [breakpoints]="breakpoints"
+  [class]="computedClass"
+  (didDismiss)="onDismiss()"
+>
+  <ng-template>
+    <!-- Header -->
+    <ion-header *ngIf="showHeader" class="ion-no-border border-b border-surface-variant bg-surface-container-lowest">
+      <ion-toolbar class="[--background:theme('colors.surface-container-lowest')] px-2">
+        <!-- Start Close Button -->
+        <ion-buttons slot="start" *ngIf="showCloseButton && closeButtonPosition === 'start'">
+          <button
+            type="button"
+            class="p-2 rounded-full hover:bg-surface-variant text-on-surface transition-colors flex items-center justify-center active:scale-95 ml-1"
+            (click)="onClose()"
+          >
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </ion-buttons>
+
+        <!-- Title -->
+        <ion-title *ngIf="title" class="font-heading font-bold text-lg text-primary">
+          {{ title }}
+          <span *ngIf="subtitle" class="block text-xs font-sans font-normal text-on-surface-variant mt-0.5">
+            {{ subtitle }}
+          </span>
+        </ion-title>
+
+        <!-- Projected custom header content -->
+        <ng-content select="[modal-header]"></ng-content>
+
+        <!-- End Close Button -->
+        <ion-buttons slot="end" *ngIf="showCloseButton && closeButtonPosition === 'end'">
+          <button
+            type="button"
+            class="p-2 rounded-full hover:bg-surface-variant text-on-surface transition-colors flex items-center justify-center active:scale-95 mr-1"
+            (click)="onClose()"
+          >
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </ion-buttons>
+
+        <ion-buttons slot="end">
+          <ng-content select="[modal-header-actions]"></ng-content>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <!-- Body: Direct child of ng-template, single wildcard ng-content -->
+    <ion-content class="bg-surface [--background:theme('colors.surface')] custom-scrollbar">
+      <ng-content></ng-content>
+    </ion-content>
+
+    <!-- Footer -->
+    <ion-footer *ngIf="showFooter" class="ion-no-border bg-surface-container-lowest border-t border-surface-variant">
+      <ng-content select="[footer]"></ng-content>
+    </ion-footer>
+  </ng-template>
+</ion-modal>

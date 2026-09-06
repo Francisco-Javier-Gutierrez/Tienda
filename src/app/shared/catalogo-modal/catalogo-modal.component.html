@@ -1,0 +1,55 @@
+<app-modal-shell
+  [isOpen]="isOpen"
+  [title]="tituloModal"
+  [size]="'sm'"
+  [backdropDismiss]="false"
+  [showFooter]="true"
+  (closed)="onCancel()"
+>
+  <div class="p-4 md:p-6 space-y-4">
+    <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4">
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Nombre *</label>
+        <input
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+          [class.border-error]="!!errorNombre"
+          type="text"
+          placeholder="Nombre..."
+          [(ngModel)]="nombre"
+          (input)="errorNombre = ''"
+          (keydown.enter)="onSave()"
+        />
+        <p *ngIf="errorNombre" class="text-xs text-error mt-1 ml-1 font-sans">{{ errorNombre }}</p>
+      </div>
+
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Descripción</label>
+        <textarea
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y min-h-[100px]"
+          placeholder="Descripción opcional..."
+          [(ngModel)]="descripcion"
+        ></textarea>
+      </div>
+    </section>
+  </div>
+
+  <div footer class="p-4 flex gap-3 w-full">
+    <button
+      type="button"
+      class="flex-1 py-3 px-4 rounded-xl border border-outline-variant/30 font-sans font-medium text-sm text-on-surface-variant hover:bg-surface transition-all active:scale-95"
+      (click)="onCancel()"
+      [disabled]="saving"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="flex-1 bg-primary-container hover:bg-primary text-on-primary font-sans font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
+      [disabled]="saving"
+      (click)="onSave()"
+    >
+      <ion-spinner *ngIf="saving" name="crescent" class="w-4 h-4"></ion-spinner>
+      {{ saving ? 'Guardando...' : 'Guardar' }}
+    </button>
+  </div>
+</app-modal-shell>

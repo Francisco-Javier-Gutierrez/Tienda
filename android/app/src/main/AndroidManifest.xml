@@ -13,7 +13,7 @@
   <uses-permission android:name="android.permission.CAMERA" />
   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 
   <application
     android:allowBackup="true"
@@ -26,7 +26,7 @@
 
     <meta-data
       android:name="com.google.mlkit.vision.DEPENDENCIES"
-      android:value="barcode_ui" />
+      android:value="barcode,barcode_ui" />
 
     <activity
       android:name=".MainActivity"

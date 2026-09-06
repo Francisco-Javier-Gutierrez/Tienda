@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tienda Doña Paty - Cobrar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#58436b",
+                        "on-tertiary-container": "#e4b1a1",
+                        "on-background": "#201923",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#6b557f",
+                        "surface-dim": "#e3d6e4",
+                        "outline-variant": "#ccc4ce",
+                        "on-secondary-container": "#730425",
+                        "primary": "#402c53",
+                        "tertiary-container": "#684336",
+                        "on-tertiary-fixed-variant": "#623e31",
+                        "secondary-container": "#fe7488",
+                        "primary-fixed-dim": "#d7bcec",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#251237",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#4a454d",
+                        "surface-container-low": "#fdeffe",
+                        "surface-container": "#f7eaf8",
+                        "secondary": "#a93349",
+                        "on-tertiary-fixed": "#2f140a",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#4e2d21",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fff7fc",
+                        "on-secondary-fixed": "#400010",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#ebdeed",
+                        "secondary-fixed-dim": "#ffb2b9",
+                        "inverse-on-surface": "#faedfb",
+                        "primary-fixed": "#f0dbff",
+                        "background": "#fff7fc",
+                        "surface-variant": "#ebdeed",
+                        "secondary-fixed": "#ffdadc",
+                        "on-secondary-fixed-variant": "#891933",
+                        "outline": "#7b757e",
+                        "inverse-primary": "#d7bcec",
+                        "tertiary-fixed-dim": "#efbbaa",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#201923",
+                        "on-primary-fixed-variant": "#533e66",
+                        "on-primary-container": "#cdb2e1",
+                        "surface": "#fff7fc",
+                        "inverse-surface": "#352e38",
+                        "surface-container-high": "#f1e4f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "container-margin": "20px",
+                        "sm": "8px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-sm": ["28px", { "lineHeight": "36px", "fontWeight": "700" }]
+                    },
+                    "boxShadow": {
+                        "pastel": "0px 4px 20px rgba(88, 67, 107, 0.08)",
+                        "pastel-lg": "0px 8px 30px rgba(88, 67, 107, 0.12)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .numpad-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface antialiased flex justify-center items-center min-h-screen p-container-margin md:p-lg">
+<!-- Modal Container -->
+<main class="w-full max-w-md bg-surface-container-lowest rounded-3xl shadow-pastel-lg overflow-hidden flex flex-col relative h-[795px] md:h-auto md:max-h-[751px]">
+<!-- Header -->
+<header class="flex items-center justify-between px-md py-lg border-b border-surface-variant">
+<button aria-label="Cerrar modal" class="w-10 h-10 rounded-full bg-surface-container hover:bg-surface-variant flex items-center justify-center text-on-surface transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<div class="text-center flex-1 px-sm">
+<h1 class="font-headline-md text-headline-md text-primary">Cobrar #T-8942</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">29 Ago · 8:15 PM</p>
+</div>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden p-md space-y-lg pb-32">
+<!-- Total Card -->
+<section class="bg-surface-container-high rounded-2xl p-lg text-center flex flex-col items-center justify-center">
+<p class="font-label-sm text-label-sm text-primary-container uppercase tracking-wider mb-sm">Total a cobrar</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-primary-container">$122.00 <span class="font-body-md text-body-md align-top ml-1">MXN</span></p>
+</section>
+<!-- Payment Methods -->
+<section>
+<h2 class="font-label-md text-label-md text-on-surface-variant mb-md px-sm">Método de Pago</h2>
+<div class="flex gap-sm">
+<button class="flex-1 py-md px-sm rounded-xl border-2 border-primary-container bg-surface-container-low text-primary-container font-label-md text-label-md flex flex-col items-center gap-sm transition-colors">
+<span class="material-symbols-outlined text-2xl" data-icon="payments">payments</span>
+                        Efectivo
+                    </button>
+<button class="flex-1 py-md px-sm rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex flex-col items-center gap-sm hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-2xl" data-icon="credit_card">credit_card</span>
+                        Tarjeta
+                    </button>
+<button class="flex-1 py-md px-sm rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md flex flex-col items-center gap-sm hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+                        Transfer.
+                    </button>
+</div>
+</section>
+<!-- Quick Denominations -->
+<section>
+<h2 class="font-label-md text-label-md text-on-surface-variant mb-md px-sm">Denominaciones Rápidas</h2>
+<div class="grid grid-cols-3 gap-sm mb-sm">
+<button class="py-sm px-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">$50</button>
+<button class="py-sm px-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">$100</button>
+<button class="py-sm px-xs rounded-lg border-2 border-primary-container bg-surface-container-low text-primary-container font-label-md text-label-md transition-colors">$200</button>
+<button class="py-sm px-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">$500</button>
+<button class="py-sm px-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">$1000</button>
+<button class="py-sm px-xs rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Exacto</button>
+</div>
+</section>
+<!-- Custom Input & Numpad -->
+<section class="bg-surface-container-low rounded-2xl p-md">
+<div class="mb-md">
+<label class="font-label-sm text-label-sm text-on-surface-variant block mb-xs px-xs">Efectivo recibido</label>
+<div class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-primary">$200.00</span>
+<span class="font-body-md text-body-md text-on-surface-variant">MXN</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-sm">
+<!-- Row 1 -->
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">1</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">2</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">3</button>
+<!-- Row 2 -->
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">4</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">5</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">6</button>
+<!-- Row 3 -->
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">7</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">8</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">9</button>
+<!-- Row 4 -->
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">00</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center transition-transform">0</button>
+<button class="numpad-btn h-14 rounded-xl bg-surface-container-lowest font-headline-md text-headline-md text-on-surface shadow-sm flex items-center justify-center text-outline transition-transform">
+<span class="material-symbols-outlined" data-icon="backspace">backspace</span>
+</button>
+</div>
+</section>
+<!-- Change Card -->
+<section class="bg-[#E8F8F0] border border-[#10B981] rounded-2xl p-md flex items-center justify-between shadow-sm relative overflow-hidden">
+<div class="absolute -right-4 -top-4 opacity-10">
+<span class="material-symbols-outlined text-8xl" data-icon="paid" data-weight="fill" style="font-variation-settings: 'FILL' 1;">paid</span>
+</div>
+<div class="relative z-10">
+<p class="font-label-sm text-label-sm text-[#0F5132] font-semibold mb-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="currency_exchange">currency_exchange</span>
+                        CAMBIO A ENTREGAR
+                    </p>
+<p class="font-display-sm text-display-sm text-[#0F5132]">$78.00 <span class="font-label-md text-label-md ml-1">MXN</span></p>
+</div>
+</section>
+</div>
+<!-- Sticky Footer Action -->
+<footer class="absolute bottom-0 left-0 w-full p-md bg-surface-container-lowest border-t border-surface-variant pt-lg bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest to-transparent">
+<button class="w-full py-lg px-lg bg-primary-container hover:bg-surface-tint text-on-primary font-label-md text-label-md rounded-xl shadow-pastel flex items-center justify-center gap-sm transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="receipt">receipt</span>
+                Finalizar Venta e Imprimir Ticket
+            </button>
+</footer>
+</main>
+</body></html>

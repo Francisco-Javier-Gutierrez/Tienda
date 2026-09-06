@@ -1,55 +1,76 @@
 <app-cliente-shell>
-  <ion-content class="profile-page">
-    <main class="profile-container" *ngIf="clienteAuth.sesion as sesion">
-      <header>
-        <span>Tu cuenta</span>
-        <h1>Perfil</h1>
-        <p>Información asociada a tu inicio de sesión con Google.</p>
+  <div class="bg-surface min-h-screen pb-32">
+    <main class="w-full max-w-2xl mx-auto pt-6 md:pt-10 px-4 md:px-6" *ngIf="clienteAuth.sesion as sesion">
+      
+      <header class="mb-8">
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Tu cuenta</span>
+        <h1 class="font-heading font-bold text-3xl md:text-4xl text-on-surface mb-2">Perfil</h1>
+        <p class="font-sans text-sm text-on-surface-variant">Información asociada a tu inicio de sesión con Google.</p>
       </header>
 
-      <section class="profile-card">
-        <div class="profile-identity">
-          <span class="profile-photo">
-            <img
-              *ngIf="foto(sesion.cliente.fotoPerfil) as src; else profilePlaceholder"
-              [src]="src"
-              alt="Foto de perfil"
-            />
-            <ng-template #profilePlaceholder><ion-icon name="person-outline"></ion-icon></ng-template>
-          </span>
-          <div>
-            <h2>{{ sesion.cliente.nombre }} {{ sesion.cliente.apellidoPat }} {{ sesion.cliente.apellidoMat }}</h2>
-            <p>{{ sesion.cliente.correo }}</p>
+      <section class="bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 overflow-hidden">
+        
+        <div class="p-6 md:p-8 flex flex-col items-center sm:flex-row sm:items-start gap-6 border-b border-surface-variant/30 bg-surface-container-low">
+          <div class="w-24 h-24 rounded-full bg-surface-variant overflow-hidden flex-shrink-0 shadow-sm border-2 border-white">
+            <img *ngIf="foto(sesion.cliente.fotoPerfil) as src; else profilePlaceholder" [src]="src" alt="Foto de perfil" class="w-full h-full object-cover" />
+            <ng-template #profilePlaceholder>
+              <div class="w-full h-full flex items-center justify-center text-outline-variant bg-surface-container">
+                <span class="material-symbols-outlined text-4xl">person</span>
+              </div>
+            </ng-template>
+          </div>
+          <div class="flex flex-col items-center sm:items-start text-center sm:text-left mt-2 sm:mt-0">
+            <h2 class="font-heading font-bold text-2xl text-primary">{{ sesion.cliente.nombre }} {{ sesion.cliente.apellidoPat }}</h2>
+            <p class="font-sans text-sm text-on-surface-variant mt-1">{{ sesion.cliente.correo }}</p>
+            <div class="mt-3 flex items-center gap-1 bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full font-sans font-medium text-[10px] uppercase tracking-wider">
+              <span class="material-symbols-outlined text-[14px]">verified_user</span>
+              Cuenta verificada
+            </div>
           </div>
         </div>
 
-        <dl>
-          <div>
-            <dt>Nombre</dt>
-            <dd>{{ sesion.cliente.nombre }}</dd>
+        <div class="p-6 md:p-8" *ngIf="cargando">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="flex flex-col gap-2" *ngFor="let i of [1,2,3,4]">
+              <ion-skeleton-text animated style="width: 40%; height: 12px; border-radius: 4px; margin: 0;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 80%; height: 20px; border-radius: 4px; margin: 0;"></ion-skeleton-text>
+            </div>
           </div>
-          <div>
-            <dt>Apellidos</dt>
-            <dd>{{ sesion.cliente.apellidoPat || '—' }} {{ sesion.cliente.apellidoMat || '' }}</dd>
-          </div>
-          <div>
-            <dt>Correo</dt>
-            <dd>{{ sesion.cliente.correo }}</dd>
-          </div>
-          <div>
-            <dt>Cliente desde</dt>
-            <dd>{{ sesion.cliente.fechaRegistro | date:'longDate' }}</dd>
-          </div>
-        </dl>
+        </div>
 
-        <div class="profile-actions">
-          <p>La información de esta cuenta se administra desde Google.</p>
-          <ion-button fill="outline" color="danger" (click)="clienteAuth.logout()">
-            <ion-icon slot="start" name="log-out-outline"></ion-icon>
+        <div class="p-6 md:p-8" *ngIf="!cargando">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Nombre</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ sesion.cliente.nombre }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Apellidos</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ sesion.cliente.apellidoPat || '—' }} {{ sesion.cliente.apellidoMat || '' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Correo Electrónico</span>
+              <span class="font-sans font-medium text-base text-on-surface break-all">{{ sesion.cliente.correo }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Cliente Desde</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ sesion.cliente.fechaRegistro | date:'longDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 md:p-8 bg-error-container border-t border-error/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="font-sans text-xs text-secondary/80 max-w-xs text-center sm:text-left flex items-start gap-2">
+            <span class="material-symbols-outlined text-[16px] mt-0.5">info</span>
+            La información de esta cuenta se administra desde tu proveedor de Google.
+          </p>
+          <button class="w-full sm:w-auto border border-error text-error hover:bg-error hover:text-on-error font-sans font-bold text-sm px-6 py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 active:scale-95" (click)="clienteAuth.logout()">
+            <span class="material-symbols-outlined text-[18px]">logout</span>
             Cerrar sesión
-          </ion-button>
+          </button>
         </div>
+
       </section>
     </main>
-  </ion-content>
+  </div>
 </app-cliente-shell>

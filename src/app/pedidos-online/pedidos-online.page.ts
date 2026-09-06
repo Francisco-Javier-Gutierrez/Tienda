@@ -16,6 +16,19 @@ export class PedidosOnlinePage implements OnInit {
   busqueda = '';
   estado = '';
   cargando = true;
+
+  readonly opcionesEstado = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'EN_REVISION', label: 'Pago en revisión' },
+    { value: 'PAGADO', label: 'Pago aprobado' },
+    { value: 'LISTO', label: 'Listo para recoger' },
+    { value: 'ENTREGADO', label: 'Entregado' },
+    { value: 'RECHAZADO', label: 'Pago rechazado' },
+    { value: 'PENDIENTE_PAGO', label: 'Pendiente de pago' },
+    { value: 'CANCELADO', label: 'Cancelado' },
+    { value: 'EXPIRADO', label: 'Reserva expirada' },
+  ];
+
   private readonly api = inject(PedidosAdminService);
   private readonly toast = inject(ToastController);
   ngOnInit(): void {
@@ -48,6 +61,66 @@ export class PedidosOnlinePage implements OnInit {
         ENTREGADO: 'Entregado',
       } as Record<EstadoPedidoCliente, string>
     )[estado];
+  }
+
+  claseEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'bg-amber-100 text-amber-800 border border-amber-300/60';
+      case 'PAGADO':
+        return 'bg-blue-100 text-blue-800 border border-blue-300/60';
+      case 'LISTO':
+        return 'bg-purple-100 text-purple-800 border border-purple-300/60';
+      case 'ENTREGADO':
+        return 'bg-tertiary-fixed text-tertiary border border-tertiary/20';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'bg-error-container text-error border border-error/20';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30';
+    }
+  }
+
+  puntoEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'bg-amber-600';
+      case 'PAGADO':
+        return 'bg-blue-600';
+      case 'LISTO':
+        return 'bg-purple-600';
+      case 'ENTREGADO':
+        return 'bg-tertiary';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'bg-error';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'bg-outline';
+    }
+  }
+
+  iconoEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'pending_actions';
+      case 'PAGADO':
+        return 'verified';
+      case 'LISTO':
+        return 'inventory_2';
+      case 'ENTREGADO':
+        return 'task_alt';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'cancel';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'schedule';
+    }
   }
   async cargar(event?: CustomEvent): Promise<void> {
     if (!event) this.cargando = true;

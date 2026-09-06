@@ -1,0 +1,94 @@
+<ng-container *ngIf="state$ | async as state">
+  <div 
+    *ngIf="state.isOpen" 
+    class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-200 animate-fadeIn"
+    (click)="state.isPrompt ? null : dialog.handleCancel()"
+  >
+    <div 
+      class="bg-surface-container-lowest rounded-[28px] p-6 md:p-8 max-w-md w-full shadow-2xl border border-surface-variant/30 flex flex-col items-center text-center transform transition-all duration-200 animate-scaleUp relative"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Icon Badge -->
+      <div 
+        class="w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-transform"
+        [ngClass]="{
+          'bg-error-container text-error': state.type === 'danger',
+          'bg-tertiary-fixed text-tertiary': state.type === 'warning' || state.type === 'success',
+          'bg-primary-container/20 text-primary': state.type === 'info'
+        }"
+      >
+        <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">
+          {{ state.icon }}
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h3 class="font-heading font-bold text-xl md:text-2xl text-on-surface mb-2 tracking-tight">
+        {{ state.title }}
+      </h3>
+
+      <!-- Message -->
+      <p *ngIf="state.message" class="font-sans text-sm text-on-surface-variant mb-6 leading-relaxed">
+        {{ state.message }}
+      </p>
+
+      <!-- Prompt Input (if isPrompt) -->
+      <div *ngIf="state.isPrompt" class="w-full mb-6 text-left">
+        <textarea
+          *ngIf="state.isTextarea"
+          [value]="state.inputValue"
+          (input)="onInput($event)"
+          [placeholder]="state.placeholder"
+          [maxLength]="state.maxLength"
+          rows="3"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl p-3.5 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none"
+        ></textarea>
+
+        <input
+          *ngIf="!state.isTextarea"
+          type="text"
+          [value]="state.inputValue"
+          (input)="onInput($event)"
+          (keydown.enter)="isValid(state) ? dialog.handleConfirm() : null"
+          [placeholder]="state.placeholder"
+          [maxLength]="state.maxLength"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+        />
+
+        <div class="flex justify-between items-center mt-1 px-1 text-[11px] text-on-surface-variant font-sans">
+          <span *ngIf="state.minLength > 0 && (state.inputValue || '').trim().length < state.minLength" class="text-error">
+            Mínimo {{ state.minLength }} caracteres
+          </span>
+          <span *ngIf="state.minLength === 0 || (state.inputValue || '').trim().length >= state.minLength"></span>
+          <span>{{ (state.inputValue || '').length }} / {{ state.maxLength }}</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 w-full mt-2">
+        <button
+          type="button"
+          class="flex-1 py-3.5 px-5 rounded-xl font-sans font-semibold text-sm border border-outline-variant/30 hover:bg-surface-variant text-on-surface-variant transition-colors order-2 sm:order-1 active:scale-95"
+          (click)="dialog.handleCancel()"
+        >
+          {{ state.cancelText }}
+        </button>
+
+        <button
+          type="button"
+          class="flex-1 py-3.5 px-5 rounded-xl font-sans font-bold text-sm shadow-sm transition-all active:scale-95 order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!isValid(state)"
+          [ngClass]="{
+            'bg-error hover:bg-error/90 text-on-error': state.type === 'danger',
+            'bg-tertiary hover:bg-tertiary/90 text-on-tertiary': state.type === 'success',
+            'bg-secondary hover:bg-secondary/90 text-on-secondary': state.type === 'warning',
+            'bg-primary-container hover:bg-primary text-on-primary': state.type === 'info'
+          }"
+          (click)="dialog.handleConfirm()"
+        >
+          {{ state.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { EstadoPedidoCliente, PedidoAdminDetalle } from '../models/pedido-cliente';
 import { ImagenesService } from '../services/imagenes.service';
 import { PedidosAdminService } from '../services/pedidos-admin.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-pedido-online-detalle',
@@ -20,7 +21,7 @@ export class PedidoOnlineDetallePage implements OnInit {
   private readonly api = inject(PedidosAdminService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly alert = inject(AlertController);
+  private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastController);
   private readonly imagenes = inject(ImagenesService);
   ngOnInit(): void {
@@ -43,54 +44,97 @@ export class PedidoOnlineDetallePage implements OnInit {
       } as Record<EstadoPedidoCliente, string>
     )[estado];
   }
+
+  claseEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'bg-amber-100 text-amber-800 border border-amber-300/60';
+      case 'PAGADO':
+        return 'bg-blue-100 text-blue-800 border border-blue-300/60';
+      case 'LISTO':
+        return 'bg-purple-100 text-purple-800 border border-purple-300/60';
+      case 'ENTREGADO':
+        return 'bg-tertiary-fixed text-tertiary border border-tertiary/20';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'bg-error-container text-error border border-error/20';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30';
+    }
+  }
+
+  puntoEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'bg-amber-600';
+      case 'PAGADO':
+        return 'bg-blue-600';
+      case 'LISTO':
+        return 'bg-purple-600';
+      case 'ENTREGADO':
+        return 'bg-tertiary';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'bg-error';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'bg-outline';
+    }
+  }
+
+  iconoEstado(estado: EstadoPedidoCliente): string {
+    switch (estado) {
+      case 'EN_REVISION':
+        return 'pending_actions';
+      case 'PAGADO':
+        return 'verified';
+      case 'LISTO':
+        return 'inventory_2';
+      case 'ENTREGADO':
+        return 'task_alt';
+      case 'RECHAZADO':
+      case 'CANCELADO':
+      case 'EXPIRADO':
+        return 'cancel';
+      case 'PENDIENTE_PAGO':
+      default:
+        return 'schedule';
+    }
+  }
   async confirmarAprobacion(): Promise<void> {
     if (!this.pedido || this.accionEnCurso) return;
-    const a = await this.alert.create({
-      header: 'Aprobar pago',
+    const confirmado = await this.dialog.confirm({
+      title: 'Aprobar pago',
       message: 'Confirma que verificaste el comprobante y el monto recibido. Esta acción registrará la venta.',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Aprobar',
-          handler: () => {
-            void this.ejecutar('aprobar');
-          },
-        },
-      ],
+      type: 'success',
+      icon: 'verified',
+      confirmText: 'Aprobar pago',
+      cancelText: 'Volver',
     });
-    await a.present();
+    if (confirmado) {
+      void this.ejecutar('aprobar');
+    }
   }
   async solicitarRechazo(): Promise<void> {
     if (!this.pedido || this.accionEnCurso) return;
-    const a = await this.alert.create({
-      header: 'Rechazar pago',
+    const motivo = await this.dialog.prompt({
+      title: 'Rechazar pago',
       message: 'El motivo se mostrará al cliente y el inventario reservado será restaurado.',
-      inputs: [
-        {
-          name: 'motivo',
-          type: 'textarea',
-          placeholder: 'Motivo del rechazo',
-          attributes: { minlength: 3, maxlength: 255 },
-        },
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Rechazar',
-          role: 'destructive',
-          handler: (data) => {
-            const motivo = String(data.motivo || '').trim();
-            if (motivo.length < 3 || motivo.length > 255) {
-              void this.feedback('El motivo debe tener entre 3 y 255 caracteres.', 'warning');
-              return false;
-            }
-            void this.ejecutar('rechazar', motivo);
-            return true;
-          },
-        },
-      ],
+      type: 'danger',
+      icon: 'cancel',
+      placeholder: 'Explica el motivo del rechazo...',
+      minLength: 3,
+      maxLength: 255,
+      confirmText: 'Rechazar pago',
+      cancelText: 'Volver',
+      isTextarea: true,
     });
-    await a.present();
+    if (motivo !== null) {
+      void this.ejecutar('rechazar', motivo.trim());
+    }
   }
   async ejecutar(accion: 'aprobar' | 'rechazar' | 'listo' | 'entregar', motivo = ''): Promise<void> {
     if (!this.pedido || this.accionEnCurso) return;
