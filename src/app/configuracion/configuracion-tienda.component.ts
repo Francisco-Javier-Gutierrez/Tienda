@@ -43,6 +43,13 @@ export class ConfiguracionTiendaComponent implements OnChanges, OnInit {
     if (changes['sucursalActual']) this.cargarFormulario();
   }
 
+  get opcionesSucursales(): { value: any; label: string }[] {
+    return this.sucursales.map((s) => ({
+      value: s.id || s.sucursalId || s.idSuc,
+      label: s.nombre || s.nombreSuc || `Sucursal ${s.id || s.sucursalId || s.idSuc}`,
+    }));
+  }
+
   seleccionar(id: number | string): void {
     const seleccionada = this.sucursales.find((sucursal) => String(sucursal.id || sucursal.sucursalId || sucursal.idSuc) === String(id));
     if (seleccionada) this.sucursalSeleccionada.emit(seleccionada);

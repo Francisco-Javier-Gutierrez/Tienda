@@ -1,988 +1,139 @@
-<app-admin-shell menuId="admin-home-menu" contentId="admin-home-content" [activeSection]="seccion">
-  <!-- =====================================================
-       MENÚ ADMINISTRATIVO
-  ====================================================== -->
+<app-admin-shell menuId="admin-home-menu" contentId="admin-home-content" activeSection="inicio">
+  <div class="p-4 md:p-6 lg:p-8 flex flex-col gap-6 max-w-[1280px] mx-auto w-full">
+    
+    <!-- Header/Greeting -->
+    <div class="flex flex-col">
+      <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest mb-1">Panel administrativo</span>
+      <h1 class="font-heading font-bold text-3xl md:text-4xl text-primary">{{ saludoActual }}</h1>
+      <p class="font-sans text-sm md:text-base text-on-surface-variant mt-2">Aquí tienes el resumen de {{ nombreTienda }}.</p>
+    </div>
+    
+    <!-- Skeleton Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-4" *ngIf="cargando">
+      <div *ngFor="let i of [1,2,3,4]" class="bg-surface-container-lowest rounded-[20px] p-5 shadow-sm border border-surface-variant/30 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <ion-skeleton-text animated style="width: 60%; height: 20px; border-radius: 4px;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 40px; height: 40px; border-radius: 12px;"></ion-skeleton-text>
+        </div>
+        <ion-skeleton-text animated style="width: 40%; height: 36px; border-radius: 8px;"></ion-skeleton-text>
+      </div>
+    </div>
+    
+    <!-- KPI Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-4" *ngIf="!cargando">
+      <!-- Total Productos -->
+      <div class="bg-surface-container-lowest rounded-[20px] p-5 shadow-sm border border-surface-variant/30 flex flex-col group hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-sans font-medium text-sm text-on-surface-variant">Total productos</span>
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl group-hover:scale-110 transition-transform">inventory_2</span>
+        </div>
+        <div class="font-heading font-bold text-3xl text-primary">{{ productos.length }}</div>
+      </div>
+      
+      <!-- Stock Bajo -->
+      <div class="bg-secondary-fixed/40 rounded-[20px] p-5 shadow-sm border border-secondary/20 flex flex-col group hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-sans font-medium text-sm text-secondary">Con stock bajo</span>
+          <span class="material-symbols-outlined text-secondary bg-secondary/10 p-2 rounded-xl group-hover:scale-110 transition-transform">warning</span>
+        </div>
+        <div class="font-heading font-bold text-3xl text-secondary">{{ totalStockBajo }}</div>
+      </div>
+      
+      <!-- Categorías -->
+      <div class="bg-surface-container-lowest rounded-[20px] p-5 shadow-sm border border-surface-variant/30 flex flex-col group hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-sans font-medium text-sm text-on-surface-variant">Categorías</span>
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl group-hover:scale-110 transition-transform">category</span>
+        </div>
+        <div class="font-heading font-bold text-3xl text-primary">{{ categorias.length }}</div>
+      </div>
+      
+      <!-- Marcas -->
+      <div class="bg-surface-container-lowest rounded-[20px] p-5 shadow-sm border border-surface-variant/30 flex flex-col group hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-sans font-medium text-sm text-on-surface-variant">Marcas</span>
+          <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl group-hover:scale-110 transition-transform">sell</span>
+        </div>
+        <div class="font-heading font-bold text-3xl text-primary">{{ marcas.length }}</div>
+      </div>
+    </div>
+    
+    <!-- Panels -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+      
+      <!-- Productos con stock bajo -->
+      <div class="lg:col-span-2 bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b border-surface-variant flex justify-between items-center bg-surface-container-low">
+          <div>
+            <span class="font-sans font-semibold text-xs text-secondary uppercase tracking-wider block mb-1">Atención</span>
+            <h2 class="font-heading font-bold text-xl text-primary">Productos con stock bajo</h2>
+          </div>
+          <button routerLink="/productos" class="font-sans font-semibold text-sm text-secondary hover:bg-secondary/10 px-4 py-2 rounded-full transition-colors hidden sm:block">Ver todos</button>
+        </div>
+        
+        <div class="flex-1 p-6">
+          <ng-container *ngIf="cargando">
+            <div class="space-y-4">
+              <div *ngFor="let i of [1,2,3]" class="flex justify-between items-center py-3 border-b border-surface-variant border-dashed last:border-0">
+                <div class="flex flex-col gap-2 w-1/2">
+                  <ion-skeleton-text animated style="width: 80%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 50%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+                <ion-skeleton-text animated style="width: 80px; height: 24px; border-radius: 12px;"></ion-skeleton-text>
+              </div>
+            </div>
+          </ng-container>
 
-  <ion-menu
-    *ngIf="false"
-    side="start"
-    contentId="main-content"
-    menuId="admin-main-menu"
-    type="overlay"
-    class="admin-menu"
-  >
-    <!-- CABECERA DEL MENÚ -->
-
-    <ion-header class="admin-menu-header">
-      <ion-toolbar>
-        <div class="store-brand">
-          <div class="brand-logo">
-            <img *ngIf="resolverLogoTienda() as logo; else menuLogo" [src]="logo" alt="Logo de la tienda" />
-
-            <ng-template #menuLogo>
-              <ion-icon name="storefront-outline"></ion-icon>
+          <ng-container *ngIf="!cargando">
+            <div *ngIf="productosStockBajo.length; else stockEmpty" class="space-y-4">
+              <div *ngFor="let producto of productosStockBajo" class="flex justify-between items-center py-3 border-b border-surface-variant border-dashed last:border-0">
+                <div class="flex flex-col">
+                  <span class="font-sans font-semibold text-sm text-on-surface">{{ producto.nombre }}</span>
+                  <span class="font-sans text-xs text-on-surface-variant mt-0.5">{{ producto.marca || 'Sin marca' }}</span>
+                </div>
+                <div class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-sans font-bold text-xs flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">trending_down</span>
+                  {{ producto.existencia }} / min {{ producto.stockMinimo }}
+                </div>
+              </div>
+              <button routerLink="/productos" class="w-full mt-4 sm:hidden font-sans font-semibold text-sm text-secondary border border-secondary/30 rounded-xl py-2.5">Ver todos</button>
+            </div>
+            
+            <ng-template #stockEmpty>
+              <div class="flex flex-col items-center justify-center py-10 opacity-60">
+                <span class="material-symbols-outlined text-4xl mb-3">check_circle</span>
+                <p class="font-sans font-medium text-sm text-on-surface-variant">No hay productos con stock bajo. ¡Todo en orden!</p>
+              </div>
             </ng-template>
-          </div>
-
-          <div class="brand-copy">
-            <strong> {{ nombreTienda }} </strong>
-
-            <small> Administración </small>
-          </div>
+          </ng-container>
         </div>
-      </ion-toolbar>
-    </ion-header>
-
-    <!-- =================================================
-         CONTENIDO DEL MENÚ
-    ================================================== -->
-
-    <ion-content class="admin-menu-content">
-      <div class="menu-section-label">Menú principal</div>
-
-      <ion-list lines="none">
-        <ion-menu-toggle [autoHide]="false">
-          <!-- INICIO -->
-
-          <ion-item
-            button
-            detail="false"
-            [class.menu-active]="seccion === 'inicio'"
-            (click)="seleccionarSeccion('inicio')"
-          >
-            <ion-icon slot="start" name="home-outline"></ion-icon>
-
-            <ion-label> Inicio </ion-label>
-          </ion-item>
-
-          <!-- PRODUCTOS -->
-
-          <ion-item
-            button
-            detail="false"
-            [class.menu-active]="seccion === 'productos'"
-            (click)="seleccionarSeccion('productos')"
-          >
-            <ion-icon slot="start" name="cube-outline"></ion-icon>
-
-            <ion-label> Productos </ion-label>
-          </ion-item>
-
-          <!-- CATEGORÍAS -->
-
-          <ion-item
-            button
-            detail="false"
-            [class.menu-active]="seccion === 'categorias'"
-            (click)="seleccionarSeccion('categorias')"
-          >
-            <ion-icon slot="start" name="folder-outline"></ion-icon>
-
-            <ion-label> Categorías </ion-label>
-          </ion-item>
-
-          <!-- MARCAS -->
-
-          <ion-item
-            button
-            detail="false"
-            [class.menu-active]="seccion === 'marcas'"
-            (click)="seleccionarSeccion('marcas')"
-          >
-            <ion-icon slot="start" name="pricetag-outline"></ion-icon>
-
-            <ion-label> Marcas </ion-label>
-          </ion-item>
-
-          <!-- CONFIGURACIÓN -->
-
-          <ion-item
-            button
-            detail="false"
-            [class.menu-active]="seccion === 'configuracion'"
-            (click)="seleccionarSeccion('configuracion')"
-          >
-            <ion-icon slot="start" name="settings-outline"></ion-icon>
-
-            <ion-label> Configuración </ion-label>
-          </ion-item>
-
-          <!-- SEPARADOR -->
-
-          <div class="menu-divider"></div>
-
-          <!-- EMPLEADOS -->
-
-          <ion-item button detail="false" routerLink="/empleados">
-            <ion-icon slot="start" name="people-outline"></ion-icon>
-
-            <ion-label> Empleados </ion-label>
-          </ion-item>
-
-          <!-- PUNTO DE VENTA -->
-
-          <ion-item button detail="false" routerLink="/cajero">
-            <ion-icon slot="start" name="calculator-outline"></ion-icon>
-
-            <ion-label> Punto de venta </ion-label>
-          </ion-item>
-
-          <!-- VENTAS -->
-
-          <ion-item button detail="false" routerLink="/ventas">
-            <ion-icon slot="start" name="receipt-outline"></ion-icon>
-
-            <ion-label> Ventas </ion-label>
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-
-      <!-- =================================================
-           USUARIO
-      ================================================== -->
-
-      <div class="admin-label">
-        <div class="admin-user-icon">
-          <ion-icon name="person-circle-outline"></ion-icon>
-        </div>
-
-        <span class="admin-user-copy">
-          <strong> {{ auth.sesion?.empleado?.nombre || 'Administrador' }} </strong>
-
-          <small> {{ auth.sesion?.empleado?.cargo || 'ADMINISTRADOR' }} </small>
-        </span>
-
-        <ion-button fill="clear" aria-label="Cerrar sesión" (click)="auth.logout()">
-          <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-        </ion-button>
       </div>
-    </ion-content>
-  </ion-menu>
-
-  <!-- =====================================================
-       CONTENIDO PRINCIPAL
-  ====================================================== -->
-
-  <ng-container>
-    <ion-header>
-      <ion-toolbar>
-        <!-- ☰ SE OCULTA EN ESCRITORIO -->
-
-        <ion-buttons slot="start">
-          <ion-menu-button class="mobile-menu-button" menu="admin-home-menu"></ion-menu-button>
-        </ion-buttons>
-
-        <ion-title> {{ tituloSeccion }} </ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding admin-content">
-      <ng-container *ngIf="seccion === 'inicio'">
-        <section class="admin-dashboard">
-          <div class="dashboard-heading">
-            <span>Panel administrativo</span>
-            <h1>{{ saludoActual }}</h1>
-            <p>Aquí tienes el resumen de {{ nombreTienda }}.</p>
-          </div>
-          <div class="dashboard-stats">
-            <article>
-              <ion-icon name="cube-outline"></ion-icon><strong>{{ productos.length }}</strong
-              ><span>Total productos</span>
-            </article>
-            <article>
-              <ion-icon name="alert-circle-outline"></ion-icon><strong>{{ totalStockBajo }}</strong
-              ><span>Con stock bajo</span>
-            </article>
-            <article>
-              <ion-icon name="folder-outline"></ion-icon><strong>{{ categorias.length }}</strong><span>Categorías</span>
-            </article>
-            <article>
-              <ion-icon name="pricetag-outline"></ion-icon><strong>{{ marcas.length }}</strong><span>Marcas</span>
-            </article>
-          </div>
-          <div class="dashboard-columns">
-            <section class="dashboard-panel">
-              <div class="panel-title">
-                <div>
-                  <span>Atención</span>
-                  <h2>Productos con stock bajo</h2>
-                </div>
-                <button type="button" (click)="seleccionarSeccion('productos')">Ver productos</button>
-              </div>
-              <div class="stock-list" *ngIf="productosStockBajo.length; else stockEmpty">
-                <article *ngFor="let producto of productosStockBajo">
-                  <span>{{ producto.nombre }}</span
-                  ><strong>{{ producto.existencia }} / mínimo {{ producto.stockMinimo }}</strong>
-                </article>
-              </div>
-              <ng-template #stockEmpty><p class="dashboard-empty">No hay productos con stock bajo.</p></ng-template>
-            </section>
-            <section class="dashboard-panel">
-              <div class="panel-title">
-                <div>
-                  <span>Acciones rápidas</span>
-                  <h2>¿Qué quieres hacer?</h2>
-                </div>
-              </div>
-              <div class="quick-actions">
-                <button type="button" (click)="abrirNuevoProducto()">
-                  <ion-icon name="add-circle-outline"></ion-icon>Nuevo producto
-                </button>
-                <button type="button" (click)="abrirNuevoCatalogo('categoria')">
-                  <ion-icon name="folder-open-outline"></ion-icon>Nueva categoría
-                </button>
-                <button type="button" (click)="abrirNuevoCatalogo('marca')">
-                  <ion-icon name="pricetag-outline"></ion-icon>Nueva marca
-                </button>
-              </div>
-            </section>
-          </div>
-        </section>
-      </ng-container>
-
-      <ng-container *ngIf="seccion === 'productos'">
-        <section class="inventory-page">
-          <header class="section-heading">
-            <div>
-              <span>Gestión de productos</span>
-              <h1>Inventario</h1>
-              <p>Consulta y administra los productos disponibles en la tienda.</p>
-            </div>
-            <ion-button class="section-primary" (click)="abrirOpcionesAgregar()"
-              ><ion-icon slot="start" name="add-outline"></ion-icon>Nuevo producto</ion-button
-            >
-          </header>
-
-          <section class="inventory-summary" aria-label="Resumen del inventario">
-            <article>
-              <ion-icon name="cube-outline"></ion-icon>
-              <div><span>Productos</span><strong>{{ productos.length }}</strong></div>
-            </article>
-            <article>
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-              <div><span>Disponibles</span><strong>{{ totalDisponibles }}</strong></div>
-            </article>
-            <article>
-              <ion-icon name="alert-circle-outline"></ion-icon>
-              <div><span>Stock bajo</span><strong>{{ totalStockBajoInventario }}</strong></div>
-            </article>
-            <article>
-              <ion-icon name="close-circle-outline"></ion-icon>
-              <div><span>Sin stock</span><strong>{{ totalSinStock }}</strong></div>
-            </article>
-          </section>
-
-          <section class="inventory-filters" aria-label="Filtros del inventario">
-            <ion-searchbar
-              aria-label="Buscar producto"
-              placeholder="Buscar por nombre, código o SKU"
-              [(ngModel)]="busquedaProducto"
-            ></ion-searchbar>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              label="Categoría"
-              labelPlacement="stacked"
-              [(ngModel)]="filtroCategoria"
-            >
-              <ion-select-option [value]="0">Todas las categorías</ion-select-option>
-              <ion-select-option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</ion-select-option>
-            </ion-select>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              label="Marca"
-              labelPlacement="stacked"
-              [(ngModel)]="filtroMarca"
-            >
-              <ion-select-option [value]="0">Todas las marcas</ion-select-option>
-              <ion-select-option *ngFor="let m of marcas" [value]="m.id">{{ m.nombre }}</ion-select-option>
-            </ion-select>
-            <ion-select
-              interface="popover"
-              fill="outline"
-              label="Stock"
-              labelPlacement="stacked"
-              [(ngModel)]="filtroStock"
-            >
-              <ion-select-option value="todos">Todos los stocks</ion-select-option>
-              <ion-select-option value="disponible">Disponible</ion-select-option>
-              <ion-select-option value="bajo">Stock bajo</ion-select-option>
-              <ion-select-option value="sin-stock">Sin stock</ion-select-option>
-            </ion-select>
-            <ion-button fill="clear" [disabled]="!hayFiltrosProductos" (click)="limpiarFiltrosProductos()"
-              >Limpiar filtros</ion-button
-            >
-          </section>
-
-          <div class="inventory-loading" *ngIf="cargandoProductos">
-            <ion-spinner name="crescent"></ion-spinner>
-            <p>Cargando inventario...</p>
-          </div>
-
-          <section class="inventory-empty" *ngIf="!cargandoProductos && productos.length === 0">
-            <ion-icon name="basket-outline"></ion-icon>
-            <h2>No hay productos registrados</h2>
-            <p>Agrega tu primer producto para comenzar a administrar el inventario.</p>
-            <ion-button (click)="abrirOpcionesAgregar()">Agregar producto</ion-button>
-          </section>
-          <section
-            class="inventory-empty"
-            *ngIf="!cargandoProductos && productos.length > 0 && productosFiltrados.length === 0"
-          >
-            <ion-icon name="search-outline"></ion-icon>
-            <h2>No encontramos productos con esos filtros</h2>
-            <p>Prueba otra búsqueda o restablece los filtros.</p>
-            <ion-button fill="outline" (click)="limpiarFiltrosProductos()">Limpiar filtros</ion-button>
-          </section>
-
-          <div class="inventory-table-wrap" *ngIf="!cargandoProductos && productosFiltrados.length">
-            <table class="inventory-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th class="column-code">Código</th>
-                  <th>Categoría</th>
-                  <th>Marca</th>
-                  <th>Precio</th>
-                  <th>Existencia</th>
-                  <th>Estado</th>
-                  <th><span class="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let p of productosFiltrados">
-                  <td>
-                    <div class="product-cell">
-                      <div class="inventory-thumb">
-                        <ion-icon name="cube-outline"></ion-icon
-                        ><img
-                          *ngIf="resolverImagenProducto(p.imagen) as imagen"
-                          [src]="imagen"
-                          [alt]="p.nombre || 'Producto'"
-                          (load)="mostrarImagen($event)"
-                          (error)="ocultarImagen($event)"
-                        />
-                      </div>
-                      <div>
-                        <strong>{{ p.nombre }}</strong
-                        ><small
-                          >{{ p.tamano || 'Sin tamaño' }}<ng-container *ngIf="p.presentacion">
-                            · {{ p.presentacion }}</ng-container
-                          ></small
-                        >
-                      </div>
-                    </div>
-                  </td>
-                  <td class="column-code"><span class="code-value">{{ p.codigoQR || p.sku || '—' }}</span></td>
-                  <td>{{ p.categoria?.nombre || 'Sin categoría' }}</td>
-                  <td>{{ p.marca?.nombre || 'Sin marca' }}</td>
-                  <td><strong>{{ p.precioVenta | currency:'MXN' }}</strong></td>
-                  <td>{{ p.existencia }} unidades</td>
-                  <td>
-                    <span class="stock-badge" [class]="'stock-badge ' + estadoStock(p)">{{ etiquetaStock(p) }}</span>
-                  </td>
-                  <td>
-                    <div class="row-actions">
-                      <ion-button fill="clear" (click)="editarProducto(p)" aria-label="Editar producto"
-                        ><ion-icon slot="icon-only" name="create-outline"></ion-icon></ion-button
-                      ><ion-button
-                        fill="clear"
-                        color="danger"
-                        (click)="eliminarProducto(p)"
-                        aria-label="Eliminar producto"
-                        ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                      ></ion-button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="inventory-cards" *ngIf="!cargandoProductos && productosFiltrados.length">
-            <article *ngFor="let p of productosFiltrados">
-              <div class="mobile-product-head">
-                <div class="inventory-thumb">
-                  <ion-icon name="cube-outline"></ion-icon
-                  ><img
-                    *ngIf="resolverImagenProducto(p.imagen) as imagen"
-                    [src]="imagen"
-                    [alt]="p.nombre || 'Producto'"
-                    (load)="mostrarImagen($event)"
-                    (error)="ocultarImagen($event)"
-                  />
-                </div>
-                <div>
-                  <h2>{{ p.nombre }}</h2>
-                  <p>{{ p.categoria?.nombre || 'Sin categoría' }} · {{ p.marca?.nombre || 'Sin marca' }}</p>
-                  <small>{{ p.tamano || '' }} {{ p.presentacion || '' }}</small>
-                </div>
-              </div>
-              <dl>
-                <div>
-                  <dt>Precio</dt>
-                  <dd>{{ p.precioVenta | currency:'MXN' }}</dd>
-                </div>
-                <div>
-                  <dt>Existencia</dt>
-                  <dd>{{ p.existencia }} unidades</dd>
-                </div>
-                <div>
-                  <dt>Estado</dt>
-                  <dd>
-                    <span class="stock-badge" [class]="'stock-badge ' + estadoStock(p)">{{ etiquetaStock(p) }}</span>
-                  </dd>
-                </div>
-              </dl>
-              <div class="mobile-actions">
-                <ion-button fill="outline" (click)="editarProducto(p)"
-                  ><ion-icon slot="start" name="create-outline"></ion-icon>Editar</ion-button
-                ><ion-button fill="clear" color="danger" (click)="eliminarProducto(p)" aria-label="Eliminar producto"
-                  ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                ></ion-button>
-              </div>
-            </article>
-          </div>
-        </section>
-      </ng-container>
-
-      <ng-container *ngIf="seccion === 'categorias'">
-        <section class="catalog-admin-page">
-          <header class="section-heading">
-            <div>
-              <span>Organización</span>
-              <h1>Categorías</h1>
-              <p>Organiza tus productos por tipo.</p>
-            </div>
-            <ion-button class="section-primary" (click)="abrirNuevoCatalogo('categoria')"
-              ><ion-icon slot="start" name="add-outline"></ion-icon>Nueva categoría</ion-button
-            >
-          </header>
-          <ion-searchbar
-            class="catalog-search"
-            aria-label="Buscar categoría"
-            placeholder="Buscar por nombre o descripción"
-            [(ngModel)]="busquedaCategoria"
-          ></ion-searchbar>
-          <div class="catalog-table-wrap" *ngIf="categoriasFiltradas.length">
-            <table class="catalog-table">
-              <thead>
-                <tr>
-                  <th>Categoría</th>
-                  <th>Descripción</th>
-                  <th><span class="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let c of categoriasFiltradas">
-                  <td><strong>{{ c.nombre }}</strong></td>
-                  <td>{{ c.descripcion || 'Sin descripción' }}</td>
-                  <td>
-                    <div class="row-actions">
-                      <ion-button fill="clear" (click)="editarCategoria(c)" aria-label="Editar categoría"
-                        ><ion-icon slot="icon-only" name="create-outline"></ion-icon></ion-button
-                      ><ion-button
-                        fill="clear"
-                        color="danger"
-                        (click)="eliminarCategoria(c)"
-                        aria-label="Eliminar categoría"
-                        ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                      ></ion-button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="catalog-cards" *ngIf="categoriasFiltradas.length">
-            <article *ngFor="let c of categoriasFiltradas">
-              <div>
-                <h2>{{ c.nombre }}</h2>
-                <p>{{ c.descripcion || 'Sin descripción' }}</p>
-              </div>
-              <div class="row-actions">
-                <ion-button fill="clear" (click)="editarCategoria(c)">Editar</ion-button
-                ><ion-button fill="clear" color="danger" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría"
-                  ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                ></ion-button>
-              </div>
-            </article>
-          </div>
-          <section class="inventory-empty" *ngIf="categoriasFiltradas.length === 0">
-            <ion-icon name="grid-outline"></ion-icon>
-            <h2>{{ categorias.length ? 'No encontramos categorías' : 'No hay categorías registradas' }}</h2>
-            <p>
-              {{ categorias.length ? 'Prueba con otro término de búsqueda.' : 'Crea una categoría para organizar tus
-              productos.' }}
-            </p>
-          </section>
-        </section>
-      </ng-container>
-
-      <ng-container *ngIf="seccion === 'marcas'">
-        <section class="catalog-admin-page">
-          <header class="section-heading">
-            <div>
-              <span>Catálogo</span>
-              <h1>Marcas</h1>
-              <p>Administra las marcas de los productos disponibles.</p>
-            </div>
-            <ion-button class="section-primary" (click)="abrirNuevoCatalogo('marca')"
-              ><ion-icon slot="start" name="add-outline"></ion-icon>Nueva marca</ion-button
-            >
-          </header>
-          <ion-searchbar
-            class="catalog-search"
-            aria-label="Buscar marca"
-            placeholder="Buscar por nombre o descripción"
-            [(ngModel)]="busquedaMarca"
-          ></ion-searchbar>
-          <div class="catalog-table-wrap" *ngIf="marcasFiltradas.length">
-            <table class="catalog-table">
-              <thead>
-                <tr>
-                  <th>Marca</th>
-                  <th>Descripción</th>
-                  <th><span class="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let m of marcasFiltradas">
-                  <td><strong>{{ m.nombre }}</strong></td>
-                  <td>{{ m.descripcion || 'Sin descripción' }}</td>
-                  <td>
-                    <div class="row-actions">
-                      <ion-button fill="clear" (click)="editarMarca(m)" aria-label="Editar marca"
-                        ><ion-icon slot="icon-only" name="create-outline"></ion-icon></ion-button
-                      ><ion-button fill="clear" color="danger" (click)="eliminarMarca(m)" aria-label="Eliminar marca"
-                        ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                      ></ion-button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="catalog-cards" *ngIf="marcasFiltradas.length">
-            <article *ngFor="let m of marcasFiltradas">
-              <div>
-                <h2>{{ m.nombre }}</h2>
-                <p>{{ m.descripcion || 'Sin descripción' }}</p>
-              </div>
-              <div class="row-actions">
-                <ion-button fill="clear" (click)="editarMarca(m)">Editar</ion-button
-                ><ion-button fill="clear" color="danger" (click)="eliminarMarca(m)" aria-label="Eliminar marca"
-                  ><ion-icon slot="icon-only" name="trash-outline"></ion-icon
-                ></ion-button>
-              </div>
-            </article>
-          </div>
-          <section class="inventory-empty" *ngIf="marcasFiltradas.length === 0">
-            <ion-icon name="pricetag-outline"></ion-icon>
-            <h2>{{ marcas.length ? 'No encontramos marcas' : 'No hay marcas registradas' }}</h2>
-            <p>
-              {{ marcas.length ? 'Prueba con otro término de búsqueda.' : 'Crea una marca para clasificar tus
-              productos.' }}
-            </p>
-          </section>
-        </section>
-      </ng-container>
-
-      <ng-container *ngIf="seccion === 'configuracion'">
-        <app-configuracion-tienda
-          [sucursales]="sucursales"
-          [sucursalActual]="sucursalActual"
-          [cargando]="cargandoSucursal"
-          (sucursalSeleccionada)="seleccionarSucursal($event)"
-          (sucursalGuardada)="actualizarSucursal($event)"
-        ></app-configuracion-tienda>
-      </ng-container>
-    </ion-content>
-  </ng-container>
+      
+      <!-- Quick Actions -->
+      <div class="bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b border-surface-variant bg-surface-container-low">
+          <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-wider block mb-1">Acciones rápidas</span>
+          <h2 class="font-heading font-bold text-xl text-primary">¿Qué quieres hacer?</h2>
+        </div>
+        
+        <div class="p-6 flex flex-col gap-3">
+          <button routerLink="/productos" class="w-full flex items-center gap-3 p-4 bg-surface rounded-xl border border-outline-variant/30 hover:bg-surface-variant hover:border-outline-variant transition-all group text-left">
+            <span class="material-symbols-outlined text-primary bg-primary-container/10 p-2 rounded-lg group-hover:scale-110 transition-transform">add_circle</span>
+            <span class="font-sans font-semibold text-sm text-on-surface">Nuevo producto</span>
+          </button>
+          
+          <button routerLink="/categorias" class="w-full flex items-center gap-3 p-4 bg-surface rounded-xl border border-outline-variant/30 hover:bg-surface-variant hover:border-outline-variant transition-all group text-left">
+            <span class="material-symbols-outlined text-primary bg-primary-container/10 p-2 rounded-lg group-hover:scale-110 transition-transform">folder_open</span>
+            <span class="font-sans font-semibold text-sm text-on-surface">Nueva categoría</span>
+          </button>
+          
+          <button routerLink="/marcas" class="w-full flex items-center gap-3 p-4 bg-surface rounded-xl border border-outline-variant/30 hover:bg-surface-variant hover:border-outline-variant transition-all group text-left">
+            <span class="material-symbols-outlined text-primary bg-primary-container/10 p-2 rounded-lg group-hover:scale-110 transition-transform">sell</span>
+            <span class="font-sans font-semibold text-sm text-on-surface">Nueva marca</span>
+          </button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
 </app-admin-shell>
-
-<ion-modal
-  class="add-sheet"
-  [isOpen]="mostrarOpcionesAgregar"
-  [initialBreakpoint]="0.28"
-  [breakpoints]="[0, 0.28]"
-  (didDismiss)="mostrarOpcionesAgregar = false"
->
-  <ng-template>
-    <ion-content class="ion-padding">
-      <div class="sheet-heading">
-        <h2>Agregar producto</h2>
-        <ion-button fill="clear" (click)="mostrarOpcionesAgregar = false" aria-label="Cerrar"
-          ><ion-icon slot="icon-only" name="close-outline"></ion-icon
-        ></ion-button>
-      </div>
-      <button class="sheet-option" type="button" (click)="abrirNuevoProducto()">
-        <span><ion-icon name="cube-outline"></ion-icon> Producto único</span>
-        <ion-icon name="chevron-forward-outline"></ion-icon>
-      </button>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-<ion-modal class="product-form-modal" [isOpen]="mostrarModalProducto" [backdropDismiss]="false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancelarModalProducto()" aria-label="Regresar"
-            ><ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon
-          ></ion-button>
-        </ion-buttons>
-        <ion-title>{{ modoProducto === 'editar' ? 'Editar producto' : 'Agregar información del producto' }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="form-content">
-      <div class="form-shell">
-        <section class="barcode-panel" *ngIf="sync.estadoConexion().conectado; else panelCodigoOffline">
-          <ion-icon name="barcode-outline"></ion-icon>
-          <div>
-            <h2>Escanea o ingresa el código de barras</h2>
-            <p>y agiliza la creación</p>
-          </div>
-          <ion-input
-            fill="outline"
-            label="Código de barras"
-            labelPlacement="stacked"
-            inputmode="text"
-            enterkeyhint="search"
-            [(ngModel)]="formProducto.codigoQR"
-            (keyup.enter)="buscarInformacionCodigo()"
-          ></ion-input>
-          <div class="scan-actions">
-            <ion-button expand="block" [disabled]="leyendoCodigo || buscandoProducto" (click)="escanearCodigoEnVivo()">
-              <ion-icon slot="start" name="scan-outline"></ion-icon>
-              {{ leyendoCodigo ? 'Leyendo...' : 'Escanear código' }}
-            </ion-button>
-            <ion-button
-              expand="block"
-              fill="outline"
-              [disabled]="leyendoCodigo || buscandoProducto"
-              (click)="elegirFotoParaCodigo()"
-            >
-              <ion-icon slot="start" name="images-outline"></ion-icon>
-              Usar fotografía
-            </ion-button>
-            <ion-button
-              expand="block"
-              fill="clear"
-              [disabled]="leyendoCodigo || buscandoProducto"
-              (click)="tomarFotoParaCodigo()"
-            >
-              <ion-icon slot="start" name="camera-outline"></ion-icon>
-              Tomar foto del código
-            </ion-button>
-          </div>
-          <ion-button expand="block" fill="outline" [disabled]="buscandoProducto" (click)="buscarInformacionCodigo()">
-            <ion-spinner *ngIf="buscandoProducto" name="crescent"></ion-spinner>
-            <span *ngIf="!buscandoProducto">Buscar información</span>
-            <span *ngIf="buscandoProducto">Buscando producto...</span>
-          </ion-button>
-          <p class="status-message" *ngIf="mensajeBusqueda">{{ mensajeBusqueda }}</p>
-        </section>
-
-        <ng-template #panelCodigoOffline>
-          <section class="barcode-panel barcode-offline-notice">
-            <ion-icon name="barcode-outline"></ion-icon>
-            <div>
-              <h2>Código de barras</h2>
-              <p>Modo offline: ingresa el código del producto manualmente</p>
-            </div>
-            <ion-input
-              fill="outline"
-              label="Código de barras (opcional)"
-              labelPlacement="stacked"
-              inputmode="text"
-              [(ngModel)]="formProducto.codigoQR"
-            ></ion-input>
-            <p class="status-message" *ngIf="mensajeBusqueda">{{ mensajeBusqueda }}</p>
-          </section>
-        </ng-template>
-
-        <section class="existing-product" *ngIf="productoEncontrado">
-          <div class="product-photo">
-            <ion-icon name="cube-outline"></ion-icon>
-            <img
-              *ngIf="resolverImagenProducto(productoEncontrado.imagen) as imagen"
-              [src]="imagen"
-              [alt]="productoEncontrado.nombre || 'Producto'"
-              (load)="mostrarImagen($event)"
-              (error)="ocultarImagen($event)"
-            />
-          </div>
-          <div>
-            <h2>Este producto ya está registrado</h2>
-            <h3>{{ productoEncontrado.nombre }}</h3>
-            <p>
-              {{ productoEncontrado.precioVenta | currency:'MXN' }} · Stock: {{ productoEncontrado.existencia }}
-            </p>
-          </div>
-          <ion-button expand="block" (click)="editarProductoEncontrado()">Ver / Editar producto</ion-button>
-        </section>
-
-        <section class="suggestion-card" *ngIf="sugerenciaPublica">
-          <h2>Posible producto encontrado</h2>
-          <img
-            *ngIf="sugerenciaPublica.imagenUrl"
-            [src]="sugerenciaPublica.imagenUrl"
-            alt="Imagen sugerida del producto"
-          />
-          <div class="photo-placeholder" *ngIf="!sugerenciaPublica.imagenUrl">
-            <ion-icon name="image-outline"></ion-icon>
-          </div>
-          <h3>{{ sugerenciaPublica.nombre || 'Producto sin nombre' }}</h3>
-          <p>Marca: {{ sugerenciaPublica.marca || 'No disponible' }}</p>
-          <small>Fuente: Open Food Facts. Verifica toda la información.</small>
-          <ion-button expand="block" (click)="usarSugerenciaPublica()">Usar esta información</ion-button>
-          <ion-button expand="block" fill="clear" (click)="continuarManualmente()">Continuar manualmente</ion-button>
-        </section>
-
-        <section class="form-section photo-section">
-          <div class="photo-placeholder">
-            <ion-icon name="camera-outline"></ion-icon>
-            <img
-              *ngIf="previewFotoPendiente || resolverImagenProducto(formProducto.imagen) as imagen"
-              [src]="imagen"
-              alt="Vista previa del producto"
-              (load)="mostrarImagen($event)"
-              (error)="ocultarImagen($event)"
-            />
-          </div>
-          <h2>Agregar foto</h2>
-          <ion-input
-            fill="outline"
-            type="url"
-            label="URL de imagen"
-            labelPlacement="stacked"
-            [(ngModel)]="formProducto.imagen"
-            (ionInput)="cambioUrlImagen()"
-          ></ion-input>
-          <ion-button
-            type="button"
-            *ngIf="formProducto.imagen || previewFotoPendiente"
-            fill="clear"
-            color="danger"
-            (click)="quitarImagen()"
-            >Quitar foto</ion-button
-          >
-          <p>Usa una URL, una sugerencia confirmada o sube una foto propia JPEG, PNG o WEBP de hasta 5 MB.</p>
-          <div class="photo-actions">
-            <ion-button type="button" fill="outline" (click)="tomarFotoProducto()">Tomar fotografía</ion-button
-            ><ion-button type="button" fill="outline" (click)="elegirFotoProducto()">Elegir de galería</ion-button>
-          </div>
-        </section>
-
-        <section class="form-section">
-          <h2>Datos básicos</h2>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.nombre">
-            <ion-input
-              id="producto-nombre"
-              fill="outline"
-              label="Nombre del producto *"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.nombre"
-            ></ion-input
-            ><small *ngIf="erroresProducto.nombre">{{ erroresProducto.nombre }}</small>
-          </div>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.idCat">
-            <ion-select
-              id="producto-idCat"
-              fill="outline"
-              label="Categoría *"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.idCat"
-            >
-              <ion-select-option *ngFor="let c of categorias" [value]="c.id"
-                >{{ c.nombre }}</ion-select-option
-              > </ion-select
-            ><small *ngIf="erroresProducto.idCat">{{ erroresProducto.idCat }}</small>
-          </div>
-          <ion-button type="button" fill="clear" size="small" (click)="abrirNuevoCatalogo('categoria', true)"
-            >+ Nueva categoría</ion-button
-          >
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.idMarca">
-            <ion-select
-              id="producto-idMarca"
-              fill="outline"
-              label="Marca *"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.idMarca"
-            >
-              <ion-select-option *ngFor="let m of marcas" [value]="m.id"
-                >{{ m.nombre }}</ion-select-option
-              > </ion-select
-            ><small *ngIf="erroresProducto.idMarca">{{ erroresProducto.idMarca }}</small>
-          </div>
-          <ion-button type="button" fill="clear" size="small" (click)="abrirNuevoCatalogo('marca', true)"
-            >+ Nueva marca</ion-button
-          >
-        </section>
-
-        <section class="form-section">
-          <h2>Precio</h2>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.precio">
-            <ion-input
-              id="producto-precio"
-              fill="outline"
-              type="number"
-              min="0"
-              label="Precio de venta *"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.precio"
-            ></ion-input
-            ><small *ngIf="erroresProducto.precio">{{ erroresProducto.precio }}</small>
-          </div>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.costo">
-            <ion-input
-              id="producto-costo"
-              fill="outline"
-              type="number"
-              min="0"
-              label="Costo"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.costo"
-            ></ion-input
-            ><small *ngIf="erroresProducto.costo">{{ erroresProducto.costo }}</small>
-          </div>
-          <div class="profit-summary" *ngIf="gananciaUnidad !== null">
-            <div><span>Ganancia por unidad</span><strong>{{ gananciaUnidad | currency:'MXN' }}</strong></div>
-            <div>
-              <span>Margen sobre precio</span
-              ><strong
-                >{{ margenSobrePrecio === null ? 'No disponible con precio $0' : (margenSobrePrecio | number:'1.2-2') +
-                '%' }}</strong
-              >
-            </div>
-          </div>
-        </section>
-
-        <section class="form-section">
-          <h2>Inventario</h2>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.existencia">
-            <ion-input
-              id="producto-existencia"
-              fill="outline"
-              type="number"
-              min="0"
-              label="Stock actual *"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.existencia"
-            ></ion-input
-            ><small *ngIf="erroresProducto.existencia">{{ erroresProducto.existencia }}</small>
-          </div>
-          <div class="field-wrap" [class.field-invalid]="erroresProducto.stockMinimo">
-            <ion-input
-              id="producto-stockMinimo"
-              fill="outline"
-              type="number"
-              min="0"
-              label="Stock mínimo"
-              labelPlacement="stacked"
-              [(ngModel)]="formProducto.stockMinimo"
-            ></ion-input
-            ><small *ngIf="erroresProducto.stockMinimo">{{ erroresProducto.stockMinimo }}</small>
-          </div>
-        </section>
-
-        <section class="form-section">
-          <h2>Identificación y detalles</h2>
-          <ion-input fill="outline" label="SKU" labelPlacement="stacked" [(ngModel)]="formProducto.sku"></ion-input>
-          <ion-input
-            fill="outline"
-            label="Tamaño"
-            labelPlacement="stacked"
-            [(ngModel)]="formProducto.tamano"
-          ></ion-input>
-          <ion-input
-            fill="outline"
-            label="Presentación"
-            labelPlacement="stacked"
-            [(ngModel)]="formProducto.presentacion"
-          ></ion-input>
-          <ion-input fill="outline" label="Tipo" labelPlacement="stacked" [(ngModel)]="formProducto.tipo"></ion-input>
-        </section>
-
-        <div class="save-actions">
-          <ion-button expand="block" [disabled]="guardandoProducto" (click)="guardarDesdeModal(false)">
-            {{ guardandoProducto ? 'Guardando...' : 'Guardar producto' }}
-          </ion-button>
-          <ion-button
-            *ngIf="modoProducto === 'crear'"
-            expand="block"
-            fill="outline"
-            [disabled]="guardandoProducto"
-            (click)="guardarDesdeModal(true)"
-          >
-            Guardar y agregar otro producto
-          </ion-button>
-        </div>
-      </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-<ion-modal
-  class="code-selector-sheet"
-  [isOpen]="mostrarSelectorCodigos"
-  [initialBreakpoint]="0.5"
-  [breakpoints]="[0, 0.5, 0.85]"
-  (didDismiss)="mostrarSelectorCodigos = false"
->
-  <ng-template>
-    <ion-content class="ion-padding">
-      <div class="sheet-heading">
-        <div>
-          <h2>Encontramos varios códigos</h2>
-          <p>Selecciona el que corresponde al producto.</p>
-        </div>
-        <ion-button fill="clear" (click)="mostrarSelectorCodigos = false" aria-label="Cancelar selección"
-          ><ion-icon slot="icon-only" name="close-outline"></ion-icon
-        ></ion-button>
-      </div>
-      <ion-list>
-        <ion-item button detail="true" *ngFor="let codigo of codigosDetectados" (click)="seleccionarCodigo(codigo)">
-          <ion-icon slot="start" name="barcode-outline"></ion-icon>
-          <ion-label>{{ codigo }}</ion-label>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-<ion-modal [isOpen]="mostrarModalCatalogo" [backdropDismiss]="false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>
-          {{ catalogoEditandoId === null ? 'Registrar' : 'Editar' }} {{ tipoCatalogo === 'marca' ? 'marca' : 'categoría'
-          }}
-        </ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cancelarModalCatalogo()">Cancelar</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-list>
-        <ion-item
-          ><ion-input label="Nombre" labelPlacement="stacked" [(ngModel)]="formCatalogo.nombre"></ion-input
-        ></ion-item>
-        <ion-item
-          ><ion-textarea
-            label="Descripción"
-            labelPlacement="stacked"
-            [(ngModel)]="formCatalogo.descripcion"
-          ></ion-textarea
-        ></ion-item>
-      </ion-list>
-      <ion-button type="button" expand="block" [disabled]="guardandoCatalogo" (click)="guardarCatalogo()"
-        >{{ guardandoCatalogo ? 'Guardando...' : 'Guardar' }}</ion-button
-      >
-    </ion-content>
-  </ng-template>
-</ion-modal>

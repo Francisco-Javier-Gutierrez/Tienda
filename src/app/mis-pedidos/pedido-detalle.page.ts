@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { EstadoPedidoCliente, PedidoCliente } from '../models/pedido-cliente';
 import { ImagenesService } from '../services/imagenes.service';
 import { PedidosClienteService } from '../services/pedidos-cliente.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-pedido-detalle',
@@ -22,7 +23,7 @@ export class PedidoDetallePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastController);
-  private readonly alert = inject(AlertController);
+  private readonly dialog = inject(DialogService);
   private readonly imagenes = inject(ImagenesService);
   ngOnInit(): void {
     void this.cargar();
@@ -74,15 +75,17 @@ export class PedidoDetallePage implements OnInit {
   }
   async confirmarCancelar(): Promise<void> {
     if (!this.pedido || this.procesando) return;
-    const alerta = await this.alert.create({
-      header: 'Cancelar pedido',
+    const confirmado = await this.dialog.confirm({
+      title: 'Cancelar pedido',
       message: 'Los productos reservados volverán al inventario. ¿Deseas continuar?',
-      buttons: [
-        { text: 'Conservar', role: 'cancel' },
-        { text: 'Cancelar pedido', role: 'destructive', handler: () => void this.cancelar() },
-      ],
+      type: 'danger',
+      icon: 'cancel',
+      confirmText: 'Cancelar pedido',
+      cancelText: 'Conservar',
     });
-    await alerta.present();
+    if (confirmado) {
+      void this.cancelar();
+    }
   }
   async cancelar(): Promise<void> {
     if (!this.pedido) return;

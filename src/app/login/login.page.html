@@ -24,7 +24,7 @@
           <img *ngIf="resolverLogo() as logo; else logoFallback" [src]="logo" alt="Logo de la tienda" />
 
           <ng-template #logoFallback>
-            <ion-icon name="storefront-outline"></ion-icon>
+            <span class="material-symbols-outlined text-3xl">storefront</span>
           </ng-template>
         </div>
 
@@ -71,7 +71,7 @@
           <label> Correo electrónico </label>
 
           <div class="field-control">
-            <ion-icon name="person-outline" class="field-icon"></ion-icon>
+            <span class="material-symbols-outlined field-icon">person</span>
 
             <ion-input
               type="email"
@@ -88,7 +88,7 @@
           <label> Contraseña </label>
 
           <div class="field-control">
-            <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+            <span class="material-symbols-outlined field-icon">lock</span>
 
             <ion-input
               [type]="mostrarPassword ? 'text' : 'password'"
@@ -106,12 +106,9 @@
               (click)="mostrarPassword = !mostrarPassword"
               aria-label="Mostrar u ocultar contraseña"
             >
-              <ion-icon
-                slot="icon-only"
-                [name]="mostrarPassword
-                  ? 'eye-off-outline'
-                  : 'eye-outline'"
-              ></ion-icon>
+              <span slot="icon-only" class="material-symbols-outlined text-xl leading-none">
+                {{ mostrarPassword ? 'visibility_off' : 'visibility' }}
+              </span>
             </ion-button>
           </div>
         </div>
@@ -120,7 +117,7 @@
         <ion-button expand="block" class="login-primary" [disabled]="autenticando" (click)="ingresar()">
           <span> {{ autenticando ? 'Iniciando sesión...' : 'Iniciar sesión' }} </span>
 
-          <ion-icon *ngIf="!autenticando" slot="end" name="arrow-forward-outline"></ion-icon>
+          <span *ngIf="!autenticando" slot="end" class="material-symbols-outlined text-lg leading-none">arrow_forward</span>
         </ion-button>
 
         <!-- DIVISOR -->
@@ -154,7 +151,7 @@
           <ion-button fill="clear" routerLink="/catalogo">
             Ver productos
 
-            <ion-icon slot="end" name="arrow-forward-outline"></ion-icon>
+            <span slot="end" class="material-symbols-outlined text-lg leading-none">arrow_forward</span>
           </ion-button>
         </div>
       </div>

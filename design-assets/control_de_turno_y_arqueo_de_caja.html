@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Control de Turno - Tienda Doña Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-tertiary": "#ffffff",
+                            "on-secondary-container": "#730425",
+                            "on-tertiary-fixed-variant": "#623e31",
+                            "secondary-container": "#fe7488",
+                            "surface-container-lowest": "#ffffff",
+                            "primary-fixed": "#f0dbff",
+                            "inverse-on-surface": "#faedfb",
+                            "inverse-surface": "#352e38",
+                            "surface-container": "#f7eaf8",
+                            "on-tertiary-fixed": "#2f140a",
+                            "surface-container-high": "#f1e4f2",
+                            "secondary-fixed-dim": "#ffb2b9",
+                            "on-primary": "#ffffff",
+                            "outline": "#7b757e",
+                            "primary": "#402c53",
+                            "surface-container-low": "#fdeffe",
+                            "on-primary-container": "#cdb2e1",
+                            "surface-bright": "#fff7fc",
+                            "surface-tint": "#6b557f",
+                            "on-error": "#ffffff",
+                            "on-secondary-fixed-variant": "#891933",
+                            "on-background": "#201923",
+                            "tertiary-fixed-dim": "#efbbaa",
+                            "tertiary-container": "#684336",
+                            "on-error-container": "#93000a",
+                            "surface-dim": "#e3d6e4",
+                            "on-surface-variant": "#4a454d",
+                            "primary-container": "#58436b",
+                            "on-secondary": "#ffffff",
+                            "tertiary": "#4e2d21",
+                            "background": "#fff7fc",
+                            "secondary": "#a93349",
+                            "on-secondary-fixed": "#400010",
+                            "on-primary-fixed": "#251237",
+                            "on-tertiary-container": "#e4b1a1",
+                            "outline-variant": "#ccc4ce",
+                            "on-primary-fixed-variant": "#533e66",
+                            "tertiary-fixed": "#ffdbcf",
+                            "inverse-primary": "#d7bcec",
+                            "secondary-fixed": "#ffdadc",
+                            "on-surface": "#201923",
+                            "surface-container-highest": "#ebdeed",
+                            "error": "#ba1a1a",
+                            "surface-variant": "#ebdeed",
+                            "surface": "#fff7fc",
+                            "error-container": "#ffdad6",
+                            "primary-fixed-dim": "#d7bcec"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "2xl": "1rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "gutter": "12px",
+                            "container-margin": "20px",
+                            "xl": "32px",
+                            "xs": "4px",
+                            "md": "16px",
+                            "base": "4px",
+                            "lg": "24px",
+                            "sm": "8px"
+                    },
+                    "fontFamily": {
+                            "label-md": [
+                                    "Be Vietnam Pro"
+                            ],
+                            "body-lg": [
+                                    "Be Vietnam Pro"
+                            ],
+                            "display-lg-mobile": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "label-sm": [
+                                    "Be Vietnam Pro"
+                            ],
+                            "headline-md": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "display-lg": [
+                                    "Plus Jakarta Sans"
+                            ],
+                            "body-md": [
+                                    "Be Vietnam Pro"
+                            ]
+                    },
+                    "fontSize": {
+                            "label-md": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "20px",
+                                            "letterSpacing": "0.01em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "body-lg": [
+                                    "18px",
+                                    {
+                                            "lineHeight": "28px",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "display-lg-mobile": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "40px",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "label-sm": [
+                                    "12px",
+                                    {
+                                            "lineHeight": "16px",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "32px",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "display-lg": [
+                                    "40px",
+                                    {
+                                            "lineHeight": "48px",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-md": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "24px",
+                                            "fontWeight": "400"
+                                    }
+                            ]
+                    },
+                    boxShadow: {
+                        'pastel': '0px 4px 20px rgba(88, 67, 107, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #FAFAF9; /* Warm White */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased pb-24 md:pb-0 max-w-md mx-auto relative md:border-x md:border-surface-variant min-h-screen shadow-xl">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-surface-variant dark:border-outline-variant w-full top-0 sticky z-40 flat no shadows">
+<div class="flex justify-between items-center px-container-margin py-sm w-full">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors p-2 rounded-full Active: opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h1 class="font-headline-md text-[20px] font-bold text-primary dark:text-primary-fixed-dim">Turno de Caja #14</h1>
+</div>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</div>
+<div class="px-container-margin pb-sm flex justify-center">
+<span class="bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1 border border-[#bbf7d0]">
+<span class="w-2 h-2 rounded-full bg-[#16a34a]"></span> CAJA ABIERTA
+            </span>
+</div>
+</header>
+<main class="p-container-margin flex flex-col gap-lg">
+<!-- Info Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-md shadow-pastel border border-surface-variant flex flex-col gap-sm">
+<div class="flex items-center gap-3 border-b border-surface-variant pb-sm">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+<div>
+<h2 class="font-label-md text-label-md text-on-surface">Juan Pérez</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Caja Principal 01</p>
+</div>
+</div>
+<div class="flex justify-between items-center pt-xs">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Apertura</span>
+<span class="font-body-md text-[14px] text-on-surface font-medium">Hoy, 8:00 AM</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fondo Inicial</span>
+<span class="font-body-md text-[14px] text-primary font-medium">$500.00 MXN</span>
+</div>
+</div>
+</section>
+<!-- Botones Acción -->
+<section class="grid grid-cols-2 gap-gutter">
+<button class="bg-[#F3E8FF] text-[#58436B] rounded-2xl p-sm py-md flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-label-md text-label-sm text-center">Entrada de<br/>Efectivo</span>
+</button>
+<button class="bg-[#FFE4E1] text-[#58436B] rounded-2xl p-sm py-md flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="remove_circle">remove_circle</span>
+<span class="font-label-md text-label-sm text-center">Retiro de<br/>Efectivo</span>
+</button>
+</section>
+<!-- Balance Detail Card -->
+<section class="bg-surface-container-lowest rounded-2xl p-md shadow-pastel border border-surface-variant flex flex-col gap-sm">
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-2">Resumen de Movimientos</h3>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-[14px] text-on-surface">Fondo Inicial</span>
+<span class="font-body-md text-[14px] text-on-surface">$500.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-[14px] text-on-surface">Ventas Efectivo</span>
+<span class="font-body-md text-[14px] text-[#16a34a]">+$3,420.00</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant opacity-75">
+<span class="font-body-md text-[14px]">Ventas Tarjeta (Info)</span>
+<span class="font-body-md text-[14px]">$1,850.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-[14px] text-on-surface">Entradas manuales</span>
+<span class="font-body-md text-[14px] text-[#16a34a]">+$200.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-[14px] text-on-surface">Retiros manuales</span>
+<span class="font-body-md text-[14px] text-error">-$350.00</span>
+</div>
+<hr class="border-surface-variant my-2"/>
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md text-[#58436B]">Efectivo Esperado</span>
+<span class="font-headline-md text-[20px] text-[#58436B] font-bold">$3,770.00 MXN</span>
+</div>
+</section>
+<!-- Arqueo Form -->
+<section class="flex flex-col gap-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant ml-1">Declaración de Cierre</h3>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-1" for="efectivo_fisico">Efectivo Físico Contado ($)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined" data-icon="payments">payments</span>
+<input class="w-full bg-surface-container-lowest border border-surface-variant focus:border-[#58436B] focus:ring-1 focus:ring-[#58436B] rounded-lg py-3 pl-10 pr-4 font-body-lg text-body-lg text-on-surface shadow-sm" id="efectivo_fisico" type="text" value="3,770.00"/>
+</div>
+</div>
+<div class="bg-[#dcfce7] border border-[#bbf7d0] rounded-lg p-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-[#166534]" data-icon="check_circle">check_circle</span>
+<div>
+<span class="block font-label-md text-[14px] text-[#166534]">Cuadre Exacto</span>
+<span class="block font-label-sm text-label-sm text-[#166534] opacity-80">Diferencia: $0.00 MXN</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 mt-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-1" for="observaciones">Observaciones del turno</label>
+<textarea class="w-full bg-surface-container-lowest border border-surface-variant focus:border-[#58436B] focus:ring-1 focus:ring-[#58436B] rounded-lg p-3 font-body-md text-[14px] text-on-surface shadow-sm" id="observaciones" placeholder="Opcional..." rows="2"></textarea>
+</div>
+</section>
+<!-- Spacer for bottom nav/footer -->
+<div class="h-24"></div>
+</main>
+<!-- Footer Action -->
+<div class="fixed bottom-0 left-0 w-full max-w-md mx-auto md:relative bg-surface/90 backdrop-blur-sm border-t border-surface-variant p-container-margin pb-6 md:pb-container-margin z-50">
+<button class="w-full bg-[#58436B] hover:bg-primary text-white rounded-xl py-3 px-4 font-label-md text-[16px] flex justify-center items-center gap-2 shadow-pastel active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+            Cerrar Turno y Emitir Corte Z
+        </button>
+</div>
+</body></html>

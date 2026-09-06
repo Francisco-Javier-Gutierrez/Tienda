@@ -5,19 +5,17 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { ProductosPageRoutingModule } from './productos-routing.module';
-
 import { ProductosPage } from './productos.page';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    ProductosPageRoutingModule
+    ProductosPageRoutingModule,
+    SharedModule
   ],
-  
   declarations: [ProductosPage]
 })
 export class ProductosPageModule {}
-
-

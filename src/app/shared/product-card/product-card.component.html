@@ -1,0 +1,158 @@
+<article
+  class="bg-surface-container-lowest rounded-[22px] shadow-sm p-3.5 md:p-4 relative flex flex-col justify-between h-full border border-surface-variant/30 group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 select-none"
+  [ngClass]="{
+    'cursor-pointer': mode === 'admin' || (mode === 'cajero' && disponible),
+    'opacity-60 cursor-not-allowed': mode === 'cajero' && !disponible
+  }"
+  (click)="onCardClick()"
+>
+  <!-- 1. BADGES (TOP-LEFT) -->
+  <!-- Mode: Admin -->
+  <ng-container *ngIf="mode === 'admin'">
+    <div *ngIf="disponible && !stockBajo" class="absolute top-2.5 left-2.5 z-20 bg-surface-container-lowest/95 backdrop-blur-md px-2.5 py-1 rounded-full border border-surface-variant/40 flex items-center gap-1.5 shadow-sm">
+      <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+      <span class="font-sans font-semibold text-[11px] text-on-surface">{{ stock }} en stock</span>
+    </div>
+
+    <div *ngIf="!disponible || stockBajo" class="absolute top-2.5 left-2.5 z-20 bg-error-container text-on-error-container backdrop-blur-md px-2.5 py-1 rounded-full border border-error/20 flex items-center gap-1.5 shadow-sm">
+      <span class="material-symbols-outlined text-[13px] text-error">warning</span>
+      <span class="font-sans font-bold text-[11px] text-error">{{ stock }} en stock</span>
+    </div>
+  </ng-container>
+
+  <!-- Mode: Cajero -->
+  <ng-container *ngIf="mode === 'cajero'">
+    <div *ngIf="disponible" class="absolute top-2.5 left-2.5 z-20 bg-surface-container-lowest/95 backdrop-blur-md px-2 py-0.5 rounded-full border border-surface-variant/40 flex items-center gap-1 shadow-sm">
+      <span class="w-2 h-2 rounded-full" [ngClass]="stock > 3 ? 'bg-tertiary' : 'bg-amber-500'"></span>
+      <span class="font-sans font-semibold text-[10px] text-on-surface">
+        {{ stock > 3 ? stock + ' disp.' : 'Últimas ' + stock }}
+      </span>
+    </div>
+
+    <div *ngIf="!disponible" class="absolute top-2.5 left-2.5 z-20 bg-error-container text-on-error-container backdrop-blur-md px-2.5 py-0.5 rounded-full border border-error/20 flex items-center gap-1 shadow-sm">
+      <span class="material-symbols-outlined text-[12px] text-error">block</span>
+      <span class="font-sans font-bold text-[10px] text-error">Agotado</span>
+    </div>
+  </ng-container>
+
+  <!-- Mode: Catalogo -->
+  <ng-container *ngIf="mode === 'catalogo'">
+    <div *ngIf="!disponible" class="absolute top-2.5 left-2.5 z-20 bg-error-container text-on-error-container backdrop-blur-md px-2.5 py-0.5 rounded-full border border-error/20 flex items-center gap-1 shadow-sm text-[11px] font-bold">
+      <span class="material-symbols-outlined text-[12px] text-error">block</span>
+      <span>Agotado</span>
+    </div>
+
+    <div *ngIf="disponible && stock <= 3" class="absolute top-2.5 left-2.5 z-20 bg-amber-100/95 text-amber-800 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/40 flex items-center gap-1 shadow-sm text-[10px] font-bold">
+      <span class="material-symbols-outlined text-[12px] text-amber-700">warning</span>
+      <span>¡Últimas {{ stock }}!</span>
+    </div>
+  </ng-container>
+
+  <!-- 2. ADMIN ACTIONS (TOP-RIGHT) -->
+  <div *ngIf="mode === 'admin'" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1">
+    <button
+      type="button"
+      class="w-8 h-8 rounded-full bg-surface-container-lowest/95 backdrop-blur-md border border-surface-variant/40 text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all flex items-center justify-center shadow-sm active:scale-90 cursor-pointer"
+      (click)="onEdit($event)"
+      title="Editar producto"
+    >
+      <span class="material-symbols-outlined text-[16px]">edit</span>
+    </button>
+    <button
+      type="button"
+      class="w-8 h-8 rounded-full bg-surface-container-lowest/95 backdrop-blur-md border border-surface-variant/40 text-on-surface-variant hover:text-error hover:bg-error-container transition-all flex items-center justify-center shadow-sm active:scale-90 cursor-pointer"
+      (click)="onDelete($event)"
+      title="Eliminar producto"
+    >
+      <span class="material-symbols-outlined text-[16px]">delete</span>
+    </button>
+  </div>
+
+  <!-- 3. PRODUCT IMAGE CANVAS -->
+  <div class="h-36 sm:h-40 md:h-44 w-full mb-3 rounded-[18px] bg-surface-container/40 border border-surface-variant/20 overflow-hidden relative flex items-center justify-center group/canvas">
+    <img
+      *ngIf="imagenUrl as src; else imagePlaceholder"
+      [src]="src"
+      [alt]="producto?.nombre || 'Producto'"
+      class="w-full h-full object-cover object-center filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+      (error)="onImageError()"
+    />
+
+    <!-- Empty/Fallback Placeholder -->
+    <ng-template #imagePlaceholder>
+      <div class="flex flex-col items-center justify-center text-outline-variant/60 gap-1.5 py-4 select-none">
+        <div class="w-11 h-11 rounded-full bg-surface-container flex items-center justify-center text-outline-variant/80 border border-outline-variant/20">
+          <span class="material-symbols-outlined text-2xl">inventory_2</span>
+        </div>
+        <span class="text-[10px] font-sans font-medium text-outline-variant">Sin foto</span>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- 4. PRODUCT DETAILS -->
+  <div class="flex-1 flex flex-col justify-between">
+    <div>
+      <!-- Category & Brand -->
+      <div class="flex items-center gap-1 text-[11px] font-sans font-semibold tracking-wider text-outline uppercase mb-1">
+        <span class="truncate max-w-[120px]">{{ categoriaNombre || 'General' }}</span>
+        <span *ngIf="marcaNombre" class="text-outline-variant truncate max-w-[100px]">• {{ marcaNombre }}</span>
+      </div>
+
+      <!-- Product Name -->
+      <h3 class="font-heading font-bold text-sm md:text-base text-on-surface line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+        {{ producto?.nombre }}
+        <span *ngIf="producto?.tamano || producto?.presentacion" class="font-sans font-normal text-xs text-on-surface-variant block mt-0.5">
+          {{ producto?.tamano || '' }} {{ producto?.presentacion || '' }}
+        </span>
+      </h3>
+    </div>
+
+    <!-- 5. PRICE & BOTTOM ACTION ROW -->
+    <div class="flex items-end justify-between mt-3 pt-2.5 border-t border-surface-variant/30">
+      <!-- Price & Admin Cost Info -->
+      <div>
+        <p class="font-heading font-bold text-base md:text-xl text-primary leading-none">
+          {{ (producto?.precioVenta || producto?.precio || 0) | currency:'MXN' }}
+        </p>
+
+        <!-- Admin extra: Costo and profit margin -->
+        <div *ngIf="mode === 'admin'" class="font-sans text-[11px] text-on-surface-variant mt-0.5 flex items-center gap-1">
+          <span>Costo: {{ (producto?.costo || 0) | currency:'MXN' }}</span>
+          <span *ngIf="producto?.precioVenta && producto?.costo && producto.precioVenta > producto.costo" class="text-tertiary font-semibold">
+            (+{{ (((producto.precioVenta - producto.costo) / producto.precioVenta) * 100) | number:'1.0-0' }}%)
+          </span>
+        </div>
+      </div>
+
+      <!-- Admin SKU / QR badge -->
+      <span *ngIf="mode === 'admin' && (producto?.codigoQR || producto?.sku)" class="text-[10px] font-mono bg-surface-container px-1.5 py-0.5 rounded text-outline truncate max-w-[80px]" [title]="producto?.codigoQR || producto?.sku || ''">
+        {{ producto?.codigoQR || producto?.sku }}
+      </span>
+
+      <!-- Add Button for Cajero -->
+      <button
+        *ngIf="mode === 'cajero' && disponible"
+        type="button"
+        aria-label="Agregar al ticket"
+        class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary-container shadow-sm flex items-center justify-center hover:scale-105 active:scale-90 hover:bg-secondary hover:text-on-secondary transition-all duration-200 cursor-pointer"
+        (click)="onAdd($event)"
+        title="Agregar al ticket"
+      >
+        <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">add</span>
+      </button>
+
+      <!-- Add Button for Catalogo -->
+      <button
+        *ngIf="mode === 'catalogo'"
+        type="button"
+        aria-label="Agregar al carrito"
+        class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-secondary-container text-on-secondary-container shadow-sm flex items-center justify-center hover:scale-105 active:scale-95 hover:bg-secondary hover:text-on-secondary transition-all duration-200 disabled:opacity-40 disabled:bg-surface-variant disabled:text-outline disabled:shadow-none disabled:pointer-events-none cursor-pointer"
+        [disabled]="!disponible"
+        (click)="onAdd($event)"
+        title="Agregar al carrito"
+      >
+        <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">add</span>
+      </button>
+    </div>
+  </div>
+</article>

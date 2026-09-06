@@ -9,8 +9,15 @@ import { ImagenesService } from '../services/imagenes.service';
   standalone: false,
 })
 export class PerfilPage {
+  cargando = true;
   readonly clienteAuth = inject(ClienteAuthService);
   private readonly imagenes = inject(ImagenesService);
+
+  ngOnInit() {
+    setTimeout(() => {
+      this.cargando = false;
+    }, 500);
+  }
 
   foto(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);

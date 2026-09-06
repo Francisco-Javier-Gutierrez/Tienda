@@ -5,15 +5,16 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { CategoriasPageRoutingModule } from './categorias-routing.module';
-
 import { CategoriasPage } from './categorias.page';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    CategoriasPageRoutingModule
+    CategoriasPageRoutingModule,
+    SharedModule
   ],
   declarations: [CategoriasPage]
 })

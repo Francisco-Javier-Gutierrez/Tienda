@@ -15,6 +15,10 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true
   },
   plugins: {
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#fff7fc'
+    },
     SocialLogin: {
       providers: { google: true, facebook: false, apple: false, twitter: false }
     }

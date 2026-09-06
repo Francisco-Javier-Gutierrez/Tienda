@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { Capacitor } from '@capacitor/core';
 
-import { AlertController, IonSearchbar, ToastController } from '@ionic/angular';
+import { IonSearchbar, ToastController } from '@ionic/angular';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -18,6 +19,7 @@ import { SqliteService } from '../services/sqlite.service';
 import { ScanFeedbackService } from '../services/scan-feedback.service';
 import { SyncService } from '../services/sync.service';
 import { VentaService } from '../services/venta.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-cajero',
@@ -31,7 +33,9 @@ export class CajeroPage implements OnInit {
   ========================================= */
 
   @ViewChild('lector')
-  lector?: IonSearchbar;
+  lector?: ElementRef<HTMLInputElement> | IonSearchbar;
+
+  cargandoCorte = false;
 
   /* =========================================
      SERVICIOS
@@ -46,7 +50,7 @@ export class CajeroPage implements OnInit {
   private readonly imagenes = inject(ImagenesService);
   private readonly scanFeedback = inject(ScanFeedbackService);
   private readonly toast = inject(ToastController);
-  private readonly alert = inject(AlertController);
+  private readonly dialog = inject(DialogService);
 
   /* =========================================
      DATOS GENERALES
@@ -70,6 +74,8 @@ export class CajeroPage implements OnInit {
 
   cargando = true;
 
+  cargandoProductos = true;
+
   leyendoCodigo = false;
 
   procesandoVenta = false;
@@ -91,6 +97,9 @@ export class CajeroPage implements OnInit {
   ========================================= */
 
   mostrarMovimiento = false;
+
+  // NUEVO MODAL DE COBRO
+  mostrarModalCobro = false;
 
   tipoMovimiento: TipoMovimiento = 'INGRESO';
 
@@ -352,6 +361,7 @@ export class CajeroPage implements OnInit {
   ========================================= */
 
   async cargarProductos(): Promise<void> {
+    this.cargandoProductos = true;
     try {
       const productos = await firstValueFrom(this.ventas.productos());
 
@@ -374,6 +384,8 @@ export class CajeroPage implements OnInit {
       if (!this.productos.length) {
         await this.feedback('No hay catálogo local disponible.', 'danger');
       }
+    } finally {
+      this.cargandoProductos = false;
     }
   }
 
@@ -528,6 +540,17 @@ export class CajeroPage implements OnInit {
         throw new Error();
       }
 
+      if (Capacitor.getPlatform() === 'android') {
+        try {
+          const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
+          if (!available) {
+            await BarcodeScanner.installGoogleBarcodeScannerModule();
+          }
+        } catch {
+          // Continuar normalmente
+        }
+      }
+
       const permisos = await BarcodeScanner.checkPermissions();
 
       const estado = permisos.camera === 'granted' ? permisos : await BarcodeScanner.requestPermissions();
@@ -568,6 +591,18 @@ export class CajeroPage implements OnInit {
 
   cambiarMetodo(): void {
     if (this.metodoPago !== 'EFECTIVO') {
+      this.montoRecibido = null;
+    }
+  }
+
+  /* =========================================
+     MODAL COBRO
+  ========================================= */
+
+  abrirModalCobro(): void {
+    if (this.carrito.length > 0) {
+      this.mostrarModalCobro = true;
+      this.metodoPago = 'EFECTIVO';
       this.montoRecibido = null;
     }
   }
@@ -674,10 +709,9 @@ export class CajeroPage implements OnInit {
      * Limpiar venta.
      */
 
+    this.mostrarModalCobro = false;
     this.carrito = [];
-
     this.montoRecibido = null;
-
     this.metodoPago = 'EFECTIVO';
 
     /*
@@ -781,15 +815,21 @@ export class CajeroPage implements OnInit {
 
   async abrirCorte(): Promise<void> {
     if (!this.caja) {
+      await this.feedback('No hay una caja abierta para realizar el corte.', 'warning');
       return;
     }
+
+    this.mostrarCorte = true;
+    this.cargandoCorte = true;
+    this.efectivoContado = null;
+    this.observaciones = '';
 
     try {
       this.resumen = await firstValueFrom(this.cajas.resumen());
     } catch (error) {
       if (!(error instanceof HttpErrorResponse && error.status === 0 && this.sqlite.disponible)) {
         await this.error(error, 'No fue posible calcular el corte.');
-
+        this.mostrarCorte = false;
         return;
       }
 
@@ -810,13 +850,9 @@ export class CajeroPage implements OnInit {
           Number(resumenLocal.totalIngresos) -
           Number(resumenLocal.totalRetiros),
       };
+    } finally {
+      this.cargandoCorte = false;
     }
-
-    this.efectivoContado = null;
-
-    this.observaciones = '';
-
-    this.mostrarCorte = true;
   }
 
   /* =========================================
@@ -828,31 +864,16 @@ export class CajeroPage implements OnInit {
       return;
     }
 
-    const confirmacion = await this.alert.create({
-      header: 'Cerrar caja',
-
-      message: 'Una caja cerrada no puede modificarse. ¿Continuar?',
-
-      buttons: [
-        {
-          text: 'Cancelar',
-
-          role: 'cancel',
-        },
-
-        {
-          text: 'Cerrar caja',
-
-          role: 'confirm',
-        },
-      ],
+    const confirmado = await this.dialog.confirm({
+      title: 'Cerrar caja',
+      message: 'Una caja cerrada no puede modificarse. ¿Deseas continuar?',
+      type: 'warning',
+      icon: 'lock',
+      confirmText: 'Cerrar caja',
+      cancelText: 'Cancelar',
     });
 
-    await confirmacion.present();
-
-    const resultado = await confirmacion.onDidDismiss();
-
-    if (resultado.role !== 'confirm') {
+    if (!confirmado) {
       return;
     }
 
@@ -997,11 +1018,14 @@ export class CajeroPage implements OnInit {
   ========================================= */
 
   private enfocar(): void {
-    setTimeout(
-      () => void this.lector?.setFocus(),
-
-      80,
-    );
+    setTimeout(() => {
+      const el = (this.lector as any)?.nativeElement || this.lector;
+      if (typeof el?.focus === 'function') {
+        el.focus();
+      } else if (typeof el?.setFocus === 'function') {
+        void el.setFocus();
+      }
+    }, 80);
   }
 
   /* =========================================
@@ -1051,41 +1075,20 @@ export class CajeroPage implements OnInit {
   private async confirmarVenta(venta?: VentaRegistrada | null): Promise<void> {
     const total = venta?.total ?? this.total;
     const cambio = venta?.cambio ?? this.cambio;
-    const folio = venta?.id ? `Folio ${venta.id}` : 'Venta realizada';
+    const folio = venta?.id ? `Folio #${venta.id}` : 'Venta procesada';
 
-    const alerta = await this.alert.create({
-      header: 'Venta realizada',
-
-      subHeader: folio,
-
-      message: `
-            Total: ${this.moneda(total)}
-            <br>
-            Cambio: ${this.moneda(cambio)}
-          `,
-
-      buttons: [
-        ...(venta?.id
-          ? [
-              {
-                text: 'Ver comprobante',
-
-                handler: () => {
-                  location.assign(`/ventas/${venta.id}`);
-                },
-              },
-            ]
-          : []),
-
-        {
-          text: 'Nueva venta',
-        },
-      ],
+    const confirmado = await this.dialog.confirm({
+      title: '¡Venta realizada!',
+      message: `${folio} — Total: ${this.moneda(total)} · Cambio: ${this.moneda(cambio)}`,
+      type: 'success',
+      icon: 'check_circle',
+      confirmText: venta?.id ? 'Ver comprobante' : 'Aceptar',
+      cancelText: 'Nueva venta',
     });
 
-    await alerta.present();
-
-    await alerta.onDidDismiss();
+    if (confirmado && venta?.id) {
+      location.assign(`/ventas/${venta.id}`);
+    }
   }
 
   /* =========================================

@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { AlertController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { ItemCarrito } from '../models/carrito';
 import { CarritoService } from '../services/carrito.service';
 import { ImagenesService } from '../services/imagenes.service';
 import { ClienteAuthService } from '../services/cliente-auth.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-carrito',
@@ -13,12 +14,19 @@ import { ClienteAuthService } from '../services/cliente-auth.service';
   standalone: false,
 })
 export class CarritoPage {
+  cargando = true;
   readonly carrito = inject(CarritoService);
   private readonly imagenes = inject(ImagenesService);
   private readonly toastController = inject(ToastController);
-  private readonly alertController = inject(AlertController);
+  private readonly dialog = inject(DialogService);
   private readonly clienteAuth = inject(ClienteAuthService);
   private readonly router = inject(Router);
+
+  ngOnInit() {
+    setTimeout(() => {
+      this.cargando = false;
+    }, 500);
+  }
 
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);
@@ -36,15 +44,17 @@ export class CarritoPage {
   }
 
   async confirmarVaciar(): Promise<void> {
-    const alert = await this.alertController.create({
-      header: 'Vaciar carrito',
-      message: '¿Quieres quitar todos los productos del carrito?',
-      buttons: [
-        { text: 'Conservar', role: 'cancel' },
-        { text: 'Vaciar', role: 'destructive', handler: () => this.carrito.vaciar() },
-      ],
+    const confirmado = await this.dialog.confirm({
+      title: '¿Vaciar carrito?',
+      message: '¿Estás seguro de que quieres quitar todos los productos del carrito?',
+      type: 'danger',
+      icon: 'remove_shopping_cart',
+      confirmText: 'Vaciar carrito',
+      cancelText: 'Conservar',
     });
-    await alert.present();
+    if (confirmado) {
+      this.carrito.vaciar();
+    }
   }
 
   async continuarCompra(): Promise<void> {

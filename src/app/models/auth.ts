@@ -18,6 +18,7 @@ export interface EmpleadoSesion {
   idSuc?: string | number;
   nombreSuc: string | null;
   estadoEmp: boolean;
+  estado?: boolean;
 }
 
 export interface AuthSession {

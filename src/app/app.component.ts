@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { SqliteService } from './services/sqlite.service';
 import { AuthService } from './services/auth.service';
 import { SyncService } from './services/sync.service';
@@ -17,6 +19,15 @@ export class AppComponent implements OnInit {
   private readonly syncService = inject(SyncService);
 
   async ngOnInit(): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await StatusBar.setStyle({ style: Style.Light });
+        await StatusBar.setBackgroundColor({ color: '#fff7fc' });
+      } catch (e) {
+        console.warn('No se pudo configurar StatusBar', e);
+      }
+    }
+
     await Promise.all([this.authService.restaurarSesion(), this.clienteAuthService.restaurarSesion()]);
     void this.syncService.reintentar();
     try {

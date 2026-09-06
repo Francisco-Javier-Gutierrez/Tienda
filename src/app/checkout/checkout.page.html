@@ -1,110 +1,189 @@
 <app-cliente-shell>
-  <ion-content class="checkout-page">
-    <main class="checkout-container">
+  <div class="checkout-page bg-surface min-h-screen pb-32">
+    <main class="w-full max-w-lg md:max-w-4xl mx-auto flex flex-col relative pt-4 md:pt-8 px-4 md:px-6">
+      
+      <!-- FLOW 1: CONFIRM ORDER -->
       <ng-container *ngIf="!pedido">
-        <header>
-          <span>Confirmación</span>
-          <h1>Finaliza tu pedido</h1>
-          <p>Verificaremos nuevamente los precios y la disponibilidad antes de reservar tus productos.</p>
+        <header class="mb-6 md:mb-8 text-center md:text-left">
+          <span class="font-sans font-semibold text-[10px] md:text-xs text-primary/70 uppercase tracking-widest block mb-1">Paso 1 de 2 • Confirmación</span>
+          <h1 class="font-heading font-bold text-2xl md:text-4xl text-on-surface mb-2 tracking-tight">Finaliza tu reserva</h1>
+          <p class="font-sans text-sm text-on-surface-variant max-w-md mx-auto md:mx-0">Verificaremos los precios y apartaremos los productos en el inventario.</p>
         </header>
-        <section class="empty-checkout" *ngIf="carrito.items.length === 0">
-          <ion-icon name="bag-handle-outline"></ion-icon>
-          <h2>No hay productos por confirmar</h2>
-          <p>Tu carrito está vacío o el pedido ya fue generado.</p>
-          <ion-button routerLink="/catalogo">Ver catálogo</ion-button>
+
+        <section class="flex flex-col items-center justify-center py-16 bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 text-center mb-8" *ngIf="carrito.items.length === 0">
+          <span class="material-symbols-outlined text-5xl text-primary/40 mb-4">shopping_bag</span>
+          <h2 class="font-heading font-bold text-xl text-on-surface mb-2">No hay productos por confirmar</h2>
+          <p class="font-sans text-sm text-on-surface-variant mb-6 max-w-xs mx-auto">Tu carrito está vacío o el pedido ya fue generado.</p>
+          <button routerLink="/catalogo" class="font-sans font-bold text-sm bg-primary-container text-on-primary hover:bg-primary px-6 py-2.5 rounded-full transition-all active:scale-95">Ver catálogo</button>
         </section>
-        <div class="checkout-layout" *ngIf="carrito.items.length > 0">
-          <section class="checkout-items">
-            <h2>Tu pedido</h2>
-            <article *ngFor="let item of carrito.items">
-              <span class="item-image"
-                ><img
-                  *ngIf="imagen(item.imagen) as src; else placeholder"
-                  [src]="src"
-                  [alt]="item.nombre" /><ng-template #placeholder><ion-icon name="cube-outline"></ion-icon></ng-template
-              ></span>
-              <div>
-                <strong>{{ item.nombre }}</strong><small>{{ item.presentacion }}</small>
-                <p>{{ item.cantidad }} × {{ item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</p>
+
+        <div class="flex flex-col md:flex-row gap-6 md:gap-8" *ngIf="carrito.items.length > 0">
+          <div class="flex-1 flex flex-col gap-4">
+            
+            <!-- Location Card -->
+            <section class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm flex gap-4 items-start border border-surface-variant/30">
+              <div class="w-12 h-12 rounded-full bg-primary/5 flex-shrink-0 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">storefront</span>
               </div>
-              <strong>{{ item.cantidad * item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
-            </article>
-          </section>
-          <aside class="checkout-summary">
-            <span>Resumen</span>
-            <h2>Reserva</h2>
-            <div><span>Productos</span><strong>{{ carrito.cantidadTotal }}</strong></div>
-            <div class="total">
-              <span>Total mostrado</span
-              ><strong>{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
-            </div>
-            <p>El backend recalculará precios, subtotales, total y stock real.</p>
-            <p class="transfer-error" *ngIf="!transferenciaDisponible">{{ mensajeTransferencia }}</p>
-            <ion-button expand="block" [disabled]="procesando || !transferenciaDisponible" (click)="generarPedido()">
-              {{ procesando ? 'Verificando...' : 'Generar pedido e instrucciones de pago' }}
-            </ion-button>
+              <div class="flex flex-col">
+                <h2 class="font-sans font-semibold text-sm text-on-surface mb-1">Recolección en Mostrador</h2>
+                <p class="font-sans text-xs text-on-surface-variant mb-2">Sucursal Doña Paty</p>
+                <div class="flex items-center gap-1.5 text-primary font-sans font-medium text-[10px] bg-surface-container w-fit px-2.5 py-1 rounded-lg">
+                  <span class="material-symbols-outlined text-[12px]">schedule</span>
+                  <span>Retirar hoy mismo</span>
+                </div>
+              </div>
+            </section>
+            
+            <!-- Items -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 flex flex-col">
+              <h3 class="font-sans font-semibold text-sm text-on-surface mb-4 pb-2 border-b border-surface-variant/30">Tu Pedido ({{ carrito.cantidadTotal }} artículos)</h3>
+              
+              <div class="flex flex-col gap-4">
+                <article *ngFor="let item of carrito.items" class="flex items-center justify-between group">
+                  <div class="flex items-center gap-3">
+                    <div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden flex-shrink-0 border border-surface-variant/30">
+                      <img *ngIf="imagen(item.imagen) as src; else placeholder" [src]="src" [alt]="item.nombre" class="w-full h-full object-cover mix-blend-multiply p-1"/>
+                      <ng-template #placeholder><span class="w-full h-full flex items-center justify-center text-outline-variant material-symbols-outlined">image</span></ng-template>
+                    </div>
+                    <div class="flex flex-col pr-2">
+                      <span class="font-sans font-semibold text-sm text-on-surface line-clamp-1">{{ item.nombre }}</span>
+                      <span class="font-sans text-[10px] text-outline mt-0.5">{{ item.cantidad }} unidad(es) • {{ item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                    </div>
+                  </div>
+                  <span class="font-heading font-bold text-sm text-primary whitespace-nowrap">{{ item.cantidad * item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                </article>
+              </div>
+            </section>
+          </div>
+          
+          <aside class="w-full md:w-[320px]">
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 sticky top-24 flex flex-col gap-3">
+              <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Resumen</span>
+              <h2 class="font-heading font-bold text-xl text-primary mb-2">Reserva</h2>
+              
+              <div class="flex justify-between items-center text-on-surface-variant font-sans text-sm">
+                <span>Productos ({{ carrito.cantidadTotal }})</span>
+                <span class="font-semibold text-on-surface">{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+              </div>
+              
+              <div class="h-px bg-surface-variant my-1"></div>
+              
+              <div class="flex justify-between items-end mb-2">
+                <span class="font-sans font-semibold text-sm text-on-surface">Total Estimado</span>
+                <strong class="font-heading font-bold text-2xl text-primary">{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
+              </div>
+              
+              <p class="font-sans text-[10px] text-on-surface-variant mt-2 mb-4 leading-relaxed bg-surface-container p-2 rounded-lg">El backend recalculará los precios, subtotales y disponibilidad de inventario final.</p>
+              
+              <p class="font-sans text-xs text-error mb-2 bg-error-container p-2 rounded-lg" *ngIf="!transferenciaDisponible">{{ mensajeTransferencia }}</p>
+              
+              <button class="w-full font-sans font-bold text-sm bg-primary-container text-on-primary hover:bg-primary py-3.5 rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 disabled:opacity-50" [disabled]="procesando || !transferenciaDisponible" (click)="generarPedido()">
+                <ion-spinner name="crescent" class="w-4 h-4" *ngIf="procesando"></ion-spinner>
+                {{ procesando ? 'Verificando...' : 'Generar reserva' }}
+              </button>
+            </section>
           </aside>
         </div>
       </ng-container>
 
-      <section class="payment-view" *ngIf="pedido as actual">
-        <header>
-          <span>Reserva confirmada</span>
-          <h1>Pedido {{ actual.folio }}</h1>
-          <p>Tus productos están reservados mientras realizas la transferencia.</p>
-        </header>
-        <div class="payment-layout">
-          <article class="payment-total">
-            <span>Total a transferir</span
-            ><strong>{{ actual.total | currency:'MXN':'symbol-narrow':'1.2-2' }} <small>MXN</small></strong>
-            <p>Reserva disponible hasta<br /><b>{{ actual.fechaLimitePago | date:'medium' }}</b></p>
-          </article>
-          <article class="bank-card" *ngIf="actual.configuracionTransferencia as banco">
-            <span>Transferencia bancaria</span>
-            <dl>
-              <div>
-                <dt>Banco</dt>
-                <dd>{{ banco.banco }}</dd>
-              </div>
-              <div>
-                <dt>Titular</dt>
-                <dd>{{ banco.titular }}</dd>
-              </div>
-              <div *ngIf="banco.clabe">
-                <dt>CLABE</dt>
-                <dd class="copy-value">
-                  {{ banco.clabe }} <button type="button" (click)="copiarClabe()">Copiar</button>
-                </dd>
-              </div>
-              <div *ngIf="banco.numeroCuenta">
-                <dt>Número de cuenta</dt>
-                <dd>{{ banco.numeroCuenta }}</dd>
-              </div>
-              <div>
-                <dt>Concepto sugerido</dt>
-                <dd>{{ actual.folio }}</dd>
-              </div>
-            </dl>
-            <p class="instructions" *ngIf="banco.instrucciones">{{ banco.instrucciones }}</p>
-          </article>
-        </div>
-        <article class="proof-card">
-          <div>
-            <h2>Sube tu comprobante</h2>
-            <p>Después de realizar la transferencia, selecciona una imagen o PDF. El pago quedará en revisión.</p>
+      <!-- FLOW 2: PAYMENT INSTRUCTIONS -->
+      <ng-container *ngIf="pedido as actual">
+        <header class="mb-6 md:mb-8 text-center flex flex-col items-center">
+          <span class="font-sans font-semibold text-[10px] md:text-xs text-primary/70 uppercase tracking-widest block mb-1">Paso 2 de 2 • Reserva Confirmada</span>
+          <h1 class="font-heading font-bold text-3xl md:text-4xl text-primary mb-3 tracking-tight">Pedido #{{ actual.folio }}</h1>
+          <div class="inline-flex items-center bg-tertiary-container/20 rounded-full px-3 py-1 mb-2">
+            <span class="font-sans font-bold text-[10px] text-primary">⏳ PENDIENTE DE PAGO</span>
           </div>
-          <label class="file-picker"
-            ><input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,application/pdf"
-              (change)="seleccionarArchivo($event)"
-            /><ion-icon name="cloud-upload-outline"></ion-icon>{{ archivo?.name || 'Seleccionar comprobante' }}</label
-          >
-          <ion-button [disabled]="!archivo || subiendo" (click)="subirComprobante()"
-            >{{ subiendo ? 'Subiendo...' : 'Enviar a revisión' }}</ion-button
-          >
-        </article>
-      </section>
+        </header>
+
+        <div class="flex flex-col gap-4 max-w-2xl mx-auto w-full">
+          <!-- Summary Card -->
+          <section class="bg-surface-container-high rounded-[24px] p-6 text-center shadow-sm border border-surface-variant/30">
+            <p class="font-sans text-sm text-on-surface-variant mb-1">Total a transferir</p>
+            <p class="font-heading font-bold text-4xl text-primary mb-4">{{ actual.total | currency:'MXN':'symbol-narrow':'1.2-2' }} <span class="text-lg">MXN</span></p>
+            <div class="flex items-start justify-center gap-2 text-primary/80">
+              <span class="material-symbols-outlined text-[16px] mt-0.5">schedule</span>
+              <p class="font-sans text-xs text-left">
+                Reserva válida hasta:<br/>
+                <strong class="text-primary">{{ actual.fechaLimitePago | date:'medium' }}</strong>
+              </p>
+            </div>
+          </section>
+
+          <!-- Bank Card -->
+          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30" *ngIf="actual.configuracionTransferencia as banco">
+            <h2 class="font-sans font-bold text-base text-on-surface mb-5 flex items-center gap-2 border-b border-surface-variant/30 pb-3">
+              <span class="material-symbols-outlined text-primary">account_balance</span>
+              Transferencia Bancaria
+            </h2>
+            
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col">
+                  <span class="font-sans font-semibold text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Banco</span>
+                  <span class="font-sans font-semibold text-sm text-on-surface">{{ banco.banco }}</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="font-sans font-semibold text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Titular</span>
+                  <span class="font-sans font-semibold text-sm text-on-surface">{{ banco.titular }}</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between bg-surface-container p-3.5 rounded-xl border border-surface-variant/30" *ngIf="banco.clabe">
+                <div class="flex flex-col">
+                  <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-wider mb-0.5">CLABE</span>
+                  <span class="font-mono font-bold text-base text-primary tracking-widest">{{ banco.clabe }}</span>
+                </div>
+                <button class="text-primary hover:bg-surface-container-high p-2 rounded-full transition-colors active:scale-95" (click)="copiarClabe()" title="Copiar CLABE">
+                  <span class="material-symbols-outlined">content_copy</span>
+                </button>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col" *ngIf="banco.numeroCuenta">
+                  <span class="font-sans font-semibold text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Cuenta</span>
+                  <span class="font-sans font-semibold text-sm text-on-surface">{{ banco.numeroCuenta }}</span>
+                </div>
+                <div class="flex items-center justify-between bg-surface-container p-2.5 rounded-xl border border-surface-variant/30">
+                  <div class="flex flex-col">
+                    <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-wider mb-0.5">Concepto / Referencia</span>
+                    <span class="font-sans font-bold text-sm text-primary">{{ actual.folio }}</span>
+                  </div>
+                  <button class="text-primary hover:bg-surface-container-high p-1.5 rounded-full transition-colors active:scale-95" title="Copiar Referencia">
+                    <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="bg-surface border border-outline-variant/30 rounded-xl p-3 flex items-start gap-2" *ngIf="banco.instrucciones">
+                <span class="material-symbols-outlined text-primary text-[18px]">info</span>
+                <p class="font-sans text-[11px] text-on-surface-variant mt-0.5">{{ banco.instrucciones }}</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Upload Proof -->
+          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border-2 border-dashed border-outline-variant/50 text-center flex flex-col items-center">
+            <div class="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center mb-3">
+              <span class="material-symbols-outlined text-2xl text-primary">cloud_upload</span>
+            </div>
+            <h3 class="font-sans font-bold text-base text-on-surface mb-1">Sube tu comprobante de pago</h3>
+            <p class="font-sans text-xs text-on-surface-variant mb-5">El pago quedará en revisión. Selecciona una imagen o PDF (JPG, PNG, PDF).</p>
+            
+            <label class="w-full flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 py-3 rounded-xl cursor-pointer transition-colors mb-4 font-sans font-semibold text-sm text-primary">
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="hidden" (change)="seleccionarArchivo($event)"/>
+              <span class="material-symbols-outlined">attach_file</span>
+              <span class="truncate max-w-[200px]">{{ archivo?.name || 'Seleccionar archivo' }}</span>
+            </label>
+            
+            <button class="w-full bg-primary-container text-on-primary font-sans font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50" [disabled]="!archivo || subiendo" (click)="subirComprobante()">
+              {{ subiendo ? 'Subiendo...' : 'Enviar a revisión' }}
+            </button>
+          </section>
+        </div>
+      </ng-container>
+      
     </main>
-  </ion-content>
+  </div>
 </app-cliente-shell>

@@ -93,6 +93,11 @@ export class DetalleVentaPage implements OnInit {
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);
   }
+  formatearFolio(id: string | null | undefined): string {
+    if (!id) return '---';
+    const limpio = id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return limpio.length > 8 ? limpio.substring(0, 8) : limpio;
+  }
   private async feedback(message: string, color: 'success' | 'danger' | 'warning'): Promise<void> {
     const aviso = await this.toast.create({ message, color, duration: 3200, position: 'top' });
     await aviso.present();
