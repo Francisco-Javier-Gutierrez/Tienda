@@ -79,10 +79,21 @@
         <!-- Cart Items -->
         <article *ngFor="let item of carrito.items" class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex gap-4 relative group">
           
-          <div class="w-20 h-20 md:w-24 md:h-24 bg-surface-container-high rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden">
-            <img *ngIf="imagen(item.imagen) as src; else itemPlaceholder" [src]="src" [alt]="item.nombre" class="w-full h-full object-cover" />
+          <div class="w-20 h-20 md:w-24 md:h-24 bg-surface-container/40 border border-surface-variant/20 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative select-none">
+            <img
+              *ngIf="imagenUrl(item) as src; else itemPlaceholder"
+              [src]="src"
+              [alt]="item.nombre"
+              class="w-full h-full object-cover"
+              (error)="onImageError(item.id, item.imagen)"
+            />
             <ng-template #itemPlaceholder>
-              <span class="material-symbols-outlined text-3xl text-outline-variant">image</span>
+              <div class="flex flex-col items-center justify-center text-outline-variant/60 gap-1.5 py-2 select-none">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-outline-variant/80 border border-outline-variant/20">
+                  <span class="material-symbols-outlined text-xl">inventory_2</span>
+                </div>
+                <span class="text-[10px] font-sans font-medium text-outline-variant">Sin foto</span>
+              </div>
             </ng-template>
           </div>
           

@@ -10,8 +10,12 @@ export const tiendaUploadDir = path.join(baseUploadsDir, 'tienda');
 export const comprobantesUploadDir = path.join(baseUploadsDir, 'comprobantes');
 
 for (const dir of [baseUploadsDir, productosUploadDir, tiendaUploadDir, comprobantesUploadDir]) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  } catch {
+    // Ignorar en entornos serverless de solo lectura (como Vercel/AWS Lambda)
   }
 }
 

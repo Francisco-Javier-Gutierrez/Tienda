@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { ItemCarrito } from '../models/carrito';
@@ -13,7 +13,7 @@ import { DialogService } from '../services/dialog.service';
   styleUrls: ['./carrito.page.scss'],
   standalone: false,
 })
-export class CarritoPage {
+export class CarritoPage implements OnInit {
   cargando = true;
   readonly carrito = inject(CarritoService);
   private readonly imagenes = inject(ImagenesService);
@@ -21,6 +21,8 @@ export class CarritoPage {
   private readonly dialog = inject(DialogService);
   private readonly clienteAuth = inject(ClienteAuthService);
   private readonly router = inject(Router);
+
+  private imagenesConError = new Set<string>();
 
   ngOnInit() {
     setTimeout(() => {
@@ -30,6 +32,18 @@ export class CarritoPage {
 
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);
+  }
+
+  imagenUrl(item: ItemCarrito): string | null {
+    if (!item.imagen || this.imagenesConError.has(item.id)) return null;
+    return this.imagenes.resolver(item.imagen);
+  }
+
+  onImageError(id: string, ruta?: string | null): void {
+    this.imagenesConError.add(id);
+    if (ruta) {
+      this.imagenes.marcarFallida(ruta);
+    }
   }
 
   async incrementar(item: ItemCarrito): Promise<void> {

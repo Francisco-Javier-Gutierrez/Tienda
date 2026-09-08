@@ -16,7 +16,8 @@ export type AdminSection =
   | 'cajero'
   | 'ventas'
   | 'pedidos-online'
-  | 'configuracion';
+  | 'configuracion'
+  | 'catalogo';
 
 interface TiendaMenu {
   nombreSuc: string | null;
@@ -37,8 +38,8 @@ export class AdminShellComponent implements OnInit {
   @Input() showDateBadge = true;
 
   readonly auth = inject(AuthService);
+  readonly imagenes = inject(ImagenesService);
   private readonly http = inject(HttpClient);
-  private readonly imagenes = inject(ImagenesService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -87,5 +88,12 @@ export class AdminShellComponent implements OnInit {
   }
   resolverAvatar(): string | null {
     return this.imagenes.resolver(this.auth.sesion?.empleado.fotoPerfil);
+  }
+
+  onAvatarError(): void {
+    const foto = this.auth.sesion?.empleado.fotoPerfil;
+    if (foto) {
+      this.imagenes.marcarFallida(foto);
+    }
   }
 }

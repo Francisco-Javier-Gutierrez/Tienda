@@ -1,5 +1,31 @@
-<app-cliente-shell>
-  <div class="px-4 md:px-6 pt-4 pb-24 md:pb-8 flex flex-col gap-6 max-w-7xl mx-auto">
+<app-admin-shell
+  *ngIf="esEmpleado; else clientShell"
+  menuId="admin-catalogo-menu"
+  contentId="admin-catalogo-content"
+  activeSection="catalogo"
+  customTitle="Catálogo"
+>
+  <div header-actions class="flex items-center gap-2 text-on-surface-variant">
+    <span class="text-xs md:text-sm font-sans font-medium mr-1">{{ productos.length }} prod.</span>
+    <a *ngIf="esAdministrador" routerLink="/productos" class="transition-all duration-200 active:scale-95 hover:bg-surface-container-high p-2 rounded-full flex items-center justify-center text-primary" title="Gestionar inventario">
+      <span class="material-symbols-outlined text-xl">inventory_2</span>
+    </a>
+    <a routerLink="/cajero" class="transition-all duration-200 active:scale-95 hover:bg-surface-container-high p-2 rounded-full flex items-center justify-center text-primary" title="Punto de Venta">
+      <span class="material-symbols-outlined text-xl">point_of_sale</span>
+    </a>
+  </div>
+
+  <ng-container *ngTemplateOutlet="catalogoContent"></ng-container>
+</app-admin-shell>
+
+<ng-template #clientShell>
+  <app-cliente-shell>
+    <ng-container *ngTemplateOutlet="catalogoContent"></ng-container>
+  </app-cliente-shell>
+</ng-template>
+
+<ng-template #catalogoContent>
+  <div class="px-4 md:px-6 pt-4 pb-12 md:pb-8 flex flex-col gap-6 max-w-7xl mx-auto">
     
     <!-- Search -->
     <div class="relative">
@@ -30,11 +56,11 @@
     <!-- Categories -->
     <div class="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0 custom-scrollbar">
       <button (click)="seleccionarCategoria('todas')" 
-              [class]="categoria === 'todas' ? 'flex-shrink-0 flex items-center gap-1 bg-primary-container text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm transition-transform active:scale-95' : 'flex-shrink-0 flex items-center gap-1 bg-transparent text-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-outline-variant'">
+              [class]="categoria === 'todas' ? 'flex-shrink-0 flex items-center gap-1 bg-primary text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm transition-transform active:scale-95' : 'flex-shrink-0 flex items-center gap-1 bg-surface-container-lowest text-on-surface font-sans font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-outline-variant/30'">
         <span>🏷️</span> Todos
       </button>
       <button *ngFor="let opcion of categorias" (click)="seleccionarCategoria(opcion)"
-              [class]="categoria === opcion ? 'flex-shrink-0 flex items-center gap-1 bg-primary-container text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm transition-transform active:scale-95' : 'flex-shrink-0 flex items-center gap-1 bg-transparent text-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-outline-variant'">
+              [class]="categoria === opcion ? 'flex-shrink-0 flex items-center gap-1 bg-primary text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm transition-transform active:scale-95' : 'flex-shrink-0 flex items-center gap-1 bg-surface-container-lowest text-on-surface font-sans font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-outline-variant/30'">
         {{ opcion }}
       </button>
     </div>
@@ -91,4 +117,4 @@
 
     </div>
   </div>
-</app-cliente-shell>
+</ng-template>

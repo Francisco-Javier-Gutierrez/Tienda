@@ -19,6 +19,17 @@
         </button>
       </header>
 
+      <!-- Tarjetas de Resumen por Estado: Skeletons durante carga inicial -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" *ngIf="cargando && !pedidos.length">
+        <article *ngFor="let i of [1,2,3,4,5,6]" class="bg-surface-container-lowest rounded-[20px] p-3.5 shadow-sm border border-surface-variant/30 flex flex-col justify-between min-h-[85px]">
+          <div class="flex items-center justify-between">
+            <ion-skeleton-text animated style="width: 50%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 28px; height: 28px; border-radius: 10px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated style="width: 40%; height: 24px; border-radius: 4px; margin-top: 8px;"></ion-skeleton-text>
+        </article>
+      </section>
+
       <!-- Tarjetas de Resumen por Estado -->
       <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" *ngIf="!cargando || pedidos.length">
         
@@ -142,16 +153,28 @@
 
       <!-- Skeletons durante carga -->
       <div class="space-y-3" *ngIf="cargando">
-        <div *ngFor="let i of [1,2,3,4]" class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 animate-pulse space-y-3">
-          <div class="flex justify-between items-center">
+        <div *ngFor="let i of [1,2,3,4]" class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-variant/20">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-2xl bg-surface-variant/60"></div>
+              <ion-skeleton-text animated style="width: 40px; height: 40px; border-radius: 16px;"></ion-skeleton-text>
               <div class="space-y-1.5">
-                <div class="h-4 bg-surface-variant/60 rounded w-28"></div>
-                <div class="h-3 bg-surface-variant/60 rounded w-40"></div>
+                <ion-skeleton-text animated style="width: 120px; height: 16px; border-radius: 6px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="width: 160px; height: 12px; border-radius: 4px;"></ion-skeleton-text>
               </div>
             </div>
-            <div class="h-6 bg-surface-variant/60 rounded w-24"></div>
+            <div class="sm:text-right">
+              <ion-skeleton-text animated style="width: 80px; height: 22px; border-radius: 6px;"></ion-skeleton-text>
+            </div>
+          </div>
+          <div class="pt-1 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <ion-skeleton-text animated style="width: 32px; height: 32px; border-radius: 50%;"></ion-skeleton-text>
+              <div class="space-y-1.5">
+                <ion-skeleton-text animated style="width: 130px; height: 14px; border-radius: 4px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="width: 100px; height: 11px; border-radius: 4px;"></ion-skeleton-text>
+              </div>
+            </div>
+            <ion-skeleton-text animated style="width: 90px; height: 22px; border-radius: 12px;"></ion-skeleton-text>
           </div>
         </div>
       </div>
@@ -226,8 +249,18 @@
             <div class="pt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
               <!-- Info cliente -->
               <div class="flex items-center gap-3 min-w-0">
-                <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0 font-bold text-xs uppercase">
-                  {{ p.cliente.nombre.charAt(0) }}
+                <div class="w-8 h-8 rounded-full bg-surface-container border border-surface-variant/40 overflow-hidden flex items-center justify-center text-on-surface-variant shrink-0 font-bold text-xs uppercase">
+                  <img
+                    *ngIf="imagen(p.cliente.foto) as foto; else avatarLetra"
+                    [src]="foto"
+                    (error)="onFotoError(p.cliente.foto)"
+                    referrerpolicy="no-referrer"
+                    [alt]="p.cliente.nombre"
+                    class="w-full h-full object-cover"
+                  />
+                  <ng-template #avatarLetra>
+                    <span>{{ p.cliente.nombre.charAt(0) || 'C' }}</span>
+                  </ng-template>
                 </div>
                 <div class="min-w-0">
                   <strong class="font-sans font-semibold text-on-surface block truncate max-w-[200px] sm:max-w-xs">{{ p.cliente.nombre }}</strong>

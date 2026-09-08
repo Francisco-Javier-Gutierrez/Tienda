@@ -8,6 +8,7 @@ export const env = {
   PORT: Number(process.env.PORT) || 3000,
   DATABASE_URL: process.env.DATABASE_URL,
   JWT_SECRET: process.env.JWT_SECRET,
+  HASHIDS_SALT: process.env.HASHIDS_SALT || 'TiendaHashidsSaltSecret2026',
   CLIENT_URL: process.env.CLIENT_URL,
 
   // AWS S3

@@ -1,0 +1,6 @@
+# Configuración de variables para Terraform
+aws_region  = "us-east-1"
+aws_profile = "terra-profile"
+bucket_name = "tienda-donapaty-frontend"
+environment = "production"
+app_name    = "tienda-donapaty"

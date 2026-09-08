@@ -221,7 +221,8 @@
              </div>
           </div>
           
-          <div class="flex flex-col md:flex-row gap-3">
+          <div class="flex flex-col sm:flex-row gap-3">
+             <button class="flex-1 py-3 bg-surface border border-outline-variant hover:bg-surface-variant rounded-xl font-sans font-bold text-sm text-on-surface transition-colors" (click)="ultimaCaja = null; fondoInicial = null">Abrir nuevo turno</button>
              <button class="flex-1 py-3 bg-surface border border-outline-variant hover:bg-surface-variant rounded-xl font-sans font-bold text-sm text-on-surface transition-colors" routerLink="/caja">Ver detalles</button>
              <button class="flex-1 py-3 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-sans font-bold text-sm shadow-md transition-colors" (click)="auth.logout()">Cerrar sesión</button>
           </div>

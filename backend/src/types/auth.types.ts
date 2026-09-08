@@ -22,9 +22,13 @@ export interface ClienteSesion {
   id?: string | null;
   idCliente: number;
   nombre: string;
+  nombreCliente?: string;
   apellidoPat: string | null;
+  apellidoPatCliente?: string | null;
   apellidoMat: string | null;
+  apellidoMatCliente?: string | null;
   correo: string;
+  correoCliente?: string;
   fotoPerfil: string | null;
   estadoCliente: boolean;
   fechaRegistro: Date | null;

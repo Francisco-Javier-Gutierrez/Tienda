@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { pedidosController } from './pedidos.controller';
 import { autenticar, autenticarCliente, soloAdministrador } from '../../middlewares/auth.middleware';
+import { crearPedidoLimiter } from '../../middlewares/rate-limit.middleware';
 import { uploadComprobante } from '../../middlewares/upload.middleware';
 
 const clienteRouter = Router();
 const adminRouter = Router();
 
 // Rutas Cliente
-clienteRouter.post('/', autenticarCliente, pedidosController.crearPedido.bind(pedidosController));
+clienteRouter.post('/', autenticarCliente, crearPedidoLimiter, pedidosController.crearPedido.bind(pedidosController));
 clienteRouter.get('/', autenticarCliente, pedidosController.listarPedidosCliente.bind(pedidosController));
 clienteRouter.get('/:id', autenticarCliente, pedidosController.obtenerPedidoCliente.bind(pedidosController));
 clienteRouter.post('/:id/cancelar', autenticarCliente, pedidosController.cancelarPedidoCliente.bind(pedidosController));

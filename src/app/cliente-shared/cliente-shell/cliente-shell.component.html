@@ -6,17 +6,18 @@
       
       <!-- Brand & Profile -->
       <a routerLink="/catalogo" class="flex items-center gap-3 cursor-pointer transition-all duration-200 active:scale-95 hover:bg-surface-variant/50 rounded-full p-2 -ml-2">
-        <ng-container *ngIf="clienteAuth.sesion as sesion; else noSessionAvatar">
+        <ng-container *ngIf="estaAutenticado; else noSessionAvatar">
           <div class="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden flex items-center justify-center shrink-0">
-            <img *ngIf="avatar() as src; else avatarFallback" [src]="src" alt="User profile" class="w-full h-full object-cover" />
+            <img *ngIf="avatar() as src; else avatarFallback" [src]="src" (error)="onAvatarError()" referrerpolicy="no-referrer" alt="User profile" class="w-full h-full object-cover" />
             <ng-template #avatarFallback>
-              <span class="material-symbols-outlined text-primary">person</span>
+              <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
             </ng-template>
           </div>
           <div class="flex flex-col">
             <span class="font-heading text-lg font-bold text-primary">{{ nombreTienda }}</span>
-            <span class="font-sans text-xs text-on-surface-variant flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">handshake</span> ¡Hola, {{ sesion.cliente.nombre }}!
+            <span class="font-sans text-xs text-on-surface-variant flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px]">handshake</span> ¡Hola, {{ nombreUsuario }}!
+              <span *ngIf="esEmpleado" class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-semibold">{{ rolEmpleado }}</span>
             </span>
           </div>
         </ng-container>
@@ -42,8 +43,11 @@
         <nav class="hidden md:flex items-center gap-6 mr-4">
           <a routerLink="/catalogo" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Productos</a>
           <a *ngIf="clienteAuth.estaAutenticado()" routerLink="/mis-pedidos" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Mis Pedidos</a>
-          <a *ngIf="clienteAuth.estaAutenticado()" routerLink="/perfil" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Perfil</a>
-          <a *ngIf="!clienteAuth.estaAutenticado()" routerLink="/login" class="font-sans text-primary font-semibold hover:text-primary-container transition-colors text-sm">Iniciar Sesión</a>
+          <a *ngIf="estaAutenticado" routerLink="/perfil" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Perfil</a>
+          <a *ngIf="esEmpleado" [routerLink]="rutaPanel" class="font-sans text-primary font-semibold hover:text-primary-container transition-colors text-sm flex items-center gap-1.5 bg-primary-container/30 px-3 py-1.5 rounded-full">
+            <span class="material-symbols-outlined text-base">dashboard</span> Volver al Panel
+          </a>
+          <a *ngIf="!estaAutenticado" routerLink="/login" class="font-sans text-primary font-semibold hover:text-primary-container transition-colors text-sm">Iniciar Sesión</a>
         </nav>
         
         <!-- Cart -->
@@ -53,7 +57,7 @@
         </a>
 
         <!-- Logout (Desktop) -->
-        <button *ngIf="clienteAuth.estaAutenticado()" (click)="clienteAuth.logout()" class="hidden md:flex transition-all duration-200 active:scale-95 hover:bg-error/10 p-2 rounded-full text-error" title="Cerrar sesión">
+        <button *ngIf="estaAutenticado" (click)="logout()" class="hidden md:flex transition-all duration-200 active:scale-95 hover:bg-error/10 p-2 rounded-full text-error" title="Cerrar sesión">
           <span class="material-symbols-outlined">logout</span>
         </button>
       </div>
@@ -65,8 +69,8 @@
     <ng-content></ng-content>
   </main>
 
-  <!-- Mobile Bottom Nav -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-surface-variant/30 shadow-[0_-4px_24px_rgba(88,67,107,0.06)] z-40 flex items-center justify-around px-2 py-2" style="padding-bottom: calc(0.5rem + var(--safe-area-bottom));">
+  <!-- Mobile Bottom Nav (Solo para clientes/invitados, nunca para empleados) -->
+  <nav *ngIf="!esEmpleado" class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-surface-variant/30 shadow-[0_-4px_24px_rgba(88,67,107,0.06)] z-40 flex items-center justify-around px-2 py-2" style="padding-bottom: calc(0.5rem + var(--safe-area-bottom));">
     <a routerLink="/catalogo" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
       <span class="material-symbols-outlined text-[24px]">storefront</span>
       <span class="font-sans text-[10px] mt-1 font-medium">Catálogo</span>
@@ -75,9 +79,9 @@
       <span class="material-symbols-outlined text-[24px]">receipt_long</span>
       <span class="font-sans text-[10px] mt-1 font-medium">Pedidos</span>
     </a>
-    <a [routerLink]="clienteAuth.estaAutenticado() ? '/perfil' : '/login'" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
+    <a [routerLink]="estaAutenticado ? '/perfil' : '/login'" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
       <span class="material-symbols-outlined text-[24px]">person</span>
-      <span class="font-sans text-[10px] mt-1 font-medium">{{ clienteAuth.estaAutenticado() ? 'Perfil' : 'Ingresar' }}</span>
+      <span class="font-sans text-[10px] mt-1 font-medium">{{ estaAutenticado ? 'Perfil' : 'Ingresar' }}</span>
     </a>
   </nav>
 

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { baseUploadsDir } from './middlewares/upload.middleware';
+import helmet from 'helmet';
+import { env } from './config/env';
+import { productosUploadDir, tiendaUploadDir } from './middlewares/upload.middleware';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware';
 
 // Routes
@@ -16,12 +18,41 @@ import { uploadsRoutes } from './modules/uploads/uploads.routes';
 
 const app = express();
 
-app.use(cors({ origin: '*' }));
+const clientUrls = env.CLIENT_URL
+  ? env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean)
+  : [];
+
+const allowedOrigins = new Set([
+  'http://localhost',
+  'https://localhost',
+  'http://localhost:8100',
+  'http://localhost:8101',
+  'http://localhost:4200',
+  'capacitor://localhost',
+  ...clientUrls,
+]);
+
+function validarOrigen(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+  if (!origin) return callback(null, true);
+  if (allowedOrigins.has(origin)) return callback(null, true);
+  if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+    return callback(null, true);
+  }
+  if (/^https:\/\/[a-z0-9-]+\.cloudfront\.net$/.test(origin)) {
+    return callback(null, true);
+  }
+  return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+}
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cors({ origin: validarOrigen, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos locales de uploads
-app.use('/uploads', express.static(baseUploadsDir));
+// Servir únicamente archivos estáticos públicos (productos y tienda)
+// Los comprobantes bancarios quedan excluidos de express.static
+app.use('/uploads/productos', express.static(productosUploadDir));
+app.use('/uploads/tienda', express.static(tiendaUploadDir));
 
 // Rutas de la API
 app.use('/auth', authRoutes);

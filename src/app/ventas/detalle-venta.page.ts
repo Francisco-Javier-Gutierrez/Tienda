@@ -30,7 +30,11 @@ export class DetalleVentaPage implements OnInit {
     void this.cargar();
   }
   async cargar(): Promise<void> {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      await this.feedback('Venta no encontrada.', 'danger');
+      return;
+    }
     this.cargando = true;
     try {
       this.venta = await firstValueFrom(this.api.detalle(id));
@@ -97,6 +101,11 @@ export class DetalleVentaPage implements OnInit {
     if (!id) return '---';
     const limpio = id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
     return limpio.length > 8 ? limpio.substring(0, 8) : limpio;
+  }
+  obtenerNombreCajero(cajero: any): string {
+    if (!cajero) return '---';
+    if (typeof cajero === 'string') return cajero;
+    return cajero.nombre || '---';
   }
   private async feedback(message: string, color: 'success' | 'danger' | 'warning'): Promise<void> {
     const aviso = await this.toast.create({ message, color, duration: 3200, position: 'top' });

@@ -2,6 +2,7 @@ import fs from 'fs';
 import { Request, Response } from 'express';
 import {
   mimeRealComprobante,
+  normalizarPedido,
   normalizarPedidoAdmin,
   pedidosService,
   resolverComprobantePrivado,
@@ -33,11 +34,11 @@ export class PedidosController {
       return;
     }
     await pedidosService.liberarPedidosExpirados(req.cliente.idCliente);
-      const pedidos = await prisma.pedidoCliente.findMany({
-              where: { idCliente: req.cliente.idCliente },
-              orderBy: [{ fechaPedido: 'desc' }, { idPedido: 'desc' }],
-            });
-      res.json(pedidos.map((p) => pedidosService.obtenerPedidoSeguro(p.idPedido, req.cliente!.idCliente)));
+    const pedidos = await prisma.pedidoCliente.findMany({
+      where: { idCliente: req.cliente.idCliente },
+      orderBy: [{ fechaPedido: 'desc' }, { idPedido: 'desc' }],
+    });
+    res.json(pedidos.map(normalizarPedido));
   }
 
   async obtenerPedidoCliente(req: Request, res: Response): Promise<void> {

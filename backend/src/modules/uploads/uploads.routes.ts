@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
+import { prisma } from '../../config/prisma';
 import { verificarToken } from '../../utils/security';
-import { texto } from '../../utils/formatters';
+import { idValido, texto } from '../../utils/formatters';
 import { errorServidor } from '../../middlewares/error.middleware';
 import { extensionesComprobante, extensionesImagen, generarPresignedUpload } from '../../config/s3';
 
@@ -48,8 +49,19 @@ router.post('/presign', async (req: Request, res: Response): Promise<void> => {
       return;
     }
   } else {
-    if (payload.tipo === 'CLIENTE') {
+    if (payload.tipo !== 'EMPLEADO') {
       res.status(403).json({ message: 'No autorizado' });
+      return;
+    }
+    const idEmp = idValido(payload.sub);
+    const emp = idEmp
+      ? await prisma.empleado.findUnique({
+          where: { idEmp },
+          include: { cargo: true },
+        })
+      : null;
+    if (!emp || !emp.estadoEmp || emp.cargo?.nombreCargo !== 'ADMINISTRADOR') {
+      res.status(403).json({ message: 'Solo los administradores pueden subir imágenes de productos o tienda' });
       return;
     }
     if (!extensionesImagen.has(mimeType)) {

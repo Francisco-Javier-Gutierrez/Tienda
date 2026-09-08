@@ -228,8 +228,29 @@ export class PedidosService {
       }
     }
 
+    let comprobanteUrl: string | null = null;
+    if (p.comprobanteRuta) {
+      try {
+        if (esUrlS3(p.comprobanteRuta)) {
+          const key = extraerKeyS3(p.comprobanteRuta) || p.comprobanteRuta;
+          comprobanteUrl = await generarPresignedDownload(key, p.comprobanteNombre, p.comprobanteMime);
+        }
+      } catch (err) {
+        console.error('Error al generar presigned download para comprobante:', err);
+      }
+    }
+
     return {
       ...normalizarPedido(p),
+      comprobanteUrl,
+      comprobante: p.comprobanteRuta
+        ? {
+            nombre: p.comprobanteNombre || 'comprobante',
+            mime: p.comprobanteMime || 'image/jpeg',
+            fecha: p.fechaComprobante,
+            url: comprobanteUrl,
+          }
+        : null,
       items: p.detalles.map((d) => ({
         productoId: encodeId(d.idPro),
         nombre: d.producto?.nombrePro || 'Producto',
@@ -278,8 +299,29 @@ export class PedidosService {
           .join(' ')
       : null;
 
+    let comprobanteUrl: string | null = null;
+    if (p.comprobanteRuta) {
+      try {
+        if (esUrlS3(p.comprobanteRuta)) {
+          const key = extraerKeyS3(p.comprobanteRuta) || p.comprobanteRuta;
+          comprobanteUrl = await generarPresignedDownload(key, p.comprobanteNombre, p.comprobanteMime);
+        }
+      } catch (err) {
+        console.error('Error al generar presigned download para comprobante admin:', err);
+      }
+    }
+
     return {
       ...normalizarPedidoAdmin(p),
+      comprobanteUrl,
+      comprobante: p.comprobanteRuta
+        ? {
+            nombre: p.comprobanteNombre || 'comprobante',
+            mime: p.comprobanteMime || 'image/jpeg',
+            fecha: p.fechaComprobante,
+            url: comprobanteUrl,
+          }
+        : null,
       empleadoRevisa: empRevisa,
       configuracionTransferencia,
       items: p.detalles.map((item) => ({
@@ -309,7 +351,7 @@ export class PedidosService {
 
     const cantidades = new Map<number, number>();
     for (const item of body.items) {
-      const idPro = idValido(item?.idPro);
+      const idPro = idValido(item?.idPro ?? item?.id ?? item?.productoId);
       const cantidad = Number(item?.cantidad);
       if (!idPro || !Number.isInteger(cantidad) || cantidad <= 0) {
         throw errorFuncional('Los productos o cantidades no son válidos.', 400);
@@ -329,6 +371,24 @@ export class PedidosService {
           throw errorFuncional('El identificador del pedido ya está en uso.', 409);
         }
         return await this.obtenerPedidoSeguro(repetido.idPedido, idCliente, tx);
+      }
+
+      const countFn = typeof (tx.pedidoCliente as any)?.count === 'function'
+        ? (tx.pedidoCliente as any).count.bind(tx.pedidoCliente)
+        : async (args: any) => ((tx.pedidoCliente as any)?.findMany ? (await (tx.pedidoCliente as any).findMany(args)).length : 0);
+      const pendientes = await countFn({
+        where: {
+          idCliente: Number(idCliente),
+          estado: 'PENDIENTE_PAGO',
+          comprobanteRuta: null,
+          fechaLimitePago: { gt: new Date() },
+        },
+      });
+      if (pendientes >= 3) {
+        throw errorFuncional(
+          'Tienes 3 pedidos pendientes de pago. Completa o cancela alguno de ellos antes de generar uno nuevo.',
+          409,
+        );
       }
 
       const productos = await tx.producto.findMany({

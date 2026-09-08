@@ -92,8 +92,8 @@ Thumbs.db
 *.keystore
 
 # Terraform
-/terraform/
-**/.terraform/*
+.terraform/
+**/.terraform/
 *.tfstate
 *.tfstate.*
 crash.log

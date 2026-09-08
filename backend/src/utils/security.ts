@@ -61,14 +61,15 @@ export function empleadoSeguro(empleado: any): EmpleadoSesion {
 }
 
 export function clienteSeguro(cliente: any): ClienteSesion {
+  if (!cliente) return null as any;
   const idCliente = Number(cliente.idCliente);
   return {
     id: encodeId(idCliente),
     idCliente,
-    nombre: cliente.nombreCliente || '',
-    apellidoPat: cliente.apellidoPatCliente || null,
-    apellidoMat: cliente.apellidoMatCliente || null,
-    correo: cliente.correoCliente || '',
+    nombre: cliente.nombreCliente || cliente.nombre || '',
+    apellidoPat: cliente.apellidoPatCliente !== undefined ? cliente.apellidoPatCliente : (cliente.apellidoPat ?? null),
+    apellidoMat: cliente.apellidoMatCliente !== undefined ? cliente.apellidoMatCliente : (cliente.apellidoMat ?? null),
+    correo: cliente.correoCliente || cliente.correo || '',
     fotoPerfil: cliente.fotoPerfil || null,
     estadoCliente: Boolean(cliente.estadoCliente),
     fechaRegistro: cliente.fechaRegistro ? new Date(cliente.fechaRegistro) : null,

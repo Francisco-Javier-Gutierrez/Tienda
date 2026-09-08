@@ -54,10 +54,15 @@ export class CajaService {
   }
 
   async calcularResumenCaja(caja: any, client: DbClient = prisma) {
+    const idSesionCaja = caja?.idSesionCaja ?? idValido(caja?.id);
+    if (!idSesionCaja) {
+      throw errorFuncional('Sesión de caja no válida', 400);
+    }
+
     const [ventas, movimientos] = await Promise.all([
       client.venta.findMany({
         where: {
-          idSesionCaja: caja.idSesionCaja,
+          idSesionCaja,
           estadoVenta: 'COMPLETADA',
         },
         select: {
@@ -67,7 +72,7 @@ export class CajaService {
       }),
       client.movimientoCaja.findMany({
         where: {
-          idSesionCaja: caja.idSesionCaja,
+          idSesionCaja,
         },
         select: {
           tipoMovimiento: true,
@@ -211,8 +216,11 @@ export class CajaService {
     const caja = await this.obtenerCajaActual(idEmp);
     if (!caja) throw errorFuncional('No tienes una caja abierta.', 404);
 
+    const idSesionCaja = caja.idSesionCaja ?? idValido(caja.id);
+    if (!idSesionCaja) throw errorFuncional('Sesión de caja no válida', 400);
+
     const rows = await prisma.movimientoCaja.findMany({
-      where: { idSesionCaja: caja.idSesionCaja },
+      where: { idSesionCaja },
       orderBy: [{ fechaHora: 'desc' }, { idMovimientoCaja: 'desc' }],
     });
     return rows.map((r) => ({ ...r, monto: Number(r.monto) }));
@@ -231,12 +239,11 @@ export class CajaService {
       });
       if (!cajaRow) throw errorFuncional('No tienes una caja abierta.', 409);
 
-      const caja = normalizarCaja(cajaRow);
-      const resumen = await this.calcularResumenCaja(caja, tx);
+      const resumen = await this.calcularResumenCaja(cajaRow, tx);
       const diferencia = contado / 100 - resumen.efectivoEsperado;
 
       const actualizada = await tx.sesionCaja.update({
-        where: { idSesionCaja: caja.idSesionCaja },
+        where: { idSesionCaja: cajaRow.idSesionCaja },
         data: {
           fechaHoraCierre: new Date(),
           totalVentas: resumen.totalVentas,

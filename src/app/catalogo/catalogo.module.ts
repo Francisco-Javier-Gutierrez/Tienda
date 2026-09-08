@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { ClienteSharedModule } from '../cliente-shared/cliente-shared.module';
+import { SharedModule } from '../shared/shared.module';
 import { CatalogoPage } from './catalogo.page';
 
 @NgModule({
@@ -12,6 +13,7 @@ import { CatalogoPage } from './catalogo.page';
     CommonModule,
     FormsModule,
     IonicModule,
+    SharedModule,
     ClienteSharedModule,
     RouterModule.forChild([{ path: '', component: CatalogoPage }]),
   ],
