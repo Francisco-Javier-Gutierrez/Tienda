@@ -2,10 +2,71 @@
   <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24">
       
       <!-- Skeletons durante carga -->
-      <div class="space-y-4" *ngIf="cargando">
-        <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 animate-pulse space-y-4">
-          <div class="h-6 bg-surface-variant/60 rounded w-48"></div>
-          <div class="h-4 bg-surface-variant/60 rounded w-72"></div>
+      <div class="space-y-6" *ngIf="cargando">
+        <!-- Skeleton Encabezado -->
+        <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-2">
+            <ion-skeleton-text animated style="width: 100px; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 180px; height: 28px; border-radius: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 220px; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated style="width: 140px; height: 36px; border-radius: 9999px;"></ion-skeleton-text>
+        </div>
+
+        <!-- Skeleton Grid Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Skeleton Cliente -->
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <ion-skeleton-text animated style="width: 32px; height: 32px; border-radius: 12px;"></ion-skeleton-text>
+                <div class="space-y-1.5">
+                  <ion-skeleton-text animated style="width: 60px; height: 10px; border-radius: 4px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 140px; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <ion-skeleton-text animated style="width: 56px; height: 56px; border-radius: 16px;"></ion-skeleton-text>
+                <div class="space-y-2 flex-1">
+                  <ion-skeleton-text animated style="width: 180px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 240px; height: 14px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skeleton Productos -->
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <ion-skeleton-text animated style="width: 32px; height: 32px; border-radius: 12px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 120px; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+                <ion-skeleton-text animated style="width: 70px; height: 20px; border-radius: 9999px;"></ion-skeleton-text>
+              </div>
+              <div class="space-y-3">
+                <div *ngFor="let i of [1,2]" class="flex items-center gap-4 py-2">
+                  <ion-skeleton-text animated style="width: 56px; height: 56px; border-radius: 12px;"></ion-skeleton-text>
+                  <div class="flex-1 space-y-2">
+                    <ion-skeleton-text animated style="width: 60%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 40%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+                  </div>
+                  <ion-skeleton-text animated style="width: 70px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skeleton Sidebar -->
+          <div class="space-y-6">
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <ion-skeleton-text animated style="width: 140px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 100%; height: 44px; border-radius: 12px;"></ion-skeleton-text>
+            </div>
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <ion-skeleton-text animated style="width: 120px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 100%; height: 120px; border-radius: 16px;"></ion-skeleton-text>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -61,9 +122,9 @@
               <div class="flex items-center gap-4">
                 <!-- Avatar -->
                 <div class="w-14 h-14 rounded-2xl bg-surface-container-low border border-surface-variant/40 overflow-hidden flex items-center justify-center shrink-0">
-                  <img *ngIf="imagen(p.cliente.foto) as foto; else avatarFallback" [src]="foto" [alt]="p.cliente.nombre" class="w-full h-full object-cover" />
+                  <img *ngIf="imagen(p.cliente.foto) as foto; else avatarFallback" [src]="foto" (error)="onFotoError(p.cliente.foto)" referrerpolicy="no-referrer" [alt]="p.cliente.nombre" class="w-full h-full object-cover" />
                   <ng-template #avatarFallback>
-                    <span class="material-symbols-outlined text-3xl text-outline-variant">person</span>
+                    <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
                   </ng-template>
                 </div>
 
@@ -98,7 +159,7 @@
                 <article *ngFor="let item of p.items" class="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4">
                   <!-- Imagen del Producto -->
                   <div class="w-14 h-14 rounded-xl bg-surface-container-low border border-surface-variant/30 overflow-hidden flex items-center justify-center shrink-0">
-                    <img *ngIf="imagen(item.imagen) as foto; else itemFallback" [src]="foto" [alt]="item.nombre" class="w-full h-full object-cover" />
+                    <img *ngIf="imagen(item.imagen) as foto; else itemFallback" [src]="foto" (error)="onItemFotoError(item.imagen)" [alt]="item.nombre" class="w-full h-full object-cover" />
                     <ng-template #itemFallback>
                       <span class="material-symbols-outlined text-2xl text-outline-variant">package_2</span>
                     </ng-template>
@@ -222,27 +283,58 @@
               </div>
 
               <ng-container *ngIf="p.comprobante as c; else noProof">
-                <div class="p-3.5 bg-surface-container rounded-2xl border border-surface-variant/30 flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <span class="material-symbols-outlined text-2xl">
-                      {{ c.mime === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
-                    </span>
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <strong class="font-sans font-semibold text-xs text-on-surface block truncate" [title]="c.nombre">{{ c.nombre }}</strong>
-                    <span class="font-sans text-[11px] text-on-surface-variant block mt-0.5">
-                      {{ c.mime }} · {{ c.fecha | date:'short' }}
-                    </span>
+                <!-- Preview visual si es imagen -->
+                <div
+                  *ngIf="esImagenComprobante() && p.comprobanteUrl && !comprobanteImgError; else previewAlternativo"
+                  class="relative group rounded-2xl overflow-hidden border border-surface-variant/30 bg-surface-container-low"
+                >
+                  <img
+                    [src]="p.comprobanteUrl"
+                    [alt]="c.nombre || 'Comprobante de pago'"
+                    class="w-full max-h-60 object-contain mx-auto transition-transform duration-300 group-hover:scale-[1.02] cursor-pointer"
+                    (click)="verComprobante()"
+                    (error)="onComprobanteImgError()"
+                  />
+                  <!-- Overlay con botón al pasar el mouse o tocar -->
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 cursor-pointer"
+                    (click)="verComprobante()"
+                  >
+                    <button
+                      type="button"
+                      (click)="verComprobante(); $event.stopPropagation()"
+                      class="bg-surface-container-lowest/95 hover:bg-surface-container-lowest text-on-surface font-sans font-semibold text-xs py-2 px-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span class="material-symbols-outlined text-[16px] text-primary">open_in_new</span>
+                      Ver en otra pestaña
+                    </button>
                   </div>
                 </div>
+
+                <!-- Preview alternativo si es PDF o no cargó la imagen -->
+                <ng-template #previewAlternativo>
+                  <div class="p-3.5 bg-surface-container rounded-2xl border border-surface-variant/30 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-2xl">
+                        {{ c.mime === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
+                      </span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <strong class="font-sans font-semibold text-xs text-on-surface block truncate" [title]="c.nombre">{{ c.nombre }}</strong>
+                      <span class="font-sans text-[11px] text-on-surface-variant block mt-0.5">
+                        {{ c.mime }} · {{ c.fecha | date:'short' }}
+                      </span>
+                    </div>
+                  </div>
+                </ng-template>
 
                 <button
                   type="button"
                   (click)="verComprobante()"
-                  class="w-full border border-primary text-primary hover:bg-primary/5 font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                  class="w-full inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
                 >
-                  <span class="material-symbols-outlined text-base">visibility</span>
-                  Ver comprobante
+                  <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+                  Abrir en otra pestaña
                 </button>
               </ng-container>
 

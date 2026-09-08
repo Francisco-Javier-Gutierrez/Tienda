@@ -11,7 +11,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore"
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
+    "deploy:frontend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-frontend.ps1"
   },
   "private": true,
   "dependencies": {

@@ -17,18 +17,41 @@ import { DialogService } from '../services/dialog.service';
 export class PedidoOnlineDetallePage implements OnInit {
   pedido: PedidoAdminDetalle | null = null;
   cargando = true;
+  comprobanteImgError = false;
   accionEnCurso: string | null = null;
   private readonly api = inject(PedidosAdminService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(DialogService);
   private readonly toast = inject(ToastController);
-  private readonly imagenes = inject(ImagenesService);
+  readonly imagenes = inject(ImagenesService);
   ngOnInit(): void {
     void this.cargar();
   }
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);
+  }
+  onFotoError(foto: string | null | undefined): void {
+    if (foto) {
+      this.imagenes.marcarFallida(foto);
+    }
+  }
+  onItemFotoError(foto: string | null | undefined): void {
+    if (foto) {
+      this.imagenes.marcarFallida(foto);
+    }
+  }
+  onComprobanteImgError(): void {
+    this.comprobanteImgError = true;
+  }
+  esImagenComprobante(): boolean {
+    if (!this.pedido?.comprobante) return false;
+    const mime = this.pedido.comprobante.mime?.toLowerCase() || '';
+    if (mime.includes('pdf')) return false;
+    if (mime.startsWith('image/')) return true;
+    const url = (this.pedido.comprobanteUrl || this.pedido.comprobante.nombre || '').toLowerCase();
+    if (url.includes('.pdf')) return false;
+    return true;
   }
   etiqueta(estado: EstadoPedidoCliente): string {
     return (
@@ -168,6 +191,10 @@ export class PedidoOnlineDetallePage implements OnInit {
     }
   }
   async verComprobante(): Promise<void> {
+    if (this.pedido?.comprobanteUrl) {
+      window.open(this.pedido.comprobanteUrl, '_blank');
+      return;
+    }
     if (!this.pedido?.comprobante) return;
     const ventana = window.open('', '_blank');
     if (ventana) ventana.opener = null;
@@ -195,12 +222,13 @@ export class PedidoOnlineDetallePage implements OnInit {
     }
   }
   private async cargar(): Promise<void> {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isInteger(id) || id <= 0) {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
       await this.router.navigateByUrl('/pedidos-online');
       return;
     }
     this.cargando = true;
+    this.comprobanteImgError = false;
     try {
       this.pedido = await firstValueFrom(this.api.detalle(id));
     } catch (e: unknown) {

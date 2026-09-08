@@ -54,9 +54,18 @@ export interface PedidoClienteResumen {
   fechaRevision: string | null;
 }
 
+export interface ComprobantePedidoInfo {
+  nombre: string;
+  mime: string;
+  fecha: string | null;
+  url?: string | null;
+}
+
 export interface PedidoCliente extends PedidoClienteResumen {
   items: DetallePedidoCliente[];
   configuracionTransferencia: ConfiguracionTransferencia | null;
+  comprobanteUrl?: string | null;
+  comprobante?: ComprobantePedidoInfo | null;
 }
 
 export interface CrearPedidoRequest {
@@ -76,6 +85,7 @@ export interface ComprobantePedidoAdmin {
   nombre: string;
   mime: string;
   fecha: string | null;
+  url?: string | null;
 }
 
 export interface PedidoAdminResumen {
@@ -89,6 +99,7 @@ export interface PedidoAdminResumen {
   estado: EstadoPedidoCliente;
   fechaComprobante: string | null;
   comprobante: ComprobantePedidoAdmin | null;
+  comprobanteUrl?: string | null;
   fechaRevision: string | null;
   motivoRechazo: string | null;
   idVenta?: string | number | null;

@@ -78,8 +78,8 @@
             (click)="verComprobante()"
             class="shrink-0 inline-flex items-center gap-2 bg-surface-container-lowest hover:bg-surface-container text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
           >
-            <span class="material-symbols-outlined text-[18px] text-primary">visibility</span>
-            Ver comprobante
+            <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+            Ver en otra pestaña
           </button>
         </section>
 
@@ -363,6 +363,85 @@
                 </div>
               </div>
             </aside>
+
+            <!-- Tarjeta: Comprobante Recibido con Preview -->
+            <section
+              *ngIf="actual.tieneComprobante"
+              class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+            >
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-lg">receipt_long</span>
+                  </div>
+                  <div>
+                    <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Tu pago</span>
+                    <h2 class="font-heading font-bold text-base text-on-surface">Comprobante</h2>
+                  </div>
+                </div>
+                <span class="text-[10px] font-sans font-bold uppercase px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                  Adjunto
+                </span>
+              </div>
+
+              <!-- Preview visual si es imagen -->
+              <div
+                *ngIf="esImagenComprobante() && actual.comprobanteUrl && !comprobanteImgError; else previewAlternativo"
+                class="relative group rounded-2xl overflow-hidden border border-surface-variant/30 bg-surface-container-low"
+              >
+                <img
+                  [src]="actual.comprobanteUrl"
+                  [alt]="actual.comprobante?.nombre || 'Comprobante de pago'"
+                  class="w-full max-h-60 object-contain mx-auto transition-transform duration-300 group-hover:scale-[1.02] cursor-pointer"
+                  (click)="verComprobante()"
+                  (error)="onComprobanteImgError()"
+                />
+                <!-- Overlay con botón al pasar el mouse o tocar -->
+                <div
+                  class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 cursor-pointer"
+                  (click)="verComprobante()"
+                >
+                  <button
+                    type="button"
+                    (click)="verComprobante(); $event.stopPropagation()"
+                    class="bg-surface-container-lowest/95 hover:bg-surface-container-lowest text-on-surface font-sans font-semibold text-xs py-2 px-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span class="material-symbols-outlined text-[16px] text-primary">open_in_new</span>
+                    Ver en otra pestaña
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview alternativo si es PDF o no cargó la imagen -->
+              <ng-template #previewAlternativo>
+                <div class="p-3.5 bg-surface-container rounded-2xl border border-surface-variant/30 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-error/10 text-error flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-2xl">
+                      {{ actual.comprobante?.mime === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
+                    </span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <strong class="font-sans font-semibold text-xs text-on-surface block truncate" [title]="actual.comprobante?.nombre || 'Comprobante adjunto'">
+                      {{ actual.comprobante?.nombre || 'Comprobante adjunto' }}
+                    </strong>
+                    <span class="font-sans text-[11px] text-on-surface-variant block mt-0.5" *ngIf="actual.fechaComprobante">
+                      {{ actual.fechaComprobante | date:'short' }}
+                    </span>
+                  </div>
+                </div>
+              </ng-template>
+
+              <!-- Botón Ver en otra pestaña -->
+              <button
+                type="button"
+                (click)="verComprobante()"
+                class="w-full inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+                Abrir en otra pestaña
+              </button>
+            </section>
 
           </div>
 

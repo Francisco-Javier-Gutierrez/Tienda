@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
-import { verificarToken } from '../utils/security';
+import { clienteSeguro, verificarToken } from '../utils/security';
 import { idValido } from '../utils/formatters';
 
 export async function autenticar(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -96,16 +96,11 @@ export async function autenticarCliente(req: Request, res: Response, next: NextF
     }
 
     req.cliente = {
-      idCliente: cliente.idCliente,
-      nombre: cliente.nombreCliente,
-      apellidoPat: cliente.apellidoPatCliente,
-      apellidoMat: cliente.apellidoMatCliente,
-      correo: cliente.correoCliente,
-      fotoPerfil: cliente.fotoPerfil,
-      estadoCliente: Boolean(cliente.estadoCliente),
-      fechaRegistro: cliente.fechaRegistro,
-      ultimoAcceso: cliente.ultimoAcceso,
-      rol: 'CLIENTE',
+      ...clienteSeguro(cliente),
+      nombreCliente: cliente.nombreCliente,
+      apellidoPatCliente: cliente.apellidoPatCliente,
+      apellidoMatCliente: cliente.apellidoMatCliente,
+      correoCliente: cliente.correoCliente,
     };
 
     next();

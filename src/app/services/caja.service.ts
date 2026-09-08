@@ -40,7 +40,7 @@ export class CajaService {
     for (const [k, v] of Object.entries(filtros)) if (v !== undefined && v !== '') params = params.set(k, String(v));
     return this.http.get<Caja[]>(`${this.api}/caja/historial`, { params });
   }
-  detalle(id: number): Observable<Caja> {
+  detalle(id: string | number): Observable<Caja> {
     return this.http.get<Caja>(`${this.api}/caja/${id}`);
   }
 }

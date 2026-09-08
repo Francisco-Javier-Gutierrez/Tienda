@@ -3,7 +3,9 @@ import path from 'path';
 import Hashids from 'hashids';
 import { env } from '../config/env';
 
-const hashids = new Hashids(env.JWT_SECRET || 'TiendaSecret123', 8);
+const primarySalt = env.HASHIDS_SALT || 'TiendaHashidsSaltSecret2026';
+const hashids = new Hashids(primarySalt, 8);
+const fallbackHashids = env.JWT_SECRET ? new Hashids(env.JWT_SECRET, 8) : null;
 
 export function encodeId(id: number | null | undefined): string | null {
   if (id === null || id === undefined) return null;
@@ -14,6 +16,10 @@ export function idValido(id: unknown): number | null {
   if (typeof id === 'string' && isNaN(Number(id))) {
     const decoded = hashids.decode(id);
     if (decoded.length > 0) return Number(decoded[0]);
+    if (fallbackHashids) {
+      const fallbackDecoded = fallbackHashids.decode(id);
+      if (fallbackDecoded.length > 0) return Number(fallbackDecoded[0]);
+    }
   }
   const n = Number(id);
   return Number.isInteger(n) && n > 0 ? n : null;

@@ -161,9 +161,9 @@
               <div class="flex items-center gap-4 min-w-0">
                 <!-- Avatar -->
                 <div class="w-14 h-14 rounded-2xl bg-primary-container/20 border border-primary/20 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
-                  <img *ngIf="resolverFoto(e.fotoPerfil) as foto; else avatarFallback" [src]="foto" [alt]="e.nombre" class="w-full h-full object-cover" />
+                  <img *ngIf="resolverFoto(e.fotoPerfil) as foto; else avatarFallback" [src]="foto" (error)="onFotoError(e.fotoPerfil)" referrerpolicy="no-referrer" [alt]="e.nombre" class="w-full h-full object-cover" />
                   <ng-template #avatarFallback>
-                    <span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+                    <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
                   </ng-template>
                 </div>
 

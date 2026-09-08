@@ -4,6 +4,7 @@ import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { EstadoPedidoCliente, PedidoAdminResumen } from '../models/pedido-cliente';
 import { PedidosAdminService } from '../services/pedidos-admin.service';
+import { ImagenesService } from '../services/imagenes.service';
 
 @Component({
   selector: 'app-pedidos-online',
@@ -31,8 +32,18 @@ export class PedidosOnlinePage implements OnInit {
 
   private readonly api = inject(PedidosAdminService);
   private readonly toast = inject(ToastController);
+  readonly imagenes = inject(ImagenesService);
+
   ngOnInit(): void {
     void this.cargar();
+  }
+
+  imagen(ruta: string | null | undefined): string | null {
+    return this.imagenes.resolver(ruta);
+  }
+
+  onFotoError(foto: string | null | undefined): void {
+    if (foto) this.imagenes.marcarFallida(foto);
   }
   get filtrados(): PedidoAdminResumen[] {
     const q = this.busqueda.trim().toLocaleLowerCase('es');

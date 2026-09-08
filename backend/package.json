@@ -10,6 +10,7 @@
     "db:init": "node scripts/init-db-postgres.js",
     "db:sync-sequences": "node scripts/sync-sequences.js",
     "prisma:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "prisma:seed": "node prisma/seed.js",
     "test": "jest --runInBand",
     "test:coverage": "jest --coverage --runInBand",
@@ -30,6 +31,7 @@
     "express-rate-limit": "^8.6.2",
     "google-auth-library": "^11.0.2",
     "hashids": "^2.3.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "pg": "^8.23.0"

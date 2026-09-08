@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { env } from '../config/env';
 
 export function errorServidor(
   res: Response,
@@ -18,7 +19,12 @@ export function errorServidor(
   }
 
   const status = typeof error?.status === 'number' ? error.status : 500;
-  const message = typeof error?.message === 'string' ? error.message : mensajeFallback;
+  const message =
+    status >= 500 && env.NODE_ENV === 'production'
+      ? mensajeFallback
+      : typeof error?.message === 'string'
+        ? error.message
+        : mensajeFallback;
   const payload = error?.payload;
 
   return res.status(status).json({ message, ...(payload && { payload }) });

@@ -19,6 +19,7 @@ export class PedidoDetallePage implements OnInit {
   cargando = true;
   procesando = false;
   archivo: File | null = null;
+  comprobanteImgError = false;
   private readonly api = inject(PedidosClienteService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -100,7 +101,25 @@ export class PedidoDetallePage implements OnInit {
       this.procesando = false;
     }
   }
+  esImagenComprobante(): boolean {
+    if (!this.pedido?.tieneComprobante) return false;
+    const mime = this.pedido.comprobante?.mime?.toLowerCase() || '';
+    if (mime.includes('pdf')) return false;
+    if (mime.startsWith('image/')) return true;
+    const url = (this.pedido.comprobanteUrl || this.pedido.comprobante?.nombre || '').toLowerCase();
+    if (url.includes('.pdf')) return false;
+    return true;
+  }
+
+  onComprobanteImgError(): void {
+    this.comprobanteImgError = true;
+  }
+
   async verComprobante(): Promise<void> {
+    if (this.pedido?.comprobanteUrl) {
+      window.open(this.pedido.comprobanteUrl, '_blank');
+      return;
+    }
     if (!this.pedido?.tieneComprobante) return;
     const ventana = window.open('', '_blank');
     if (ventana) ventana.opener = null;
@@ -139,12 +158,13 @@ export class PedidoDetallePage implements OnInit {
     }
   }
   private async cargar(): Promise<void> {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isInteger(id) || id <= 0) {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
       await this.router.navigateByUrl('/mis-pedidos');
       return;
     }
     this.cargando = true;
+    this.comprobanteImgError = false;
     try {
       this.pedido = await firstValueFrom(this.api.detalle(id));
     } catch (e: unknown) {

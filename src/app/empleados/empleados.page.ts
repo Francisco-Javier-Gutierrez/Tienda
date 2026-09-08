@@ -21,7 +21,7 @@ export class EmpleadosPage implements OnInit {
   private readonly api = inject(EmpleadosService);
   private readonly toast = inject(ToastController);
   private readonly dialog = inject(DialogService);
-  private readonly imagenes = inject(ImagenesService);
+  readonly imagenes = inject(ImagenesService);
 
   /* Datos */
   empleados: EmpleadoSesion[] = [];
@@ -55,6 +55,12 @@ export class EmpleadosPage implements OnInit {
 
   resolverFoto(foto: string | null | undefined): string | null {
     return this.imagenes.resolver(foto);
+  }
+
+  onFotoError(foto: string | null | undefined): void {
+    if (foto) {
+      this.imagenes.marcarFallida(foto);
+    }
   }
 
   private async cargarDatos(): Promise<void> {

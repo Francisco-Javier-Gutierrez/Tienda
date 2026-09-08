@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ItemCarrito } from '../models/carrito';
 import { PedidoCliente } from '../models/pedido-cliente';
 import { CarritoService } from '../services/carrito.service';
 import { ImagenesService } from '../services/imagenes.service';
@@ -37,6 +38,7 @@ export class CheckoutPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastController);
   private readonly router = inject(Router);
+  private readonly imagenesConError = new Set<string>();
 
   ngOnInit(): void {
     if (!this.carrito.items.length) return;
@@ -53,6 +55,18 @@ export class CheckoutPage implements OnInit {
 
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);
+  }
+
+  imagenUrl(item: ItemCarrito): string | null {
+    if (!item.imagen || this.imagenesConError.has(item.id)) return null;
+    return this.imagenes.resolver(item.imagen);
+  }
+
+  onImageError(item: ItemCarrito): void {
+    this.imagenesConError.add(item.id);
+    if (item.imagen) {
+      this.imagenes.marcarFallida(item.imagen);
+    }
   }
 
   async generarPedido(): Promise<void> {

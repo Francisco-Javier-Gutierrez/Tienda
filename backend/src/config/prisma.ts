@@ -11,9 +11,8 @@ export const prisma: PrismaClient =
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   });
 
-if (process.env.NODE_ENV !== 'production') {
-  global.__prismaClient = prisma;
-}
+// En entornos Serverless (Vercel/Lambda), reutilizar el cliente en contenedores activos (warm)
+global.__prismaClient = prisma;
 
 export type TransactionClient = Prisma.TransactionClient;
 export type DbClient = PrismaClient | TransactionClient;

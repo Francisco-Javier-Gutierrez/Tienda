@@ -43,7 +43,7 @@ export class VentasService {
 
     const cantidades = new Map<number, number>();
     for (const item of body.items) {
-      const idPro = idValido(item?.idPro);
+      const idPro = idValido(item?.idPro ?? item?.id ?? item?.productoId);
       const cantidad = Number(item?.cantidad);
       if (!idPro || !Number.isInteger(cantidad) || cantidad <= 0) {
         throw errorFuncional('Los productos o cantidades no son válidos', 400);

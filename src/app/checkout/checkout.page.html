@@ -42,9 +42,22 @@
               <div class="flex flex-col gap-4">
                 <article *ngFor="let item of carrito.items" class="flex items-center justify-between group">
                   <div class="flex items-center gap-3">
-                    <div class="w-14 h-14 rounded-lg bg-surface-container-high overflow-hidden flex-shrink-0 border border-surface-variant/30">
-                      <img *ngIf="imagen(item.imagen) as src; else placeholder" [src]="src" [alt]="item.nombre" class="w-full h-full object-cover mix-blend-multiply p-1"/>
-                      <ng-template #placeholder><span class="w-full h-full flex items-center justify-center text-outline-variant material-symbols-outlined">image</span></ng-template>
+                    <div class="w-14 h-14 rounded-xl bg-surface-container/40 border border-surface-variant/20 overflow-hidden flex-shrink-0 flex items-center justify-center relative select-none">
+                      <img
+                        *ngIf="imagenUrl(item) as src; else placeholder"
+                        [src]="src"
+                        [alt]="item.nombre"
+                        class="w-full h-full object-cover"
+                        (error)="onImageError(item)"
+                      />
+                      <ng-template #placeholder>
+                        <div class="flex flex-col items-center justify-center text-outline-variant/60 gap-0.5 select-none w-full h-full">
+                          <div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-outline-variant/80 border border-outline-variant/20">
+                            <span class="material-symbols-outlined text-[15px]">inventory_2</span>
+                          </div>
+                          <span class="text-[8px] font-sans font-medium text-outline-variant leading-none">Sin foto</span>
+                        </div>
+                      </ng-template>
                     </div>
                     <div class="flex flex-col pr-2">
                       <span class="font-sans font-semibold text-sm text-on-surface line-clamp-1">{{ item.nombre }}</span>

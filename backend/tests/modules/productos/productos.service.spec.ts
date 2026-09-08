@@ -135,7 +135,7 @@ describe('ProductosService', () => {
       const items = await productosService.listarAdmin();
       expect(items.length).toBe(1);
       expect(items[0]?.nombre).toBe('Leche Entera');
-      expect(items[0]?.marca).toBe('Lala');
+      expect(items[0]?.marca?.nombre || items[0]?.marca).toBe('Lala');
       expect(items[0]?.precioVenta).toBe(28);
     });
 

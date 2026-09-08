@@ -56,7 +56,7 @@
             </span>
             <span class="flex items-center gap-1.5">
               <span class="material-symbols-outlined text-[15px] text-primary">person</span>
-              {{ v.cajero }}
+              {{ obtenerNombreCajero(v.cajero) }}
             </span>
           </div>
         </div>
@@ -310,7 +310,7 @@
     </h3>
     <p>Folio: {{ v.id }}</p>
     <p>{{ v.fecha }} · {{ v.hora }}</p>
-    <p>Cajero: {{ v.cajero }}</p>
+    <p>Cajero: {{ obtenerNombreCajero(v.cajero) }}</p>
     <div class="ticket-divider"></div>
 
     <div class="ticket-item" *ngFor="let item of v.items">
