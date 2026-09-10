@@ -1,10 +1,18 @@
 import crypto from 'crypto';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import multer from 'multer';
 import { extensionesComprobante, extensionesImagen } from '../config/s3';
 
-export const baseUploadsDir = path.join(__dirname, '../../uploads');
+const isServerless = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT,
+);
+
+export const baseUploadsDir = isServerless
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(__dirname, '../../uploads');
+
 export const productosUploadDir = path.join(baseUploadsDir, 'productos');
 export const tiendaUploadDir = path.join(baseUploadsDir, 'tienda');
 export const comprobantesUploadDir = path.join(baseUploadsDir, 'comprobantes');
@@ -15,14 +23,23 @@ for (const dir of [baseUploadsDir, productosUploadDir, tiendaUploadDir, comproba
       fs.mkdirSync(dir, { recursive: true });
     }
   } catch {
-    // Ignorar en entornos serverless de solo lectura (como Vercel/AWS Lambda)
+    // Ignorar en entornos serverless de solo lectura
   }
 }
 
 function crearUploadImagen(directorio: string) {
   return multer({
     storage: multer.diskStorage({
-      destination: directorio,
+      destination: (_req, _file, callback) => {
+        try {
+          if (!fs.existsSync(directorio)) {
+            fs.mkdirSync(directorio, { recursive: true });
+          }
+        } catch {
+          // Ignorar si falla creación dinámica
+        }
+        callback(null, directorio);
+      },
       filename: (_req, file, callback) =>
         callback(null, `${crypto.randomUUID()}${extensionesImagen.get(file.mimetype) || ''}`),
     }),
@@ -41,7 +58,16 @@ export const uploadLogo = crearUploadImagen(tiendaUploadDir);
 
 export const uploadComprobante = multer({
   storage: multer.diskStorage({
-    destination: comprobantesUploadDir,
+    destination: (_req, _file, callback) => {
+      try {
+        if (!fs.existsSync(comprobantesUploadDir)) {
+          fs.mkdirSync(comprobantesUploadDir, { recursive: true });
+        }
+      } catch {
+        // Ignorar si falla creación dinámica
+      }
+      callback(null, comprobantesUploadDir);
+    },
     filename: (_req, file, callback) =>
       callback(null, `${crypto.randomUUID()}${extensionesComprobante.get(file.mimetype) || ''}`),
   }),
