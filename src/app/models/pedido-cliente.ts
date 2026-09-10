@@ -10,8 +10,8 @@ export interface ConfiguracionTransferencia {
 }
 
 export interface ConfiguracionTransferenciaAdmin extends ConfiguracionTransferencia {
-  idConfiguracion: number;
-  idSuc: number;
+  idConfiguracion: string;
+  idSuc: string;
   activo: boolean;
   fechaActualizacion: string;
 }
@@ -26,7 +26,9 @@ export interface ConfiguracionTransferenciaDto {
 }
 
 export interface DetallePedidoCliente {
-  idPro: number;
+  id?: string;
+  productoId?: string;
+  idPro?: string | number;
   nombre: string;
   imagen: string | null;
   presentacion: string | null;
@@ -36,7 +38,8 @@ export interface DetallePedidoCliente {
 }
 
 export interface PedidoClienteResumen {
-  idPedido: number;
+  id: string;
+  idPedido?: string | number;
   folio: string;
   uuidPedido: string;
   fechaPedido: string;
@@ -46,22 +49,33 @@ export interface PedidoClienteResumen {
   tieneComprobante: boolean;
   fechaComprobante: string | null;
   motivoRechazo: string | null;
-  idVenta: number | null;
+  idVenta?: string | number | null;
+  ventaId?: string | number | null;
   fechaRevision: string | null;
+}
+
+export interface ComprobantePedidoInfo {
+  nombre: string;
+  mime: string;
+  fecha: string | null;
+  url?: string | null;
 }
 
 export interface PedidoCliente extends PedidoClienteResumen {
   items: DetallePedidoCliente[];
   configuracionTransferencia: ConfiguracionTransferencia | null;
+  comprobanteUrl?: string | null;
+  comprobante?: ComprobantePedidoInfo | null;
 }
 
 export interface CrearPedidoRequest {
   uuidPedido: string;
-  items: Array<{ idPro: number; cantidad: number }>;
+  items: Array<{ id?: string; productoId?: string; idPro?: string | number; cantidad: number }>;
 }
 
 export interface ClientePedidoAdmin {
-  idCliente: number;
+  id: string;
+  idCliente?: string | number;
   nombre: string;
   correo: string;
   foto: string | null;
@@ -71,10 +85,12 @@ export interface ComprobantePedidoAdmin {
   nombre: string;
   mime: string;
   fecha: string | null;
+  url?: string | null;
 }
 
 export interface PedidoAdminResumen {
-  idPedido: number;
+  id: string;
+  idPedido?: string | number;
   folio: string;
   uuidPedido: string;
   fechaPedido: string;
@@ -83,9 +99,11 @@ export interface PedidoAdminResumen {
   estado: EstadoPedidoCliente;
   fechaComprobante: string | null;
   comprobante: ComprobantePedidoAdmin | null;
+  comprobanteUrl?: string | null;
   fechaRevision: string | null;
   motivoRechazo: string | null;
-  idVenta: number | null;
+  idVenta?: string | number | null;
+  ventaId?: string | number | null;
   cliente: ClientePedidoAdmin;
 }
 

@@ -1,17 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-
 import { Component, inject, OnInit } from '@angular/core';
-
 import { ToastController } from '@ionic/angular';
-
 import { firstValueFrom } from 'rxjs';
-
 import { EmpleadoSesion } from '../models/auth';
 import { Cargo } from '../models/cargo';
-
-import { EmpleadoDto, EmpleadosService } from '../services/empleados.service';
-
 import { AuthService } from '../services/auth.service';
+import { DialogService } from '../services/dialog.service';
+import { EmpleadoDto, EmpleadosService } from '../services/empleados.service';
+import { ImagenesService } from '../services/imagenes.service';
 
 @Component({
   selector: 'app-empleados',
@@ -20,58 +16,61 @@ import { AuthService } from '../services/auth.service';
   standalone: false,
 })
 export class EmpleadosPage implements OnInit {
-  /* =========================================
-     SERVICIOS
-  ========================================= */
-
+  /* Servicios */
   readonly auth = inject(AuthService);
-
   private readonly api = inject(EmpleadosService);
-
   private readonly toast = inject(ToastController);
+  private readonly dialog = inject(DialogService);
+  readonly imagenes = inject(ImagenesService);
 
-  /* =========================================
-     DATOS
-  ========================================= */
-
+  /* Datos */
   empleados: EmpleadoSesion[] = [];
-
   cargos: Cargo[] = [];
-
   cargando = true;
 
-  /* =========================================
-     MODAL
-  ========================================= */
+  /* Filtros y búsqueda */
+  busqueda = '';
+  filtro: 'todos' | 'activos' | 'inactivos' | 'cajeros' = 'todos';
 
+  /* Modal */
   modal = false;
-
   guardando = false;
-
-  editando: number | null = null;
-
+  editando: string | null = null;
   form: EmpleadoDto = this.vacio();
 
-  /* =========================================
-     INICIO
-  ========================================= */
+  errores = {
+    nombre: '',
+    correo: '',
+    idCargo: '',
+    password: '',
+  };
 
   ngOnInit(): void {
     void this.cargarDatos();
   }
 
+  ionViewWillEnter(): void {
+    void this.cargarDatos();
+  }
+
+  resolverFoto(foto: string | null | undefined): string | null {
+    return this.imagenes.resolver(foto);
+  }
+
+  onFotoError(foto: string | null | undefined): void {
+    if (foto) {
+      this.imagenes.marcarFallida(foto);
+    }
+  }
+
   private async cargarDatos(): Promise<void> {
     this.cargando = true;
-
     try {
       const [empleados, cargos] = await Promise.all([
         firstValueFrom(this.api.listar()),
-
         firstValueFrom(this.api.cargos()),
       ]);
-
       this.empleados = empleados;
-
       this.cargos = cargos;
     } catch {
       await this.feedback('No fue posible cargar la información de empleados.', 'danger');
@@ -80,100 +79,117 @@ export class EmpleadosPage implements OnInit {
     }
   }
 
-  /* =========================================
-     ESTADÍSTICAS
-  ========================================= */
+  estaActivo(empleado: EmpleadoSesion): boolean {
+    if (typeof empleado?.estadoEmp === 'boolean') return empleado.estadoEmp;
+    if (typeof empleado?.estado === 'boolean') return empleado.estado;
+    return true;
+  }
 
+  /* Estadísticas */
   get totalEmpleados(): number {
     return this.empleados.length;
   }
 
   get empleadosActivos(): number {
-    return this.empleados.filter((empleado) => Boolean(empleado.estadoEmp)).length;
+    return this.empleados.filter((empleado) => this.estaActivo(empleado)).length;
   }
 
   get empleadosInactivos(): number {
-    return this.empleados.filter((empleado) => !Boolean(empleado.estadoEmp)).length;
+    return this.empleados.filter((empleado) => !this.estaActivo(empleado)).length;
   }
 
   get totalCajeros(): number {
     return this.empleados.filter((empleado) => String(empleado.cargo).toUpperCase() === 'CAJERO').length;
   }
 
-  /* =========================================
-     NUEVO EMPLEADO
-  ========================================= */
+  get filtrados(): EmpleadoSesion[] {
+    const q = this.busqueda.trim().toLocaleLowerCase('es');
+    return this.empleados.filter((e) => {
+      const activo = this.estaActivo(e);
+      if (this.filtro === 'activos' && !activo) return false;
+      if (this.filtro === 'inactivos' && activo) return false;
+      if (this.filtro === 'cajeros' && String(e.cargo).toUpperCase() !== 'CAJERO') return false;
 
+      if (!q) return true;
+      const nombreCompleto = `${e.nombreEmp || e.nombre || ''} ${e.apellidoPatEmp || ''} ${e.apellidoMatEmp || ''}`.toLocaleLowerCase('es');
+      return (
+        nombreCompleto.includes(q) ||
+        (e.correo && e.correo.toLowerCase().includes(q)) ||
+        (e.cargo && e.cargo.toLowerCase().includes(q)) ||
+        (e.telefono && e.telefono.includes(q))
+      );
+    });
+  }
+
+  /* Modal de creación */
   nuevo(): void {
     this.editando = null;
-
     this.form = this.vacio();
-
+    this.errores = { nombre: '', correo: '', idCargo: '', password: '' };
     this.modal = true;
   }
 
-  /* =========================================
-     EDITAR
-  ========================================= */
-
+  /* Modal de edición */
   editar(empleado: EmpleadoSesion): void {
-    this.editando = empleado.idEmp;
-
+    this.editando = empleado.id;
+    this.errores = { nombre: '', correo: '', idCargo: '', password: '' };
     this.form = {
-      nombre: empleado.nombreEmp || '',
-
+      nombre: empleado.nombreEmp || empleado.nombre || '',
       apellidoPat: empleado.apellidoPatEmp || '',
-
       apellidoMat: empleado.apellidoMatEmp || '',
-
       correo: empleado.correo,
-
       telefono: empleado.telefono || '',
-
       fechaIngreso: empleado.fechaIngreso?.slice(0, 10) || '',
-
       fotoPerfil: empleado.fotoPerfil || '',
-
-      idCargo: empleado.idCargo,
-
+      idCargo: (empleado.cargoId || empleado.idCargo) ?? null,
       password: '',
     };
-
     this.modal = true;
   }
 
-  /* =========================================
-     GUARDAR
-  ========================================= */
-
+  /* Guardar */
   async guardar(): Promise<void> {
-    if (this.guardando) {
-      return;
+    if (this.guardando) return;
+
+    this.errores = { nombre: '', correo: '', idCargo: '', password: '' };
+    let valido = true;
+
+    if (!this.form.nombre.trim()) {
+      this.errores.nombre = 'El nombre es obligatorio.';
+      valido = false;
     }
 
-    if (!this.form.nombre.trim() || !this.form.correo.trim() || !this.form.idCargo) {
-      await this.feedback('Nombre, correo y cargo son obligatorios.', 'warning');
+    if (!this.form.correo.trim()) {
+      this.errores.correo = 'El correo electrónico es obligatorio.';
+      valido = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.correo)) {
+      this.errores.correo = 'El formato de correo no es válido.';
+      valido = false;
+    }
 
-      return;
+    if (!this.form.idCargo) {
+      this.errores.idCargo = 'Debes seleccionar un cargo.';
+      valido = false;
     }
 
     if (this.form.password && this.form.password.length < 8) {
-      await this.feedback('La contraseña debe tener al menos 8 caracteres.', 'warning');
+      this.errores.password = 'La contraseña debe tener al menos 8 caracteres.';
+      valido = false;
+    }
 
+    if (!valido) {
+      await this.feedback('Verifica los campos señalados.', 'warning');
       return;
     }
 
     this.guardando = true;
-
     try {
       const empleado = this.editando
         ? await firstValueFrom(this.api.editar(this.editando, this.form))
         : await firstValueFrom(this.api.crear(this.form));
 
       this.empleados = this.upsert(empleado);
-
       this.modal = false;
-
       await this.feedback(
         this.editando ? 'Empleado actualizado correctamente.' : 'Empleado registrado correctamente.',
         'success',
@@ -183,7 +199,6 @@ export class EmpleadosPage implements OnInit {
         error instanceof HttpErrorResponse && error.error?.message
           ? error.error.message
           : 'No pudimos guardar el empleado.',
-
         'danger',
       );
     } finally {
@@ -191,19 +206,31 @@ export class EmpleadosPage implements OnInit {
     }
   }
 
-  /* =========================================
-     ACTIVAR / DESACTIVAR
-  ========================================= */
-
+  /* Cambiar estado con confirmación */
   async cambiarEstado(empleado: EmpleadoSesion): Promise<void> {
+    const id = empleado.id || empleado.idEmp;
+    if (!id) return;
+
+    const activo = this.estaActivo(empleado);
+    const accion = activo ? 'Desactivar' : 'Activar';
+    const confirmado = await this.dialog.confirm({
+      title: `${accion} empleado`,
+      message: activo
+        ? `¿Estás seguro de desactivar a "${empleado.nombre || empleado.nombreEmp}"? Ya no podrá iniciar sesión ni acceder al sistema.`
+        : `¿Deseas activar a "${empleado.nombre || empleado.nombreEmp}" para habilitar su acceso al sistema?`,
+      type: activo ? 'danger' : 'success',
+      icon: activo ? 'pause_circle' : 'check_circle',
+      confirmText: accion,
+      cancelText: 'Cancelar',
+    });
+
+    if (!confirmado) return;
+
     try {
-      const actualizado = await firstValueFrom(this.api.estado(empleado.idEmp, !empleado.estadoEmp));
-
+      const actualizado = await firstValueFrom(this.api.estado(id, !activo));
       this.empleados = this.upsert(actualizado);
-
       await this.feedback(
-        actualizado.estadoEmp ? 'Empleado activado.' : 'Empleado desactivado.',
-
+        this.estaActivo(actualizado) ? 'Empleado activado con éxito.' : 'Empleado desactivado.',
         'success',
       );
     } catch {
@@ -211,61 +238,36 @@ export class EmpleadosPage implements OnInit {
     }
   }
 
-  /* =========================================
-     UPSERT LOCAL
-  ========================================= */
-
   private upsert(empleado: EmpleadoSesion): EmpleadoSesion[] {
-    const existe = this.empleados.some((item) => item.idEmp === empleado.idEmp);
-
+    const existe = this.empleados.some((item) => item.id === empleado.id);
     if (existe) {
-      return this.empleados.map((item) => (item.idEmp === empleado.idEmp ? empleado : item));
+      return this.empleados.map((item) => (item.id === empleado.id ? empleado : item));
     }
-
     return [...this.empleados, empleado];
   }
-
-  /* =========================================
-     FORM VACÍO
-  ========================================= */
 
   private vacio(): EmpleadoDto {
     return {
       nombre: '',
-
       apellidoPat: '',
-
       apellidoMat: '',
-
       correo: '',
-
       telefono: '',
-
       fechaIngreso: '',
-
       fotoPerfil: '',
-
       idCargo: null,
-
       password: '',
     };
   }
 
-  /* =========================================
-     TOAST
-  ========================================= */
-
   private async feedback(message: string, color: 'success' | 'danger' | 'warning'): Promise<void> {
     const toast = await this.toast.create({
       message,
-
       color,
-
       duration: 3000,
-
       position: 'top',
     });
-
     await toast.present();
   }
 }
+

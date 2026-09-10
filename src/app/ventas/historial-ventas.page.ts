@@ -28,12 +28,16 @@ export class HistorialVentasPage implements OnInit {
     void this.cargar();
   }
 
+  ionViewWillEnter(): void {
+    void this.cargar();
+  }
+
   /* =========================================
      VENTAS COMPLETADAS
   ========================================= */
 
   get ventasCompletadas(): number {
-    return this.ventas.filter((venta) => venta.estadoVenta === 'COMPLETADA').length;
+    return this.ventas.filter((venta) => venta.estado === 'COMPLETADA').length;
   }
 
   /* =========================================
@@ -41,7 +45,7 @@ export class HistorialVentasPage implements OnInit {
   ========================================= */
 
   get ventasCanceladas(): number {
-    return this.ventas.filter((venta) => venta.estadoVenta === 'CANCELADA').length;
+    return this.ventas.filter((venta) => venta.estado === 'CANCELADA').length;
   }
 
   /* =========================================
@@ -52,7 +56,7 @@ export class HistorialVentasPage implements OnInit {
   get totalVendido(): number {
     return this.ventas
 
-      .filter((venta) => venta.estadoVenta === 'COMPLETADA')
+      .filter((venta) => venta.estado === 'COMPLETADA')
 
       .reduce((total, venta) => total + Number(venta.total), 0);
   }
@@ -84,5 +88,15 @@ export class HistorialVentasPage implements OnInit {
     } finally {
       this.cargando = false;
     }
+  }
+
+  /* =========================================
+     FORMATEAR FOLIO (ID ENCRIPTADO)
+  ========================================= */
+
+  formatearFolio(id: string | null | undefined): string {
+    if (!id) return '---';
+    const limpio = id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return limpio.length > 8 ? limpio.substring(0, 8) : limpio;
   }
 }

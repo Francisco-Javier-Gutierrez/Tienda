@@ -1,16 +1,14 @@
 export interface Empleado {
-  idEmp?: number;
-  nombreEmp?: string;
-  apellidoPatEmp?: string;
-  apellidoMatEmp?: string;
-  edadPer?: number;
-  generoPer?: string;
-  fechaIngreso?: string;
-  fechaEntrada?: string;
-  fechaSalida?: string;
-  correoEmp?: string;
+  id?: string;
+  nombreCompleto?: string;
+  nombre?: string;
+  apellidoPat?: string;
+  apellidoMat?: string;
+  correo?: string;
   telefono?: string;
+  fechaIngreso?: string;
   fotoPerfil?: string;
-  idDir?: number;
-  idCargo?: number;
+  estado?: string;
+  cargo?: string;
+  sucursal?: string;
 }

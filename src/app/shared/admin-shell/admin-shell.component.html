@@ -1,119 +1,283 @@
-<ion-split-pane [contentId]="contentId" when="(min-width: 992px)">
-  <ion-menu side="start" [contentId]="contentId" [menuId]="menuId" type="overlay" class="admin-menu">
-    <ion-header class="admin-menu-header">
-      <ion-toolbar>
-        <div class="store-brand">
-          <div class="brand-logo">
-            <img *ngIf="resolverLogo() as logo; else logoFallback" [src]="logo" alt="Logo de la tienda" />
-            <ng-template #logoFallback><ion-icon name="storefront-outline"></ion-icon></ng-template>
-          </div>
-          <div class="brand-copy">
-            <strong>{{ nombreTienda }}</strong
-            ><small>Administración</small>
-          </div>
-        </div>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="admin-menu-content">
-      <ion-list lines="none">
-        <ion-menu-toggle [autoHide]="false">
-          <ng-container *ngIf="esAdministrador">
-            <div class="menu-section-label">Inicio</div>
-            <ion-item
-              button
-              detail="false"
-              routerLink="/home"
-              [queryParams]="{ seccion: 'inicio' }"
-              [class.menu-active]="activeSection === 'inicio'"
-            >
-              <ion-icon slot="start" name="home-outline"></ion-icon><ion-label>Inicio</ion-label>
-            </ion-item>
-
-            <div class="menu-section-label">Gestión</div>
-            <ion-item
-              button
-              detail="false"
-              routerLink="/home"
-              [queryParams]="{ seccion: 'productos' }"
-              [class.menu-active]="activeSection === 'productos'"
-            >
-              <ion-icon slot="start" name="cube-outline"></ion-icon><ion-label>Productos</ion-label>
-            </ion-item>
-            <ion-item
-              button
-              detail="false"
-              routerLink="/home"
-              [queryParams]="{ seccion: 'categorias' }"
-              [class.menu-active]="activeSection === 'categorias'"
-            >
-              <ion-icon slot="start" name="grid-outline"></ion-icon><ion-label>Categorías</ion-label>
-            </ion-item>
-            <ion-item
-              button
-              detail="false"
-              routerLink="/home"
-              [queryParams]="{ seccion: 'marcas' }"
-              [class.menu-active]="activeSection === 'marcas'"
-            >
-              <ion-icon slot="start" name="pricetag-outline"></ion-icon><ion-label>Marcas</ion-label>
-            </ion-item>
-
-            <div class="menu-section-label">Personal</div>
-            <ion-item button detail="false" routerLink="/empleados" [class.menu-active]="activeSection === 'empleados'">
-              <ion-icon slot="start" name="people-outline"></ion-icon><ion-label>Empleados</ion-label>
-            </ion-item>
-          </ng-container>
-
-          <div class="menu-section-label">Operación</div>
-          <ion-item button detail="false" routerLink="/cajero" [class.menu-active]="activeSection === 'cajero'">
-            <ion-icon slot="start" name="cart-outline"></ion-icon><ion-label>Punto de venta</ion-label>
-          </ion-item>
-          <ion-item button detail="false" routerLink="/ventas" [class.menu-active]="activeSection === 'ventas'">
-            <ion-icon slot="start" name="receipt-outline"></ion-icon><ion-label>Ventas</ion-label>
-          </ion-item>
-          <ion-item
-            *ngIf="esAdministrador"
-            button
-            detail="false"
-            routerLink="/pedidos-online"
-            [class.menu-active]="activeSection === 'pedidos-online'"
-          >
-            <ion-icon slot="start" name="bag-check-outline"></ion-icon><ion-label>Pedidos online</ion-label>
-          </ion-item>
-
-          <ng-container *ngIf="esAdministrador">
-            <div class="menu-section-label">Sistema</div>
-            <ion-item
-              button
-              detail="false"
-              routerLink="/home"
-              [queryParams]="{ seccion: 'configuracion' }"
-              [class.menu-active]="activeSection === 'configuracion'"
-            >
-              <ion-icon slot="start" name="settings-outline"></ion-icon><ion-label>Configuración</ion-label>
-            </ion-item>
-          </ng-container>
-        </ion-menu-toggle>
-      </ion-list>
-
-      <div class="admin-user">
-        <div class="admin-avatar">
-          <img *ngIf="resolverAvatar() as avatar; else avatarFallback" [src]="avatar" alt="Foto del empleado" />
-          <ng-template #avatarFallback><ion-icon name="person-outline"></ion-icon></ng-template>
-        </div>
-        <div class="admin-user-copy">
-          <strong>{{ auth.sesion?.empleado?.nombre || 'Usuario' }}</strong>
-          <small>{{ auth.sesion?.empleado?.cargo || 'EMPLEADO' }}</small>
-        </div>
-        <ion-button fill="clear" aria-label="Cerrar sesión" title="Cerrar sesión" (click)="auth.logout()">
-          <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-        </ion-button>
+<div class="flex h-screen w-full overflow-hidden bg-surface relative" [id]="contentId">
+  
+  <!-- DESKTOP PERMANENT SIDEBAR (Visible on lg:flex, hidden on mobile/zoom) -->
+  <aside class="hidden lg:flex w-72 flex-col shrink-0 bg-surface-container-low border-r border-surface-variant/30 h-full select-none z-30 print:hidden">
+    
+    <!-- BRANDING -->
+    <div class="px-6 py-6 flex items-center gap-4 bg-surface-container-low shrink-0 border-b border-surface-variant/20">
+      <div class="w-11 h-11 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+        <img *ngIf="resolverLogo() as logo; else logoFallback" [src]="logo" alt="Logo de la tienda" class="w-full h-full object-cover" />
+        <ng-template #logoFallback>
+          <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">storefront</span>
+        </ng-template>
       </div>
-    </ion-content>
-  </ion-menu>
+      <div class="flex flex-col min-w-0">
+        <strong class="font-heading text-base font-bold text-primary tracking-tight leading-tight truncate">{{ nombreTienda }}</strong>
+        <small class="font-sans text-xs text-on-surface-variant">Administración</small>
+      </div>
+    </div>
 
-  <div class="ion-page admin-shell-content" [id]="contentId">
-    <ng-content></ng-content>
+    <!-- NAVIGATION LINKS -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar px-3 py-4 flex flex-col gap-1">
+      <ng-container *ngIf="esAdministrador">
+        <div class="px-3 py-1.5 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase">Inicio</div>
+        <a routerLink="/home" 
+           [class]="activeSection === 'inicio' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'inicio' ? '\'FILL\' 1' : '\'FILL\' 0'">dashboard</span>
+          Inicio
+        </a>
+
+        <div class="px-3 py-1.5 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-3">Gestión</div>
+        <a routerLink="/productos" 
+           [class]="activeSection === 'productos' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'productos' ? '\'FILL\' 1' : '\'FILL\' 0'">inventory_2</span>
+          Productos
+        </a>
+        <a routerLink="/categorias" 
+           [class]="activeSection === 'categorias' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'categorias' ? '\'FILL\' 1' : '\'FILL\' 0'">category</span>
+          Categorías
+        </a>
+        <a routerLink="/marcas" 
+           [class]="activeSection === 'marcas' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'marcas' ? '\'FILL\' 1' : '\'FILL\' 0'">sell</span>
+          Marcas
+        </a>
+
+        <div class="px-3 py-1.5 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-3">Personal</div>
+        <a routerLink="/empleados" 
+           [class]="activeSection === 'empleados' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'empleados' ? '\'FILL\' 1' : '\'FILL\' 0'">badge</span>
+          Empleados
+        </a>
+      </ng-container>
+
+      <div class="px-3 py-1.5 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-3">Operación</div>
+      <a routerLink="/cajero" 
+         [class]="activeSection === 'cajero' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'cajero' ? '\'FILL\' 1' : '\'FILL\' 0'">point_of_sale</span>
+        Punto de Venta
+      </a>
+      <a routerLink="/ventas" 
+         [class]="activeSection === 'ventas' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'ventas' ? '\'FILL\' 1' : '\'FILL\' 0'">receipt_long</span>
+        Ventas
+      </a>
+      <a routerLink="/catalogo" 
+         [class]="activeSection === 'catalogo' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'catalogo' ? '\'FILL\' 1' : '\'FILL\' 0'">storefront</span>
+        Catálogo
+      </a>
+      <a *ngIf="esAdministrador" routerLink="/pedidos-online" 
+         [class]="activeSection === 'pedidos-online' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'pedidos-online' ? '\'FILL\' 1' : '\'FILL\' 0'">shopping_bag</span>
+        Pedidos Online
+      </a>
+
+      <ng-container *ngIf="esAdministrador">
+        <div class="px-3 py-1.5 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-3">Sistema</div>
+        <a routerLink="/configuracion" 
+           [class]="activeSection === 'configuracion' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'configuracion' ? '\'FILL\' 1' : '\'FILL\' 0'">settings</span>
+          Configuración
+        </a>
+      </ng-container>
+    </div>
+
+    <!-- PROFILE / LOGOUT BOTTOM -->
+    <div class="p-3 bg-surface-container border-t border-surface-variant/30 shrink-0">
+      <div class="flex items-center justify-between">
+        <a routerLink="/perfil" class="flex items-center gap-3 overflow-hidden min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+          <div class="w-9 h-9 rounded-full bg-primary/10 overflow-hidden shrink-0 flex items-center justify-center">
+            <img
+              *ngIf="resolverAvatar() as avatar; else avatarFallback"
+              [src]="avatar"
+              alt="Foto"
+              class="w-full h-full object-cover"
+              referrerpolicy="no-referrer"
+              (error)="onAvatarError()"
+            />
+            <ng-template #avatarFallback>
+              <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
+            </ng-template>
+          </div>
+          <div class="flex flex-col truncate min-w-0">
+            <strong class="font-sans font-semibold text-xs text-on-surface truncate">{{ auth.sesion?.empleado?.nombre || 'Usuario' }}</strong>
+            <small class="font-sans text-[10px] text-on-surface-variant truncate">{{ auth.sesion?.empleado?.cargo || 'EMPLEADO' }}</small>
+          </div>
+        </a>
+        <button (click)="auth.logout()" class="p-2 text-error hover:bg-error/10 rounded-full transition-colors shrink-0" title="Cerrar sesión">
+          <span class="material-symbols-outlined text-xl">logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MOBILE / ZOOMED-IN TRANSLUCENT BACKDROP -->
+  <div
+    *ngIf="sidebarAbierto"
+    class="fixed inset-0 z-40 bg-black/25 backdrop-blur-sm transition-opacity duration-300 ease-in-out lg:hidden"
+    (click)="cerrarSidebar()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- MOBILE / ZOOMED-IN DRAWER -->
+  <aside
+    class="fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-surface-container-low shadow-2xl border-r border-surface-variant/30 flex flex-col transition-transform duration-300 ease-in-out transform lg:hidden select-none"
+    [class.translate-x-0]="sidebarAbierto"
+    [class.-translate-x-full]="!sidebarAbierto"
+  >
+    <!-- Drawer Header -->
+    <div class="px-5 py-5 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-surface-variant/20" style="padding-top: calc(1.25rem + var(--safe-area-top));">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 bg-primary-container text-on-primary-container rounded-2xl flex items-center justify-center shadow-sm overflow-hidden shrink-0">
+          <img *ngIf="resolverLogo() as logo; else logoFallbackMobile" [src]="logo" alt="Logo de la tienda" class="w-full h-full object-cover" />
+          <ng-template #logoFallbackMobile>
+            <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">storefront</span>
+          </ng-template>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <strong class="font-heading text-sm font-bold text-primary tracking-tight leading-tight truncate">{{ nombreTienda }}</strong>
+          <small class="font-sans text-[11px] text-on-surface-variant">Administración</small>
+        </div>
+      </div>
+      <button (click)="cerrarSidebar()" class="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 shrink-0" title="Cerrar menú">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Nav Links (Mobile) -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 flex flex-col gap-1">
+      <ng-container *ngIf="esAdministrador">
+        <div class="px-3 py-1 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase">Inicio</div>
+        <a routerLink="/home" (click)="cerrarSidebar()"
+           [class]="activeSection === 'inicio' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'inicio' ? '\'FILL\' 1' : '\'FILL\' 0'">dashboard</span>
+          Inicio
+        </a>
+
+        <div class="px-3 py-1 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-2.5">Gestión</div>
+        <a routerLink="/productos" (click)="cerrarSidebar()"
+           [class]="activeSection === 'productos' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'productos' ? '\'FILL\' 1' : '\'FILL\' 0'">inventory_2</span>
+          Productos
+        </a>
+        <a routerLink="/categorias" (click)="cerrarSidebar()"
+           [class]="activeSection === 'categorias' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'categorias' ? '\'FILL\' 1' : '\'FILL\' 0'">category</span>
+          Categorías
+        </a>
+        <a routerLink="/marcas" (click)="cerrarSidebar()"
+           [class]="activeSection === 'marcas' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'marcas' ? '\'FILL\' 1' : '\'FILL\' 0'">sell</span>
+          Marcas
+        </a>
+
+        <div class="px-3 py-1 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-2.5">Personal</div>
+        <a routerLink="/empleados" (click)="cerrarSidebar()"
+           [class]="activeSection === 'empleados' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'empleados' ? '\'FILL\' 1' : '\'FILL\' 0'">badge</span>
+          Empleados
+        </a>
+      </ng-container>
+
+      <div class="px-3 py-1 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-2.5">Operación</div>
+      <a routerLink="/cajero" (click)="cerrarSidebar()"
+         [class]="activeSection === 'cajero' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'cajero' ? '\'FILL\' 1' : '\'FILL\' 0'">point_of_sale</span>
+        Punto de Venta
+      </a>
+      <a routerLink="/ventas" (click)="cerrarSidebar()"
+         [class]="activeSection === 'ventas' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'ventas' ? '\'FILL\' 1' : '\'FILL\' 0'">receipt_long</span>
+        Ventas
+      </a>
+      <a routerLink="/catalogo" (click)="cerrarSidebar()"
+         [class]="activeSection === 'catalogo' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'catalogo' ? '\'FILL\' 1' : '\'FILL\' 0'">storefront</span>
+        Catálogo
+      </a>
+      <a *ngIf="esAdministrador" routerLink="/pedidos-online" (click)="cerrarSidebar()"
+         [class]="activeSection === 'pedidos-online' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'pedidos-online' ? '\'FILL\' 1' : '\'FILL\' 0'">shopping_bag</span>
+        Pedidos Online
+      </a>
+
+      <ng-container *ngIf="esAdministrador">
+        <div class="px-3 py-1 font-sans font-semibold text-[11px] text-outline tracking-wider uppercase mt-2.5">Sistema</div>
+        <a routerLink="/configuracion" (click)="cerrarSidebar()"
+           [class]="activeSection === 'configuracion' ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all' : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'">
+          <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="activeSection === 'configuracion' ? '\'FILL\' 1' : '\'FILL\' 0'">settings</span>
+          Configuración
+        </a>
+      </ng-container>
+    </div>
+
+    <!-- Profile & Logout (Mobile Bottom) -->
+    <div class="p-3 bg-surface-container border-t border-surface-variant/30 shrink-0" style="padding-bottom: calc(0.75rem + var(--safe-area-bottom));">
+      <div class="flex items-center justify-between">
+        <a routerLink="/perfil" (click)="cerrarSidebar()" class="flex items-center gap-3 overflow-hidden min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+          <div class="w-9 h-9 rounded-full bg-primary/10 overflow-hidden shrink-0 flex items-center justify-center">
+            <img
+              *ngIf="resolverAvatar() as avatar; else avatarFallbackMobile2"
+              [src]="avatar"
+              alt="Foto"
+              class="w-full h-full object-cover"
+              referrerpolicy="no-referrer"
+              (error)="onAvatarError()"
+            />
+            <ng-template #avatarFallbackMobile2>
+              <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
+            </ng-template>
+          </div>
+          <div class="flex flex-col truncate min-w-0">
+            <strong class="font-sans font-semibold text-xs text-on-surface truncate">{{ auth.sesion?.empleado?.nombre || 'Usuario' }}</strong>
+            <small class="font-sans text-[10px] text-on-surface-variant truncate">{{ auth.sesion?.empleado?.cargo || 'EMPLEADO' }}</small>
+          </div>
+        </a>
+        <button (click)="auth.logout()" class="p-2 text-error hover:bg-error/10 rounded-full transition-colors shrink-0" title="Cerrar sesión">
+          <span class="material-symbols-outlined text-xl">logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-surface">
+    <!-- Top Header -->
+    <header class="w-full z-30 flex justify-between items-center px-4 md:px-6 py-2.5 bg-surface shadow-sm shrink-0 border-b border-surface-variant/30 print:hidden"
+            style="padding-top: calc(0.625rem + var(--safe-area-top)); min-height: calc(4rem + var(--safe-area-top));">
+      <div class="flex items-center gap-3 md:gap-4 min-w-0">
+        <!-- Hamburger Button (Mobile / Zoom) -->
+        <button
+          type="button"
+          (click)="toggleSidebar()"
+          class="lg:hidden p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 flex items-center justify-center m-0 w-10 h-10 shrink-0"
+          aria-label="Abrir menú"
+        >
+          <span class="material-symbols-outlined text-2xl">menu</span>
+        </button>
+        <div class="min-w-0">
+          <h1 class="font-heading font-semibold text-lg md:text-2xl text-primary capitalize leading-tight truncate">
+            {{ customTitle || activeSection.replace('-', ' ') }}
+          </h1>
+          <ng-content select="[header-subtitle]"></ng-content>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 md:gap-4 shrink-0">
+        <ng-content select="[header-actions]"></ng-content>
+        <div class="hidden sm:flex items-center bg-surface-container rounded-full px-4 py-1.5 text-on-surface-variant font-sans font-semibold text-xs gap-2" *ngIf="showDateBadge && !customTitle">
+          <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+          Hoy
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full relative overflow-y-auto custom-scrollbar">
+      <ng-content></ng-content>
+    </main>
   </div>
-</ion-split-pane>
+
+</div>

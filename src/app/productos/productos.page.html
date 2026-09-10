@@ -1,0 +1,347 @@
+<app-admin-shell menuId="admin-productos-menu" contentId="admin-productos-content" activeSection="productos" customTitle="Inventario">
+
+  <div header-actions class="flex items-center gap-2 text-on-surface-variant">
+    <span class="text-xs md:text-sm font-sans font-medium mr-1">{{ productos.length }} prod.</span>
+    <button class="transition-all duration-200 active:scale-95 hover:bg-surface-container-high p-2 rounded-full flex items-center justify-center text-primary" (click)="escanearCodigoEnVivo()" title="Escanear código de barras">
+      <span class="material-symbols-outlined text-xl" data-icon="barcode_scanner">barcode_scanner</span>
+    </button>
+  </div>
+
+  <div class="px-4 md:px-6 py-6 max-w-7xl mx-auto pb-24 flex flex-col gap-6">
+        
+        <!-- Search & Filters -->
+        <section>
+          <div class="relative w-full mb-4 shadow-sm rounded-xl">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+            <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3.5 pl-12 pr-4 text-on-surface font-sans text-sm placeholder:text-outline-variant/80 focus:ring-1 focus:ring-primary focus:outline-none transition-shadow" placeholder="Buscar por nombre o código..." type="text" [(ngModel)]="busquedaProducto"/>
+          </div>
+          <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
+            <button class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroCategoria === 0 && filtroStock === 'todos' ? 'bg-primary-container text-white border-transparent shadow-sm' : 'bg-transparent text-primary border-outline-variant hover:bg-surface-variant'" (click)="filtroCategoria = 0; filtroStock = 'todos'">
+              Todos ({{ productos.length }})
+            </button>
+            <button class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroStock === 'bajo' ? 'bg-error-container text-on-error-container border-transparent shadow-sm' : 'bg-transparent text-secondary border-outline-variant hover:bg-surface-variant'" (click)="filtroStock = 'bajo'">
+              ⚠️ Stock Bajo ({{ totalStockBajoInventario }})
+            </button>
+            <button *ngFor="let c of categorias" class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroCategoria == c.id ? 'bg-primary-container text-white border-transparent shadow-sm' : 'bg-transparent text-primary border-outline-variant hover:bg-surface-variant'" (click)="filtroCategoria = c.id">
+              {{ c.nombre }}
+            </button>
+          </div>
+        </section>
+
+        <!-- Loading -->
+        <!-- Skeleton List -->
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4" *ngIf="cargandoProductos">
+          <article *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]" class="bg-surface-container-lowest rounded-[22px] shadow-sm border border-surface-variant/30 flex flex-col relative overflow-hidden p-3 gap-3">
+            <ion-skeleton-text animated style="width: 100%; height: 160px; border-radius: 16px; margin: 0;"></ion-skeleton-text>
+            <div class="flex flex-col gap-2 flex-grow">
+              <ion-skeleton-text animated style="width: 40%; height: 10px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 90%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+              <div class="mt-auto pt-2 flex justify-between items-end">
+                <ion-skeleton-text animated style="width: 45%; height: 22px; border-radius: 6px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="width: 30%; height: 14px; border-radius: 4px;"></ion-skeleton-text>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Empty States -->
+        <section class="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30" *ngIf="!cargandoProductos && productos.length === 0">
+          <span class="material-symbols-outlined text-5xl text-primary/40 mb-4">inventory_2</span>
+          <h2 class="font-heading font-bold text-xl text-on-surface mb-2">No hay productos registrados</h2>
+          <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-sm mx-auto">Agrega tu primer producto para comenzar a administrar el inventario de la tienda.</p>
+          <button class="bg-primary hover:bg-primary-container text-on-primary px-8 py-3 rounded-xl font-sans font-bold shadow-md transition-all active:scale-95" (click)="abrirOpcionesAgregar()">Agregar producto</button>
+        </section>
+
+        <section class="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30" *ngIf="!cargandoProductos && productos.length > 0 && productosFiltrados.length === 0">
+          <span class="material-symbols-outlined text-5xl text-primary/40 mb-4">search_off</span>
+          <h2 class="font-heading font-bold text-xl text-on-surface mb-2">No encontramos productos</h2>
+          <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-sm mx-auto">Prueba otra búsqueda o restablece los filtros activos.</p>
+          <button class="border border-outline-variant text-on-surface hover:bg-surface-variant px-6 py-2 rounded-full font-sans font-semibold text-sm transition-colors" (click)="limpiarFiltrosProductos()">Limpiar filtros</button>
+        </section>
+
+        <!-- Product List -->
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4" *ngIf="!cargandoProductos && productosFiltrados.length">
+          <app-product-card
+            *ngFor="let p of productosFiltrados"
+            [producto]="p"
+            mode="admin"
+            (edit)="editarProducto($event)"
+            (delete)="eliminarProducto($event)"
+          ></app-product-card>
+        </section>
+
+        <!-- FAB -->
+        <button class="fixed bottom-6 right-4 md:right-8 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-sm flex items-center justify-center active:scale-95 transition-all z-40 hover:bg-primary-container hover:rounded-3xl" (click)="abrirOpcionesAgregar()">
+          <span class="material-symbols-outlined text-3xl">add</span>
+        </button>
+      </div>
+</app-admin-shell>
+
+<!-- Add Sheet Modal -->
+<app-modal-shell
+  [isOpen]="mostrarOpcionesAgregar"
+  [size]="'sheet'"
+  [initialBreakpoint]="0.3"
+  [breakpoints]="[0, 0.3]"
+  [showHeader]="false"
+  (closed)="mostrarOpcionesAgregar = false"
+>
+  <div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="font-heading font-bold text-xl text-primary">Agregar producto</h2>
+      <button class="p-2 rounded-full hover:bg-surface-variant text-on-surface transition-colors" (click)="mostrarOpcionesAgregar = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <button class="w-full flex items-center justify-between p-4 bg-surface rounded-xl mb-3 border border-surface-variant hover:bg-surface-variant transition-colors active:scale-95" (click)="abrirNuevoProducto()">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">inventory_2</span>
+        </div>
+        <span class="font-sans font-semibold text-sm text-on-surface">Producto individual</span>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </button>
+  </div>
+</app-modal-shell>
+
+<!-- Product Form Modal -->
+<app-modal-shell
+  [isOpen]="mostrarModalProducto"
+  [title]="modoProducto === 'editar' ? 'Editar producto' : 'Nuevo producto'"
+  [size]="'lg'"
+  [backdropDismiss]="false"
+  [showFooter]="true"
+  (closed)="cancelarModalProducto()"
+>
+  <div class="p-4 md:p-6 max-w-2xl mx-auto pb-12 flex flex-col gap-6">
+        
+        <!-- Image Upload Box -->
+        <section class="bg-surface-container-lowest rounded-[24px] p-4 shadow-sm border border-surface-variant/30">
+          <div class="w-full h-40 border-2 border-dashed border-outline-variant/60 rounded-[16px] bg-surface-container-high/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-surface-container-high transition-colors overflow-hidden relative" (click)="elegirFotoProducto()">
+            <img *ngIf="previewFotoPendiente || resolverImagenProducto(formProducto.imagen) as imagen" [src]="imagen" class="w-full h-full object-contain mix-blend-multiply p-2" />
+            <ng-container *ngIf="!formProducto.imagen && !previewFotoPendiente">
+              <span class="material-symbols-outlined text-primary/60 text-4xl mb-1">add_a_photo</span>
+              <span class="font-sans font-semibold text-sm text-primary/80">Tomar foto o elegir de galería</span>
+            </ng-container>
+          </div>
+          <div class="flex justify-center mt-3" *ngIf="formProducto.imagen || previewFotoPendiente">
+            <button class="text-error font-sans font-semibold text-xs hover:bg-error/10 px-4 py-2 rounded-full transition-colors" (click)="quitarImagen(); $event.stopPropagation();">Quitar foto</button>
+          </div>
+        </section>
+
+        <!-- Identificación (primero para escanear y autocompletar) -->
+        <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4">
+          <h3 class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest mb-2 border-b border-surface-variant pb-2">Identificación</h3>
+          
+          <div>
+            <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Código de Barras / QR</label>
+            <div class="relative">
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-4 pr-24 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono" type="text" [(ngModel)]="formProducto.codigoQR" (keyup.enter)="buscarInformacionCodigo()" placeholder="Escanea o escribe el código"/>
+              <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <button class="material-symbols-outlined text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors text-xl" (click)="escanearCodigoEnVivo()" title="Escanear con cámara">barcode_scanner</button>
+                <button class="material-symbols-outlined text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors text-xl" (click)="tomarFotoParaCodigo()" title="Tomar foto del código">photo_camera</button>
+                <button class="material-symbols-outlined text-primary hover:bg-primary/10 p-1.5 rounded-full transition-colors text-xl" (click)="elegirFotoParaCodigo()" title="Elegir foto con código">image</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Searching Spinner -->
+          <div class="flex items-center gap-3 p-4 bg-surface-container rounded-xl border border-surface-variant/30" *ngIf="buscandoProducto">
+            <ion-spinner name="crescent" color="primary" class="w-5 h-5"></ion-spinner>
+            <span class="font-sans text-sm text-on-surface-variant">Buscando información del producto...</span>
+          </div>
+
+          <!-- Search Message -->
+          <div class="flex items-start gap-3 p-4 bg-surface-container rounded-xl border border-surface-variant/30" *ngIf="!buscandoProducto && mensajeBusqueda">
+            <span class="material-symbols-outlined text-primary shrink-0 mt-0.5">info</span>
+            <div class="flex flex-col gap-1">
+              <span class="font-sans text-sm text-on-surface">{{ mensajeBusqueda }}</span>
+              <span class="font-mono text-xs text-on-surface-variant" *ngIf="formProducto.codigoQR">Código: {{ formProducto.codigoQR }}</span>
+            </div>
+          </div>
+
+          <!-- Existing Product Found -->
+          <div class="p-4 bg-secondary-fixed rounded-[16px] border border-secondary/20" *ngIf="productoEncontrado">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 rounded-xl bg-surface-container-lowest overflow-hidden shrink-0 flex items-center justify-center">
+                <img *ngIf="resolverImagenProducto(productoEncontrado.imagen) as img" [src]="img" class="w-full h-full object-cover"/>
+                <span *ngIf="!productoEncontrado.imagen" class="material-symbols-outlined text-2xl text-outline-variant">inventory_2</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <span class="font-sans font-semibold text-xs text-secondary uppercase tracking-wider">Producto existente</span>
+                <h4 class="font-sans font-bold text-sm text-on-surface mt-1 line-clamp-2">{{ productoEncontrado.nombre }}</h4>
+                <p class="font-sans text-xs text-on-surface-variant mt-0.5">{{ productoEncontrado.precioVenta | currency:'MXN' }} · Stock: {{ productoEncontrado.existencia }}</p>
+              </div>
+            </div>
+            <button class="w-full mt-3 bg-secondary text-on-secondary font-sans font-semibold text-sm py-2.5 rounded-xl transition-all active:scale-95" (click)="editarProductoEncontrado()">Editar este producto</button>
+          </div>
+
+          <!-- OpenFoodFacts Suggestion -->
+          <div class="p-4 bg-tertiary-fixed rounded-[16px] border border-tertiary/20" *ngIf="sugerenciaPublica">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 rounded-xl bg-surface-container-lowest overflow-hidden shrink-0 flex items-center justify-center">
+                <img *ngIf="sugerenciaPublica.imagenUrl" [src]="sugerenciaPublica.imagenUrl" class="w-full h-full object-cover"/>
+                <span *ngIf="!sugerenciaPublica.imagenUrl" class="material-symbols-outlined text-2xl text-outline-variant">nutrition</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <span class="font-sans font-semibold text-xs text-tertiary uppercase tracking-wider">Información encontrada</span>
+                <h4 class="font-sans font-bold text-sm text-on-surface mt-1 line-clamp-2">{{ sugerenciaPublica.nombre || 'Producto sin nombre' }}</h4>
+                <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+                  <span *ngIf="sugerenciaPublica.marca">{{ sugerenciaPublica.marca }}</span>
+                  <span *ngIf="sugerenciaPublica.marca && sugerenciaPublica.tamano"> · </span>
+                  <span *ngIf="sugerenciaPublica.tamano">{{ sugerenciaPublica.tamano }}</span>
+                  <span *ngIf="sugerenciaPublica.categoria"> · {{ sugerenciaPublica.categoria }}</span>
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button class="flex-1 bg-tertiary text-on-tertiary font-sans font-semibold text-sm py-2.5 rounded-xl transition-all active:scale-95" (click)="usarSugerenciaPublica()">Usar esta información</button>
+              <button class="px-4 border border-tertiary/30 text-tertiary font-sans font-semibold text-sm py-2.5 rounded-xl transition-all hover:bg-tertiary/10" (click)="continuarManualmente()">Ignorar</button>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Tamaño</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" [(ngModel)]="formProducto.tamano" placeholder="Ej. 1L, 500g"/>
+            </div>
+            <div>
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Presentación</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" [(ngModel)]="formProducto.presentacion" placeholder="Ej. Lata, Botella"/>
+            </div>
+          </div>
+        </section>
+
+        <!-- Información Básica -->
+        <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4">
+          <h3 class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest mb-2 border-b border-surface-variant pb-2">Información Básica</h3>
+          
+          <div [class.field-invalid]="erroresProducto.nombre">
+            <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Nombre del producto *</label>
+            <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" [(ngModel)]="formProducto.nombre"/>
+            <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.nombre">{{ erroresProducto.nombre }}</small>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div [class.field-invalid]="erroresProducto.idCat">
+              <div class="flex items-center justify-between mb-1 ml-1">
+                <label class="block font-sans font-semibold text-xs text-on-surface-variant">Categoría *</label>
+                <button 
+                  type="button" 
+                  (click)="crearNuevaCategoriaRapida()"
+                  class="text-[11px] font-sans font-semibold text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors cursor-pointer group focus:outline-none"
+                  title="Crear nueva categoría"
+                >
+                  <span class="material-symbols-outlined text-[14px] group-hover:rotate-90 transition-transform">add</span>
+                  <span>Nueva</span>
+                </button>
+              </div>
+              <app-custom-select 
+                [(ngModel)]="formProducto.idCat" 
+                [options]="categorias" 
+                valueKey="id" 
+                labelKey="nombre" 
+                placeholder="Selecciona categoría"
+                [searchable]="true"
+                [allowCreate]="true"
+                createLabel="Nueva categoría"
+                (createOption)="crearNuevaCategoriaRapida($event)"
+              ></app-custom-select>
+              <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.idCat">{{ erroresProducto.idCat }}</small>
+            </div>
+            <div [class.field-invalid]="erroresProducto.idMarca">
+              <div class="flex items-center justify-between mb-1 ml-1">
+                <label class="block font-sans font-semibold text-xs text-on-surface-variant">Marca *</label>
+                <button 
+                  type="button" 
+                  (click)="crearNuevaMarcaRapida()"
+                  class="text-[11px] font-sans font-semibold text-primary hover:text-primary/80 flex items-center gap-0.5 transition-colors cursor-pointer group focus:outline-none"
+                  title="Crear nueva marca"
+                >
+                  <span class="material-symbols-outlined text-[14px] group-hover:rotate-90 transition-transform">add</span>
+                  <span>Nueva</span>
+                </button>
+              </div>
+              <app-custom-select 
+                [(ngModel)]="formProducto.idMarca" 
+                [options]="marcas" 
+                valueKey="id" 
+                labelKey="nombre" 
+                placeholder="Selecciona marca"
+                [searchable]="true"
+                [allowCreate]="true"
+                createLabel="Nueva marca"
+                (createOption)="crearNuevaMarcaRapida($event)"
+              ></app-custom-select>
+              <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.idMarca">{{ erroresProducto.idMarca }}</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4">
+          <h3 class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest mb-2 border-b border-surface-variant pb-2">Precios y Stock</h3>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div [class.field-invalid]="erroresProducto.precio">
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Precio Venta *</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="number" min="0" [(ngModel)]="formProducto.precio"/>
+              <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.precio">{{ erroresProducto.precio }}</small>
+            </div>
+            <div [class.field-invalid]="erroresProducto.costo">
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Costo</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="number" min="0" [(ngModel)]="formProducto.costo"/>
+              <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.costo">{{ erroresProducto.costo }}</small>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div [class.field-invalid]="erroresProducto.existencia">
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Stock Actual *</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="number" min="0" [(ngModel)]="formProducto.existencia"/>
+              <small class="text-error font-sans text-[10px] ml-1 mt-1 block" *ngIf="erroresProducto.existencia">{{ erroresProducto.existencia }}</small>
+            </div>
+            <div>
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Stock Mínimo</label>
+              <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="number" min="0" [(ngModel)]="formProducto.stockMinimo"/>
+            </div>
+          </div>
+        </section>
+
+  </div>
+
+  <div footer class="p-4 md:p-6 pb-safe max-w-2xl mx-auto flex gap-3 w-full">
+    <button class="flex-1 bg-primary-container hover:bg-primary text-on-primary font-sans font-bold text-base py-4 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2" [disabled]="guardandoProducto" (click)="guardarDesdeModal(false)">
+      <ion-spinner *ngIf="guardandoProducto" name="crescent" class="w-5 h-5"></ion-spinner>
+      {{ guardandoProducto ? 'Guardando...' : 'Guardar Producto' }}
+    </button>
+  </div>
+</app-modal-shell>
+
+<!-- Code Selector Modal -->
+<app-modal-shell
+  [isOpen]="mostrarSelectorCodigos"
+  [size]="'sheet'"
+  [initialBreakpoint]="0.5"
+  [breakpoints]="[0, 0.5, 0.85]"
+  [showHeader]="false"
+  (closed)="mostrarSelectorCodigos = false"
+>
+  <div class="p-6">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h2 class="font-heading font-bold text-xl text-primary">Varios códigos</h2>
+        <p class="text-sm font-sans text-on-surface-variant mt-1">Selecciona el código correcto.</p>
+      </div>
+      <button class="p-2 rounded-full hover:bg-surface-variant text-on-surface transition-colors" (click)="mostrarSelectorCodigos = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <button *ngFor="let codigo of codigosDetectados" class="w-full flex items-center gap-4 p-4 bg-surface hover:bg-surface-variant rounded-xl border border-surface-variant transition-colors text-left" (click)="seleccionarCodigo(codigo)">
+        <span class="material-symbols-outlined text-primary">barcode</span>
+        <span class="font-mono font-medium text-sm text-on-surface">{{ codigo }}</span>
+      </button>
+    </div>
+  </div>
+</app-modal-shell>

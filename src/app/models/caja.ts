@@ -1,10 +1,10 @@
 export type EstadoCaja = 'ABIERTA' | 'CERRADA';
 export type TipoMovimiento = 'INGRESO' | 'RETIRO';
 export interface Caja {
-  idSesionCaja: number;
+  id: string;
   uuidSesionCaja: string;
-  idEmp: number;
-  idSuc: number;
+  empleadoId: string;
+  sucursalId: string;
   fechaHoraApertura: string;
   fondoInicial: number;
   fechaHoraCierre: string | null;
@@ -24,10 +24,10 @@ export interface Caja {
   nombreSuc: string;
 }
 export interface MovimientoCaja {
-  idMovimientoCaja: number;
+  id: string;
   uuidMovimientoCaja: string;
-  idSesionCaja: number;
-  idEmp: number;
+  idSesionCaja: string;
+  idEmp: string;
   tipoMovimiento: TipoMovimiento;
   monto: number;
   concepto: string;

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historial de Ventas y Cortes - Store Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#fff7fc",
+                        "on-surface-variant": "#4a454d",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#6b557f",
+                        "on-secondary-fixed-variant": "#891933",
+                        "secondary-fixed-dim": "#ffb2b9",
+                        "on-tertiary-fixed-variant": "#623e31",
+                        "on-primary-fixed": "#251237",
+                        "surface-container-highest": "#ebdeed",
+                        "on-background": "#201923",
+                        "inverse-primary": "#d7bcec",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#efbbaa",
+                        "on-surface": "#201923",
+                        "inverse-surface": "#352e38",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#a93349",
+                        "background": "#fff7fc",
+                        "primary-container": "#58436b",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-container-low": "#fdeffe",
+                        "outline-variant": "#ccc4ce",
+                        "on-error": "#ffffff",
+                        "tertiary": "#4e2d21",
+                        "surface-variant": "#ebdeed",
+                        "surface-dim": "#e3d6e4",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#7b757e",
+                        "on-tertiary-container": "#e4b1a1",
+                        "on-primary-container": "#cdb2e1",
+                        "surface-container": "#f7eaf8",
+                        "surface-bright": "#fff7fc",
+                        "on-secondary-container": "#730425",
+                        "secondary-container": "#fe7488",
+                        "inverse-on-surface": "#faedfb",
+                        "on-primary-fixed-variant": "#533e66",
+                        "primary-fixed-dim": "#d7bcec",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#2f140a",
+                        "primary-fixed": "#f0dbff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#f1e4f2",
+                        "secondary-fixed": "#ffdadc",
+                        "tertiary-container": "#684336",
+                        "on-secondary-fixed": "#400010",
+                        "primary": "#402c53"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-margin": "20px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .pastel-shadow {
+            box-shadow: 0px 4px 20px rgba(88, 67, 107, 0.08);
+        }
+        body {
+            background-color: #FAFAF9; /* Using the requested Warm White background */
+            color: #201923; /* fallback for on-surface */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased font-body-md text-on-surface">
+<!-- Mobile Top Header -->
+<header class="bg-surface sticky top-0 z-50 px-container-margin py-md flex items-center justify-between border-b border-surface-variant md:hidden">
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant active:scale-95 duration-150 p-sm rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary truncate max-w-[200px]">Historial de Ventas</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant active:scale-95 duration-150 p-sm rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</header>
+<div class="flex h-screen overflow-hidden lg:pl-64">
+<!-- Navigation Drawer (Desktop) -->
+<nav class="hidden lg:flex flex-col h-full py-lg bg-surface-container-low border-r border-surface-variant fixed left-0 top-0 w-64 z-40">
+<div class="px-lg pb-md">
+<h1 class="font-display-lg text-headline-md text-primary">Retail Management</h1>
+</div>
+<ul class="flex flex-col gap-sm mt-md flex-1">
+<li>
+<a class="flex items-center gap-md text-on-surface-variant mx-sm px-md py-sm hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Dashboard
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant mx-sm px-md py-sm hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                        Inventory
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant mx-sm px-md py-sm hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">category</span>
+                        Categories
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-full mx-sm px-md py-sm transition-all duration-200 ease-in-out font-label-md text-label-md font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+                        Sales Reports
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant mx-sm px-md py-sm hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out font-label-md text-label-md mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto w-full pb-24 md:pb-lg">
+<!-- Desktop Header -->
+<div class="hidden md:flex justify-between items-center px-lg py-lg bg-surface sticky top-0 z-30 shadow-sm">
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant active:scale-95 duration-150 p-sm rounded-full hover:bg-surface-container-high transition-colors bg-surface-container-lowest pastel-shadow">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="font-headline-md text-headline-md text-primary">Historial de Ventas y Cortes</h2>
+</div>
+<div class="flex items-center gap-md">
+<div class="bg-surface-container-high text-on-surface rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+                        Hoy (29 de Agosto)
+                    </div>
+<button class="flex items-center gap-sm bg-surface-container-lowest border border-outline-variant text-primary px-md py-sm rounded-full font-label-md text-label-md hover:bg-surface-container-highest transition-colors active:scale-95">
+<span class="material-symbols-outlined">download</span>
+                        Exportar
+                    </button>
+</div>
+</div>
+<!-- Mobile Date Pill (shown below header on mobile) -->
+<div class="md:hidden px-container-margin pt-md flex justify-between items-center">
+<div class="bg-surface-container-high text-on-surface rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md border border-outline-variant w-fit">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+                    Hoy (29 de Agosto)
+                </div>
+</div>
+<div class="p-container-margin md:p-lg max-w-7xl mx-auto space-y-lg">
+<!-- Summary Card -->
+<section class="bg-surface-container-high rounded-[16px] p-lg md:p-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-lg border border-surface-variant/50 relative overflow-hidden">
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-primary-container opacity-5 rounded-full blur-2xl"></div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-base uppercase tracking-wider">Total Facturado Hoy</p>
+<h3 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary">$14,850.00 <span class="text-headline-md text-on-surface-variant font-normal">MXN</span></h3>
+</div>
+<div class="flex flex-wrap gap-md md:gap-lg bg-surface-container-lowest p-md rounded-xl pastel-shadow z-10 w-full md:w-auto">
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container p-xs rounded-lg text-primary">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Efectivo</p>
+<p class="font-label-md text-label-md text-on-surface">$9,200.00</p>
+</div>
+</div>
+<div class="w-px bg-outline-variant/30 hidden md:block"></div>
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container p-xs rounded-lg text-primary">
+<span class="material-symbols-outlined text-[20px]">credit_card</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tarjeta</p>
+<p class="font-label-md text-label-md text-on-surface">$3,800.00</p>
+</div>
+</div>
+<div class="w-px bg-outline-variant/30 hidden md:block"></div>
+<div class="flex items-center gap-sm">
+<div class="bg-surface-container p-xs rounded-lg text-primary">
+<span class="material-symbols-outlined text-[20px]">smartphone</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Transferencia</p>
+<p class="font-label-md text-label-md text-on-surface">$1,850.00</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Tabs -->
+<div class="flex gap-sm overflow-x-auto pb-sm snap-x snap-mandatory hide-scrollbar">
+<button class="snap-start shrink-0 bg-primary-container text-on-primary-container px-lg py-sm rounded-full font-label-md text-label-md shadow-sm border border-primary-container/20 transition-all active:scale-95">
+                        Tickets de Venta (86)
+                    </button>
+<button class="snap-start shrink-0 bg-surface-container-lowest text-on-surface-variant px-lg py-sm rounded-full font-label-md text-label-md border border-outline-variant hover:bg-surface-container transition-all active:scale-95">
+                        Cortes de Turno (3)
+                    </button>
+</div>
+<!-- Tickets List -->
+<div class="space-y-md">
+<!-- Ticket 1 -->
+<div class="bg-surface-container-lowest rounded-[16px] p-md md:p-lg pastel-shadow border border-surface-variant/30 transition-transform hover:-translate-y-1 duration-200">
+<div class="flex flex-col md:flex-row justify-between gap-md mb-md">
+<div class="flex gap-md items-start">
+<div class="bg-surface-container-high p-sm rounded-xl text-primary hidden sm:block">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h4 class="font-headline-md text-[18px] text-primary">Ticket #T-8942</h4>
+<span class="text-on-surface-variant text-label-sm font-label-sm">8:15 PM</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[14px]">Cajero: Juan Pérez (Caja 01)</p>
+</div>
+</div>
+<div class="text-left md:text-right">
+<p class="font-headline-md text-headline-md text-primary">$122.00 MXN</p>
+</div>
+</div>
+<div class="bg-[#F2BEAD]/10 border border-[#F2BEAD]/30 text-primary-container px-md py-sm rounded-lg flex items-center gap-sm w-fit mb-md font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">payments</span>
+                            Efectivo (Pago: $200 / Cambio: $78)
+                        </div>
+<div class="border-t border-dashed border-outline-variant pt-md mb-md">
+<p class="font-body-md text-body-md text-on-surface-variant">Coca-Cola 3L (x2), Sabritas Sal 45g (x1)</p>
+</div>
+<div class="flex justify-end">
+<button class="bg-surface-container-high text-primary px-lg py-sm rounded-full font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors active:scale-95">
+                                Ver Ticket / Reimprimir
+                            </button>
+</div>
+</div>
+<!-- Ticket 2 -->
+<div class="bg-surface-container-lowest rounded-[16px] p-md md:p-lg pastel-shadow border border-surface-variant/30 transition-transform hover:-translate-y-1 duration-200">
+<div class="flex flex-col md:flex-row justify-between gap-md mb-md">
+<div class="flex gap-md items-start">
+<div class="bg-surface-container-high p-sm rounded-xl text-primary hidden sm:block">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h4 class="font-headline-md text-[18px] text-primary">Ticket #T-8941</h4>
+<span class="text-on-surface-variant text-label-sm font-label-sm">7:45 PM</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[14px]">Cajero: Juan Pérez (Caja 01)</p>
+</div>
+</div>
+<div class="text-left md:text-right">
+<p class="font-headline-md text-headline-md text-primary">$98.00 MXN</p>
+</div>
+</div>
+<div class="bg-surface-container px-md py-sm rounded-lg flex items-center gap-sm w-fit font-label-sm text-label-sm text-primary">
+<span class="material-symbols-outlined text-[16px]">credit_card</span>
+                            Tarjeta Débito (Term. 02)
+                        </div>
+</div>
+<!-- Ticket 3 -->
+<div class="bg-surface-container-lowest rounded-[16px] p-md md:p-lg pastel-shadow border border-surface-variant/30 transition-transform hover:-translate-y-1 duration-200">
+<div class="flex flex-col md:flex-row justify-between gap-md mb-md">
+<div class="flex gap-md items-start">
+<div class="bg-surface-container-high p-sm rounded-xl text-primary hidden sm:block">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h4 class="font-headline-md text-[18px] text-primary">Ticket #T-8940</h4>
+<span class="text-on-surface-variant text-label-sm font-label-sm">7:10 PM</span>
+</div>
+<p class="font-body-md text-on-surface-variant text-[14px]">Cajero: Juan Pérez (Caja 01)</p>
+</div>
+</div>
+<div class="text-left md:text-right">
+<p class="font-headline-md text-headline-md text-primary">$122.00 MXN</p>
+</div>
+</div>
+<div class="bg-surface-container px-md py-sm rounded-lg flex items-center gap-sm w-fit font-label-sm text-label-sm text-primary">
+<span class="material-symbols-outlined text-[16px]">smartphone</span>
+                            Pedido Online #DP-1042 (Transferencia BBVA)
+                        </div>
+</div>
+</div>
+<!-- Auditoría Section -->
+<div class="mt-xl pt-lg border-t border-outline-variant/30">
+<h3 class="font-headline-md text-[20px] text-primary mb-md">Auditoría (Cortes)</h3>
+<div class="bg-surface-container-lowest rounded-[16px] p-md md:p-lg pastel-shadow border border-surface-variant/30 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md pl-sm">
+<div>
+<h4 class="font-headline-md text-[18px] text-primary mb-xs">Corte de Turno #13 · Matutino</h4>
+<p class="font-body-md text-on-surface-variant text-[14px]">Cajera: Laura Torres (8:00 AM a 3:00 PM)</p>
+</div>
+<div class="flex flex-col items-start md:items-end gap-sm">
+<p class="font-headline-md text-headline-md text-primary">$5,240.00 MXN</p>
+<div class="bg-[#10b981]/10 text-[#047857] px-sm py-xs rounded-md font-label-sm text-label-sm flex items-center gap-xs border border-[#10b981]/20">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    Cuadre Exacto
+                                </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

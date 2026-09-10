@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instrucciones de Pago Bancario</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#400010",
+                        "on-tertiary-fixed-variant": "#623e31",
+                        "on-background": "#201923",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#58436b",
+                        "secondary-fixed": "#ffdadc",
+                        "on-surface-variant": "#4a454d",
+                        "inverse-primary": "#d7bcec",
+                        "on-tertiary-container": "#e4b1a1",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#ccc4ce",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#684336",
+                        "inverse-on-surface": "#faedfb",
+                        "on-tertiary-fixed": "#2f140a",
+                        "surface-container-highest": "#ebdeed",
+                        "on-primary-container": "#cdb2e1",
+                        "on-primary-fixed-variant": "#533e66",
+                        "surface-container-high": "#f1e4f2",
+                        "surface-bright": "#fff7fc",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#a93349",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#ebdeed",
+                        "primary-fixed": "#f0dbff",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#efbbaa",
+                        "surface-tint": "#6b557f",
+                        "primary": "#402c53",
+                        "tertiary": "#4e2d21",
+                        "secondary-container": "#fe7488",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#f7eaf8",
+                        "primary-fixed-dim": "#d7bcec",
+                        "on-primary-fixed": "#251237",
+                        "surface-container-low": "#fdeffe",
+                        "inverse-surface": "#352e38",
+                        "secondary-fixed-dim": "#ffb2b9",
+                        "on-secondary-fixed-variant": "#891933",
+                        "surface-dim": "#e3d6e4",
+                        "on-surface": "#201923",
+                        "on-secondary-container": "#730425",
+                        "tertiary-fixed": "#ffdbcf",
+                        "background": "#fff7fc",
+                        "surface": "#fff7fc",
+                        "outline": "#7b757e"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "base": "4px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "gutter": "12px",
+                        "xl": "32px",
+                        "container-margin": "20px",
+                        "xs": "4px",
+                        "sm": "8px"
+                    },
+                    fontFamily: {
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Be Vietnam Pro"]
+                    },
+                    fontSize: {
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    },
+                    boxShadow: {
+                        'pastel': '0px 4px 20px rgba(88, 67, 107, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #FAFAF9; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background antialiased pb-24 md:pb-0 font-body-md">
+<!-- Top Navigation (Mobile) -->
+<header class="fixed top-0 w-full z-50 bg-surface shadow-[0px_4px_20px_rgba(88,67,107,0.08)]">
+<div class="flex items-center justify-between px-container-margin h-16 w-full max-w-7xl mx-auto">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high transition-colors text-primary active:scale-95 duration-150">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Paso 2 de 2 · Reserva Confirmada</span>
+<h1 class="font-headline-md text-headline-md text-primary mt-1">Pedido #DP-1042</h1>
+</div>
+<div class="w-10"></div> <!-- Spacer -->
+</div>
+</header>
+<main class="pt-24 px-container-margin max-w-lg mx-auto md:max-w-7xl">
+<!-- Status Badge -->
+<div class="flex justify-center mb-6">
+<div class="inline-flex items-center bg-[#F2BEAD] bg-opacity-20 rounded-full px-3 py-1">
+<span class="font-label-sm text-label-sm text-primary font-bold">⏳ PENDIENTE DE PAGO</span>
+</div>
+</div>
+<!-- Summary Card -->
+<section class="bg-[#F8F4F9] rounded-xl p-lg mb-md shadow-pastel">
+<div class="text-center">
+<p class="font-body-md text-on-surface-variant mb-1">Total a transferir</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-primary mb-4">$122.00 MXN</p>
+<div class="flex items-start justify-center text-sm text-on-surface-variant gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">schedule</span>
+<p class="text-left font-label-sm text-label-sm">
+                        Reserva válida hasta:<br/>
+<span class="font-label-md text-label-md text-on-background">Hoy, 29 de Agosto · 10:00 PM</span><br/>
+                        (Tus productos están apartados)
+                    </p>
+</div>
+</div>
+</section>
+<!-- Bank Details Card -->
+<section class="bg-surface-container-lowest rounded-xl p-md mb-md shadow-pastel">
+<h2 class="font-label-md text-label-md text-on-background mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+                Transferencia Bancaria
+            </h2>
+<div class="space-y-4">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Banco</span>
+<span class="font-body-md text-body-md text-on-background">BBVA México</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Titular</span>
+<span class="font-body-md text-body-md text-on-background">Tienda Doña Paty S.A. de C.V.</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container p-3 rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">CLABE</span>
+<span class="font-label-md text-label-md text-on-background font-mono tracking-wide">012 180 015928374619</span>
+</div>
+<button class="text-primary hover:text-primary-container p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cuenta</span>
+<span class="font-body-md text-body-md text-on-background">1592837461</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container p-2 rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Referencia</span>
+<span class="font-label-md text-label-md text-on-background">DP-1042</span>
+</div>
+<button class="text-primary hover:text-primary-container p-1 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-bright border border-surface-variant rounded-lg p-3 mt-2">
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] mt-0.5 text-primary">info</span>
+                        Realiza la transferencia por el monto exacto usando el número de pedido como concepto.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Upload Section -->
+<section class="bg-surface-container-lowest rounded-xl p-md mb-lg shadow-pastel border-2 border-dashed border-outline-variant">
+<div class="flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-background mb-1">Sube tu comprobante de pago</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4">Aceptamos capturas de pantalla, fotos o PDF (JPG, PNG, PDF)</p>
+<!-- File Status (Simulated Uploaded State) -->
+<div class="w-full bg-surface-container-low border border-surface-variant rounded-lg p-3 flex items-center justify-between mb-4">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant">attach_file</span>
+<span class="font-label-sm text-label-sm text-on-background truncate">comprobante_transferencia_bbva.jpg (1.2 MB)</span>
+</div>
+<button class="text-error hover:bg-error-container p-1 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg shadow-pastel active:scale-95 transition-transform">
+                    Enviar comprobante a revisión
+                </button>
+</div>
+</section>
+<!-- Footer Actions -->
+<div class="flex flex-col items-center gap-4 mb-xl">
+<p class="font-label-sm text-label-sm text-center text-on-surface-variant px-4">
+<span class="material-symbols-outlined text-[16px] inline-block align-text-bottom mr-1">check_circle</span>
+                Una vez validado tu comprobante por el cajero, recibirás el aviso para recoger tus productos en mostrador
+            </p>
+<button class="font-label-md text-label-md text-[#FB7185] hover:opacity-80 active:scale-95 transition-all">
+                Cancelar este pedido
+            </button>
+</div>
+</main>
+</body></html>

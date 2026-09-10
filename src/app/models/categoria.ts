@@ -1,5 +1,5 @@
 export interface Categoria {
-  idCat: number;
-  nombreCat: string | null;
-  descripCat: string | null;
+  id: string;
+  nombre: string | null;
+  descripcion: string | null;
 }

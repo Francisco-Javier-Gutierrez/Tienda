@@ -17,6 +17,13 @@ export class CajaPage implements OnInit {
   estado = '';
   fecha = '';
   cargando = false;
+
+  readonly opcionesEstado = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'ABIERTA', label: 'Abierta' },
+    { value: 'CERRADA', label: 'Cerrada' },
+  ];
+
   private api = inject(CajaService);
   ngOnInit(): void {
     void this.cargar();
@@ -35,3 +42,4 @@ export class CajaPage implements OnInit {
     return d === 0 ? 'CAJA CUADRADA' : d > 0 ? 'SOBRANTE' : 'FALTANTE';
   }
 }
+

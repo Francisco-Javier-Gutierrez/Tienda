@@ -1,15 +1,15 @@
 export interface ProductoParaCarrito {
-  idPro: number;
-  nombrePro: string;
-  precioVentaPro: number;
-  existenciaPro: number | null;
-  imagenPro: string | null;
-  tamanoPro: string | null;
-  presentacionPro: string | null;
+  id: string;
+  nombre: string;
+  precioVenta: number;
+  existencia: number | null;
+  imagen: string | null;
+  tamano: string | null;
+  presentacion: string | null;
 }
 
 export interface ItemCarrito {
-  idPro: number;
+  id: string;
   nombre: string;
   precioMostrado: number;
   cantidad: number;

@@ -1,7 +1,8 @@
 export type Rol = 'ADMINISTRADOR' | 'CAJERO';
 
 export interface EmpleadoSesion {
-  idEmp: number;
+  id: string;
+  idEmp?: string | number;
   nombre: string;
   nombreEmp: string | null;
   apellidoPatEmp: string | null;
@@ -10,11 +11,14 @@ export interface EmpleadoSesion {
   telefono: string | null;
   fechaIngreso: string | null;
   fotoPerfil: string | null;
-  idCargo: number;
+  cargoId: string;
+  idCargo?: string | number;
   cargo: Rol;
-  idSuc: number;
+  sucursalId: string;
+  idSuc?: string | number;
   nombreSuc: string | null;
   estadoEmp: boolean;
+  estado?: boolean;
 }
 
 export interface AuthSession {

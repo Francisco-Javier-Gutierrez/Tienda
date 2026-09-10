@@ -1,549 +1,413 @@
-<app-admin-shell menuId="admin-employees-menu" contentId="employees-main" activeSection="empleados">
-  <ion-menu *ngIf="false" contentId="employees-main" menuId="admin-employees-menu" type="overlay">
-    <ion-header class="admin-menu-header">
-      <ion-toolbar>
-        <div class="menu-brand">
-          <div class="menu-brand-icon">
-            <ion-icon name="storefront-outline"></ion-icon>
+<app-admin-shell menuId="admin-employees-menu" contentId="employees-main" [activeSection]="'empleados'">
+  <div class="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24">
+
+      <!-- Header de la sección -->
+      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Personal</span>
+          <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary">Empleados</h1>
+          <p class="font-sans text-sm text-on-surface-variant">Administra las cuentas del personal, sus roles y los accesos al sistema.</p>
+        </div>
+        <button
+          type="button"
+          (click)="nuevo()"
+          class="flex items-center gap-2 bg-primary hover:bg-primary-container text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm transition-all active:scale-95 self-start sm:self-auto"
+        >
+          <span class="material-symbols-outlined text-lg">person_add</span>
+          Nuevo empleado
+        </button>
+      </header>
+
+      <!-- Tarjetas de Resumen Interactivas -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" *ngIf="!cargando || empleados.length">
+        
+        <!-- Total -->
+        <article
+          (click)="filtro = 'todos'"
+          class="cursor-pointer transition-all active:scale-95 bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 hover:border-primary/40 flex items-center gap-3.5"
+          [class.ring-2]="filtro === 'todos'"
+          [class.ring-primary]="filtro === 'todos'"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">group</span>
           </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Total empleados</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-on-surface leading-tight">{{ totalEmpleados }}</strong>
+          </div>
+        </article>
 
-          <div class="menu-brand-copy">
-            <strong> Doña Paty </strong>
+        <!-- Activos -->
+        <article
+          (click)="filtro = 'activos'"
+          class="cursor-pointer transition-all active:scale-95 bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 hover:border-tertiary flex items-center gap-3.5"
+          [class.ring-2]="filtro === 'activos'"
+          [class.ring-tertiary]="filtro === 'activos'"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">check_circle</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Activos</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">{{ empleadosActivos }}</strong>
+          </div>
+        </article>
 
-            <small> Administración </small>
+        <!-- Inactivos -->
+        <article
+          (click)="filtro = 'inactivos'"
+          class="cursor-pointer transition-all active:scale-95 bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 hover:border-error flex items-center gap-3.5"
+          [class.ring-2]="filtro === 'inactivos'"
+          [class.ring-error]="filtro === 'inactivos'"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-error-container text-error flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">pause_circle</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Inactivos</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-error leading-tight">{{ empleadosInactivos }}</strong>
+          </div>
+        </article>
+
+        <!-- Cajeros -->
+        <article
+          (click)="filtro = 'cajeros'"
+          class="cursor-pointer transition-all active:scale-95 bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 hover:border-secondary flex items-center gap-3.5"
+          [class.ring-2]="filtro === 'cajeros'"
+          [class.ring-secondary]="filtro === 'cajeros'"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-secondary-container text-secondary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">point_of_sale</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Cajeros</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-secondary leading-tight">{{ totalCajeros }}</strong>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Buscador y filtro -->
+      <section class="bg-surface-container-lowest rounded-[20px] p-3.5 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+        <div class="relative flex-1 w-full">
+          <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">search</span>
+          <input
+            type="text"
+            [(ngModel)]="busqueda"
+            placeholder="Buscar por nombre, correo, teléfono o cargo..."
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-2.5 pl-10 pr-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+          />
+        </div>
+        <button
+          *ngIf="busqueda || filtro !== 'todos'"
+          type="button"
+          (click)="busqueda = ''; filtro = 'todos'"
+          class="text-xs font-sans font-semibold text-primary hover:underline px-2 py-1 shrink-0"
+        >
+          Limpiar filtros
+        </button>
+      </section>
+
+      <!-- Skeletons durante carga -->
+      <div class="space-y-3" *ngIf="cargando">
+        <div *ngFor="let i of [1,2,3,4]" class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 animate-pulse flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-surface-variant/60 shrink-0"></div>
+          <div class="space-y-2 flex-1">
+            <div class="h-4 bg-surface-variant/60 rounded w-44"></div>
+            <div class="h-3 bg-surface-variant/60 rounded w-60"></div>
           </div>
         </div>
-      </ion-toolbar>
-    </ion-header>
-
-    <!-- CONTENIDO DEL MENÚ -->
-
-    <ion-content class="admin-menu-content">
-      <div class="menu-section-label">Menú principal</div>
-
-      <ion-list lines="none">
-        <ion-menu-toggle [autoHide]="false">
-          <!-- INICIO -->
-
-          <ion-item button detail="false" routerLink="/home">
-            <ion-icon slot="start" name="home-outline"></ion-icon>
-
-            <ion-label> Inicio </ion-label>
-          </ion-item>
-
-          <!-- PRODUCTOS -->
-
-          <ion-item button detail="false" routerLink="/home">
-            <ion-icon slot="start" name="cube-outline"></ion-icon>
-
-            <ion-label> Productos </ion-label>
-          </ion-item>
-
-          <!-- CATEGORÍAS -->
-
-          <ion-item button detail="false" routerLink="/home">
-            <ion-icon slot="start" name="folder-outline"></ion-icon>
-
-            <ion-label> Categorías </ion-label>
-          </ion-item>
-
-          <!-- MARCAS -->
-
-          <ion-item button detail="false" routerLink="/home">
-            <ion-icon slot="start" name="pricetag-outline"></ion-icon>
-
-            <ion-label> Marcas </ion-label>
-          </ion-item>
-
-          <!-- CONFIGURACIÓN -->
-
-          <ion-item button detail="false" routerLink="/home" routerDirection="root">
-            <ion-icon slot="start" name="settings-outline"></ion-icon>
-
-            <ion-label> Configuración </ion-label>
-          </ion-item>
-
-          <!-- EMPLEADOS -->
-
-          <ion-item detail="false" class="menu-active">
-            <ion-icon slot="start" name="people-outline"></ion-icon>
-
-            <ion-label> Empleados </ion-label>
-          </ion-item>
-
-          <!-- PUNTO DE VENTA -->
-
-          <ion-item button detail="false" routerLink="/cajero">
-            <ion-icon slot="start" name="calculator-outline"></ion-icon>
-
-            <ion-label> Punto de venta </ion-label>
-          </ion-item>
-
-          <!-- VENTAS -->
-
-          <ion-item button detail="false" routerLink="/ventas">
-            <ion-icon slot="start" name="receipt-outline"></ion-icon>
-
-            <ion-label> Ventas </ion-label>
-          </ion-item>
-        </ion-menu-toggle>
-      </ion-list>
-
-      <!-- =================================================
-           USUARIO ADMINISTRADOR
-      ================================================== -->
-
-      <div class="admin-user">
-        <div class="admin-user-icon">
-          <ion-icon name="person-circle-outline"></ion-icon>
-        </div>
-
-        <div class="admin-user-copy">
-          <strong> {{ auth.sesion?.empleado?.nombre || 'Administrador' }} </strong>
-
-          <small> {{ auth.sesion?.empleado?.cargo || 'ADMINISTRADOR' }} </small>
-        </div>
-
-        <ion-button fill="clear" aria-label="Cerrar sesión" (click)="auth.logout()">
-          <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-        </ion-button>
       </div>
-    </ion-content>
-  </ion-menu>
 
-  <!-- =====================================================
-       CONTENIDO PRINCIPAL
-  ====================================================== -->
+      <!-- Estado Vacío: Sin empleados registrados -->
+      <div *ngIf="!cargando && !empleados.length" class="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm p-6">
+        <div class="w-14 h-14 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mb-3">
+          <span class="material-symbols-outlined text-3xl">people</span>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-on-surface">No hay empleados registrados</h3>
+        <p class="font-sans text-sm mt-1 mb-4 text-on-surface-variant max-w-sm">Agrega al primer miembro del equipo para comenzar a administrar el personal.</p>
+        <button (click)="nuevo()" class="bg-primary text-on-primary font-sans font-semibold text-sm px-6 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all">
+          Agregar empleado
+        </button>
+      </div>
 
-  <ng-container>
-    <!-- =================================================
-         HEADER
-    ================================================== -->
+      <!-- Estado Vacío: Búsqueda sin coincidencias -->
+      <div *ngIf="!cargando && empleados.length && !filtrados.length" class="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm p-6">
+        <div class="w-14 h-14 rounded-2xl bg-surface-container text-outline-variant flex items-center justify-center mb-3">
+          <span class="material-symbols-outlined text-3xl">search_off</span>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-on-surface">Sin resultados</h3>
+        <p class="font-sans text-sm mt-1 text-on-surface-variant max-w-sm">No encontramos ningún colaborador que coincida con "{{ busqueda }}".</p>
+        <button (click)="busqueda = ''; filtro = 'todos'" class="mt-4 text-xs font-sans font-semibold text-primary hover:underline">
+          Mostrar todos los empleados
+        </button>
+      </div>
 
-    <ion-header>
-      <ion-toolbar>
-        <!-- ☰ SOLO TABLET / CELULAR -->
-
-        <ion-buttons slot="start">
-          <ion-menu-button class="mobile-menu-button" menu="admin-employees-menu"></ion-menu-button>
-        </ion-buttons>
-
-        <ion-title> Empleados </ion-title>
-
-        <ion-buttons slot="end">
-          <ion-button class="toolbar-new" (click)="nuevo()">
-            <ion-icon slot="start" name="person-add-outline"></ion-icon>
-
-            <span class="desktop-label"> Nuevo empleado </span>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <!-- =================================================
-         CONTENIDO
-    ================================================== -->
-
-    <ion-content class="employees-content">
-      <main class="employees">
-        <!-- =============================================
-             CABECERA
-        ============================================== -->
-
-        <header class="employees-heading">
-          <div>
-            <span class="employees-eyebrow"> Personal </span>
-
-            <h1>Empleados</h1>
-
-            <p>Administra las cuentas del personal, sus roles y el acceso al sistema.</p>
-          </div>
-
-          <ion-button class="new-employee-button" (click)="nuevo()">
-            <ion-icon slot="start" name="person-add-outline"></ion-icon>
-
-            Agregar empleado
-          </ion-button>
-        </header>
-
-        <!-- =============================================
-             ESTADÍSTICAS
-        ============================================== -->
-
-        <section class="employee-stats" *ngIf="!cargando">
-          <!-- TOTAL -->
-
-          <article>
-            <div class="stat-icon">
-              <ion-icon name="people-outline"></ion-icon>
-            </div>
-
-            <div>
-              <small> Total empleados </small>
-
-              <strong> {{ totalEmpleados }} </strong>
-            </div>
-          </article>
-
-          <!-- ACTIVOS -->
-
-          <article>
-            <div class="stat-icon active">
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </div>
-
-            <div>
-              <small> Activos </small>
-
-              <strong> {{ empleadosActivos }} </strong>
-            </div>
-          </article>
-
-          <!-- INACTIVOS -->
-
-          <article>
-            <div class="stat-icon inactive">
-              <ion-icon name="pause-circle-outline"></ion-icon>
-            </div>
-
-            <div>
-              <small> Inactivos </small>
-
-              <strong> {{ empleadosInactivos }} </strong>
-            </div>
-          </article>
-
-          <!-- CAJEROS -->
-
-          <article>
-            <div class="stat-icon cashier">
-              <ion-icon name="calculator-outline"></ion-icon>
-            </div>
-
-            <div>
-              <small> Cajeros </small>
-
-              <strong> {{ totalCajeros }} </strong>
-            </div>
-          </article>
-        </section>
-
-        <!-- =============================================
-             CARGANDO
-        ============================================== -->
-
-        <div class="employees-loading" *ngIf="cargando">
-          <ion-spinner></ion-spinner>
-
-          <p>Cargando empleados...</p>
+      <!-- Lista de Empleados -->
+      <section class="space-y-4" *ngIf="!cargando && filtrados.length">
+        
+        <div class="flex items-center justify-between">
+          <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">Colaboradores</span>
+          <span class="font-sans text-xs text-on-surface-variant">{{ filtrados.length }} {{ filtrados.length === 1 ? 'empleado' : 'empleados' }}</span>
         </div>
 
-        <!-- =============================================
-             PANEL DE EMPLEADOS
-        ============================================== -->
-
-        <section class="employees-panel" *ngIf="!cargando">
-          <div class="panel-heading">
-            <div>
-              <span class="employees-eyebrow"> Equipo </span>
-
-              <h2>Personal registrado</h2>
-            </div>
-
-            <span class="employee-count" *ngIf="empleados.length">
-              {{ empleados.length }} {{ empleados.length === 1 ? 'empleado' : 'empleados' }}
-            </span>
-          </div>
-
-          <!-- ===========================================
-               LISTA DE EMPLEADOS
-          ============================================ -->
-
-          <div class="employee-grid">
-            <article class="employee-card" *ngFor="let e of empleados" [class.inactive-employee]="!e.estadoEmp">
-              <!-- AVATAR -->
-
-              <div class="employee-avatar">
-                <img *ngIf="e.fotoPerfil" [src]="e.fotoPerfil" [alt]="e.nombre" />
-
-                <ion-icon *ngIf="!e.fotoPerfil" name="person-outline"></ion-icon>
-              </div>
-
-              <!-- INFORMACIÓN -->
-
-              <div class="employee-information">
-                <div class="employee-name-row">
-                  <h2>{{ e.nombre }}</h2>
-
-                  <span class="employee-status" [class.inactive]="!e.estadoEmp">
-                    <span></span>
-
-                    {{ e.estadoEmp ? 'Activo' : 'Inactivo' }}
-                  </span>
+        <div class="space-y-3">
+          <article *ngFor="let e of filtrados"
+                   class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 hover:shadow-md hover:border-primary/30 transition-all duration-200">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              
+              <!-- Left: Avatar + Info -->
+              <div class="flex items-center gap-4 min-w-0">
+                <!-- Avatar -->
+                <div class="w-14 h-14 rounded-2xl bg-primary-container/20 border border-primary/20 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
+                  <img *ngIf="resolverFoto(e.fotoPerfil) as foto; else avatarFallback" [src]="foto" (error)="onFotoError(e.fotoPerfil)" referrerpolicy="no-referrer" [alt]="e.nombre" class="w-full h-full object-cover" />
+                  <ng-template #avatarFallback>
+                    <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
+                  </ng-template>
                 </div>
 
-                <!-- ROL -->
+                <!-- Info -->
+                <div class="min-w-0 space-y-1">
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h2 class="font-heading font-bold text-base text-on-surface truncate">{{ e.nombre }}</h2>
+                    
+                    <!-- Badge Activo / Inactivo -->
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                          [ngClass]="estaActivo(e) ? 'bg-tertiary-fixed text-tertiary border border-tertiary/20' : 'bg-error-container text-error border border-error/20'">
+                      <span class="w-1.5 h-1.5 rounded-full" [ngClass]="estaActivo(e) ? 'bg-tertiary' : 'bg-error'"></span>
+                      <span>{{ estaActivo(e) ? 'Activo' : 'Inactivo' }}</span>
+                    </span>
 
-                <span class="employee-role">
-                  <ion-icon
-                    [name]="
-                      e.cargo === 'ADMINISTRADOR'
-                        ? 'shield-checkmark-outline'
-                        : 'calculator-outline'
-                    "
-                  ></ion-icon>
+                    <!-- Badge Cargo -->
+                    <span class="inline-flex items-center gap-1 text-[11px] font-sans font-bold uppercase px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container">
+                      <span class="material-symbols-outlined text-[13px]">{{ e.cargo === 'ADMINISTRADOR' ? 'shield_person' : 'point_of_sale' }}</span>
+                      {{ e.cargo }}
+                    </span>
+                  </div>
 
-                  {{ e.cargo }}
-                </span>
+                  <!-- Contacto & Metadata -->
+                  <div class="flex items-center gap-3 md:gap-4 text-xs font-sans text-on-surface-variant flex-wrap pt-0.5">
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-outline">mail</span>
+                      <a [href]="'mailto:' + e.correo" class="hover:underline hover:text-primary truncate max-w-[200px]">{{ e.correo }}</a>
+                    </span>
 
-                <!-- CONTACTO -->
+                    <span *ngIf="e.telefono" class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-outline">call</span>
+                      <span>{{ e.telefono }}</span>
+                    </span>
 
-                <div class="employee-contact">
-                  <span>
-                    <ion-icon name="mail-outline"></ion-icon>
-
-                    {{ e.correo }}
-                  </span>
-
-                  <span *ngIf="e.telefono">
-                    <ion-icon name="call-outline"></ion-icon>
-
-                    {{ e.telefono }}
-                  </span>
+                    <span *ngIf="e.fechaIngreso" class="flex items-center gap-1 text-outline">
+                      <span class="material-symbols-outlined text-[15px]">event</span>
+                      <span>Ingreso: {{ e.fechaIngreso | date:'mediumDate' }}</span>
+                    </span>
+                  </div>
                 </div>
-
-                <!-- FECHA -->
-
-                <small class="employee-date" *ngIf="e.fechaIngreso">
-                  Ingreso: {{ e.fechaIngreso | date:'mediumDate' }}
-                </small>
               </div>
 
-              <!-- =======================================
-                   ACCIONES
-              ======================================== -->
-
-              <div class="employee-actions">
-                <ion-button fill="clear" (click)="editar(e)">
-                  <ion-icon slot="start" name="create-outline"></ion-icon>
-
-                  Editar
-                </ion-button>
-
-                <ion-button
-                  fill="clear"
-                  [color]="
-                    e.estadoEmp
-                      ? 'danger'
-                      : 'success'
-                  "
-                  (click)="cambiarEstado(e)"
+              <!-- Right: Action buttons -->
+              <div class="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-surface-variant/20 self-end sm:self-center shrink-0">
+                <button
+                  type="button"
+                  (click)="editar(e)"
+                  class="border border-outline-variant/40 hover:bg-surface-container text-on-surface font-sans font-semibold text-xs py-2 px-3.5 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 shadow-xs"
                 >
-                  <ion-icon
-                    slot="start"
-                    [name]="
-                      e.estadoEmp
-                        ? 'pause-circle-outline'
-                        : 'checkmark-circle-outline'
-                    "
-                  ></ion-icon>
+                  <span class="material-symbols-outlined text-base text-primary">edit</span>
+                  Editar
+                </button>
 
-                  {{ e.estadoEmp ? 'Desactivar' : 'Activar' }}
-                </ion-button>
+                <button
+                  type="button"
+                  (click)="cambiarEstado(e)"
+                  class="font-sans font-semibold text-xs py-2 px-3.5 rounded-xl transition-all active:scale-95 flex items-center gap-1.5"
+                  [ngClass]="estaActivo(e) ? 'text-error hover:bg-error-container/20 border border-error/30' : 'text-tertiary hover:bg-tertiary-fixed/30 border border-tertiary/30'"
+                >
+                  <span class="material-symbols-outlined text-base">{{ estaActivo(e) ? 'pause_circle' : 'check_circle' }}</span>
+                  {{ estaActivo(e) ? 'Desactivar' : 'Activar' }}
+                </button>
               </div>
-            </article>
-          </div>
 
-          <!-- ===========================================
-               SIN EMPLEADOS
-          ============================================ -->
-
-          <div class="employees-empty" *ngIf="!empleados.length">
-            <div class="empty-icon">
-              <ion-icon name="people-outline"></ion-icon>
             </div>
 
-            <h2>No hay empleados registrados</h2>
+          </article>
+        </div>
 
-            <p>Agrega el primer empleado para comenzar a administrar el personal.</p>
+      </section>
 
-            <ion-button (click)="nuevo()">
-              <ion-icon slot="start" name="person-add-outline"></ion-icon>
-
-              Agregar empleado
-            </ion-button>
-          </div>
-        </section>
-      </main>
-    </ion-content>
-  </ng-container>
+  </div>
 </app-admin-shell>
 
 <!-- =========================================================
      MODAL NUEVO / EDITAR EMPLEADO
 ========================================================== -->
 
-<ion-modal cssClass="employee-modal" [isOpen]="modal" (didDismiss)="modal = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title> {{ editando ? 'Editar empleado' : 'Nuevo empleado' }} </ion-title>
-
-        <ion-buttons slot="end">
-          <ion-button [disabled]="guardando" (click)="modal = false"> Cerrar </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding">
-      <div class="employee-form">
-        <!-- =============================================
-             INTRO FORMULARIO
-        ============================================== -->
-
-        <div class="form-heading">
-          <div class="form-icon">
-            <ion-icon
-              [name]="
-                editando
-                  ? 'create-outline'
-                  : 'person-add-outline'
-              "
-            ></ion-icon>
-          </div>
-
-          <div>
-            <span class="employees-eyebrow"> {{ editando ? 'Edición' : 'Nuevo registro' }} </span>
-
-            <h2>{{ editando ? 'Actualizar empleado' : 'Agregar empleado' }}</h2>
-
-            <p>
-              {{ editando ? 'Modifica únicamente los datos que necesites actualizar.' : 'Captura la información
-              necesaria para crear el acceso del empleado.' }}
-            </p>
-          </div>
-        </div>
-
-        <!-- =============================================
-             CAMPOS
-        ============================================== -->
-
-        <div class="form-grid">
-          <!-- NOMBRE -->
-
-          <ion-input fill="outline" label="Nombre *" labelPlacement="stacked" [(ngModel)]="form.nombre"></ion-input>
-
-          <!-- APELLIDO PATERNO -->
-
-          <ion-input
-            fill="outline"
-            label="Apellido paterno"
-            labelPlacement="stacked"
-            [(ngModel)]="form.apellidoPat"
-          ></ion-input>
-
-          <!-- APELLIDO MATERNO -->
-
-          <ion-input
-            fill="outline"
-            label="Apellido materno"
-            labelPlacement="stacked"
-            [(ngModel)]="form.apellidoMat"
-          ></ion-input>
-
-          <!-- CORREO -->
-
-          <ion-input
-            fill="outline"
-            type="email"
-            inputmode="email"
-            label="Correo electrónico *"
-            labelPlacement="stacked"
-            [(ngModel)]="form.correo"
-          ></ion-input>
-
-          <!-- TELÉFONO -->
-
-          <ion-input
-            fill="outline"
-            type="tel"
-            inputmode="tel"
-            label="Teléfono"
-            labelPlacement="stacked"
-            [(ngModel)]="form.telefono"
-          ></ion-input>
-
-          <!-- FECHA INGRESO -->
-
-          <ion-input
-            fill="outline"
-            type="date"
-            label="Fecha de ingreso"
-            labelPlacement="stacked"
-            [(ngModel)]="form.fechaIngreso"
-          ></ion-input>
-
-          <!-- CARGO -->
-
-          <ion-select fill="outline" label="Cargo *" labelPlacement="stacked" [(ngModel)]="form.idCargo">
-            <ion-select-option *ngFor="let c of cargos" [value]="c.idCargo"> {{ c.nombreCargo }} </ion-select-option>
-          </ion-select>
-
-          <!-- FOTO -->
-
-          <ion-input
-            fill="outline"
-            type="url"
-            label="URL de foto"
-            labelPlacement="stacked"
-            placeholder="Opcional"
-            [(ngModel)]="form.fotoPerfil"
-          ></ion-input>
-        </div>
-
-        <!-- =============================================
-             CONTRASEÑA
-        ============================================== -->
-
-        <section class="password-section">
-          <div>
-            <ion-icon name="key-outline"></ion-icon>
-
-            <div>
-              <strong> Contraseña </strong>
-
-              <small>
-                {{ editando ? 'Déjala vacía para conservar la contraseña actual.' : 'Puede quedar vacía si utilizará
-                exclusivamente Google.' }}
-              </small>
-            </div>
-          </div>
-
-          <ion-input
-            fill="outline"
-            [label]="
-              editando
-                ? 'Nueva contraseña'
-                : 'Contraseña inicial'
-            "
-            labelPlacement="stacked"
-            type="password"
-            [(ngModel)]="form.password"
-          ></ion-input>
-        </section>
-
-        <!-- =============================================
-             GUARDAR
-        ============================================== -->
-
-        <ion-button class="save-employee" expand="block" [disabled]="guardando" (click)="guardar()">
-          <ion-spinner *ngIf="guardando" name="crescent"></ion-spinner>
-
-          <ion-icon *ngIf="!guardando" slot="start" name="save-outline"></ion-icon>
-
-          {{ guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Registrar empleado' }}
-        </ion-button>
+<app-modal-shell
+  [isOpen]="modal"
+  [title]="editando ? 'Editar empleado' : 'Nuevo empleado'"
+  [subtitle]="editando ? 'Modificar datos del colaborador' : 'Registrar un nuevo miembro del equipo'"
+  [size]="'lg'"
+  (closed)="modal = false"
+>
+  <div class="p-5 md:p-6 space-y-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
+    
+    <!-- Header visual dentro del modal -->
+    <div class="flex items-center gap-3 pb-3 border-b border-surface-variant/20">
+      <div class="w-10 h-10 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-xl">{{ editando ? 'badge' : 'person_add' }}</span>
       </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+      <div>
+        <h3 class="font-heading font-bold text-base text-on-surface">Información de la cuenta</h3>
+        <p class="font-sans text-xs text-on-surface-variant">
+          {{ editando ? 'Actualiza los datos del empleado. La contraseña solo debe llenarse si deseas cambiarla.' : 'Ingresa los datos para otorgar acceso al colaborador.' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Formulario en Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      
+      <!-- Nombre -->
+      <div class="sm:col-span-2">
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Nombre *</label>
+        <input
+          type="text"
+          [(ngModel)]="form.nombre"
+          (input)="errores.nombre = ''"
+          placeholder="Ej. Juan Carlos"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+          [class.border-error]="!!errores.nombre"
+        />
+        <p *ngIf="errores.nombre" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.nombre }}</p>
+      </div>
+
+      <!-- Apellido Paterno -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Apellido paterno</label>
+        <input
+          type="text"
+          [(ngModel)]="form.apellidoPat"
+          placeholder="Ej. Pérez"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+        />
+      </div>
+
+      <!-- Apellido Materno -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Apellido materno</label>
+        <input
+          type="text"
+          [(ngModel)]="form.apellidoMat"
+          placeholder="Ej. Gómez"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+        />
+      </div>
+
+      <!-- Correo Electrónico -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Correo electrónico *</label>
+        <input
+          type="email"
+          [(ngModel)]="form.correo"
+          (input)="errores.correo = ''"
+          placeholder="juan@mitienda.com"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+          [class.border-error]="!!errores.correo"
+        />
+        <p *ngIf="errores.correo" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.correo }}</p>
+      </div>
+
+      <!-- Teléfono -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Teléfono</label>
+        <input
+          type="tel"
+          [(ngModel)]="form.telefono"
+          placeholder="Ej. 722 123 4567"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+        />
+      </div>
+
+      <!-- Cargo -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Cargo *</label>
+        <app-custom-select 
+          [(ngModel)]="form.idCargo"
+          (ngModelChange)="errores.idCargo = ''"
+          [options]="cargos" 
+          valueKey="idCargo" 
+          labelKey="nombreCargo" 
+          placeholder="Selecciona el cargo"
+        ></app-custom-select>
+        <p *ngIf="errores.idCargo" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.idCargo }}</p>
+      </div>
+
+      <!-- Fecha de Ingreso -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Fecha de ingreso</label>
+        <input
+          type="date"
+          [(ngModel)]="form.fechaIngreso"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+        />
+      </div>
+
+      <!-- Foto de Perfil -->
+      <div class="sm:col-span-2">
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">URL de foto de perfil</label>
+        <input
+          type="url"
+          [(ngModel)]="form.fotoPerfil"
+          placeholder="https://ejemplo.com/avatar.jpg (opcional)"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+        />
+      </div>
+
+      <!-- Sección de Contraseña -->
+      <div class="sm:col-span-2 bg-surface-container/60 p-4 rounded-2xl border border-surface-variant/30 space-y-3 mt-1">
+        <div class="flex items-start gap-2.5">
+          <span class="material-symbols-outlined text-primary text-xl mt-0.5">key</span>
+          <div>
+            <strong class="font-sans font-semibold text-xs text-on-surface block">Contraseña</strong>
+            <small class="font-sans text-[11px] text-on-surface-variant block">
+              {{ editando ? 'Déjala vacía para conservar la contraseña actual.' : 'Mínimo 8 caracteres. Puede quedar vacía si iniciará sesión con Google.' }}
+            </small>
+          </div>
+        </div>
+
+        <input
+          type="password"
+          [(ngModel)]="form.password"
+          (input)="errores.password = ''"
+          [placeholder]="editando ? 'Nueva contraseña (opcional)' : 'Contraseña inicial'"
+          class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl py-2.5 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+          [class.border-error]="!!errores.password"
+        />
+        <p *ngIf="errores.password" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.password }}</p>
+      </div>
+
+    </div>
+
+    <!-- Botones de Acción del Modal -->
+    <div class="pt-4 border-t border-surface-variant/30 flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="modal = false"
+        class="border border-outline-variant/40 hover:bg-surface-container text-on-surface font-sans font-semibold text-xs py-3 px-5 rounded-xl transition-all active:scale-95"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        (click)="guardar()"
+        [disabled]="guardando"
+        class="bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-xs py-3 px-6 rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+      >
+        <ion-spinner *ngIf="guardando" name="crescent" class="w-4 h-4"></ion-spinner>
+        <span>{{ guardando ? 'Guardando...' : (editando ? 'Guardar cambios' : 'Registrar empleado') }}</span>
+      </button>
+    </div>
+
+  </div>
+</app-modal-shell>

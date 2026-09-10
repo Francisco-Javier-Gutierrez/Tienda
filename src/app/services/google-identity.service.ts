@@ -16,7 +16,7 @@ export class GoogleIdentityService {
     }
     const resultado = await SocialLogin.login({
       provider: 'google',
-      options: { scopes: ['email', 'profile'] },
+      options: {},
     });
     const idToken = 'idToken' in resultado.result ? resultado.result.idToken : null;
     if (!idToken) throw new Error('GOOGLE_ID_TOKEN_MISSING');
@@ -36,3 +36,6 @@ export class GoogleIdentityService {
     return (error as SocialLoginError | undefined)?.code === 'USER_CANCELLED';
   }
 }
+
+
+

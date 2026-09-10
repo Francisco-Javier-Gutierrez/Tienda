@@ -1,790 +1,728 @@
-<app-admin-shell menuId="admin-pos-menu" contentId="pos-main" activeSection="cajero">
-  <ion-header class="pos-header">
-    <ion-toolbar>
-      <div class="toolbar-shell">
-        <div class="toolbar-brand">
-          <ion-menu-button class="mobile-menu-button" menu="admin-pos-menu"></ion-menu-button>
-          <div class="toolbar-icon">
-            <ion-icon name="storefront-outline"></ion-icon>
-          </div>
 
-          <div>
-            <strong>Punto de venta</strong>
-            <small *ngIf="auth.sesion?.empleado as empleado"> {{ empleado.nombre }} · {{ empleado.cargo }} </small>
-          </div>
-        </div>
-
-        <ion-buttons class="toolbar-actions">
-          <ion-button routerLink="/ventas">
-            <ion-icon slot="start" name="receipt-outline"></ion-icon>
-            <span class="toolbar-text">Ventas</span>
-          </ion-button>
-
-          <ion-button *ngIf="auth.tieneRol('ADMINISTRADOR')" routerLink="/home">
-            <ion-icon slot="start" name="grid-outline"></ion-icon>
-            <span class="toolbar-text">Administración</span>
-          </ion-button>
-
-          <ion-button class="logout-button" (click)="auth.logout()">
-            <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </div>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content class="pos-content">
-    <main class="pos-shell">
-      <!-- =========================================
-         ESTADO DE CONEXIÓN
-    ========================================== -->
-
-      <div
-        class="sync-status"
-        *ngIf="sync.estado$ | async as s"
-        [class.offline]="!s.conectado"
-        [class.has-conflicts]="s.conflictos"
-      >
-        <div class="sync-main">
-          <span class="sync-dot"></span>
-
-          <div>
-            <strong> {{ s.conectado ? 'En línea' : 'Sin conexión' }} </strong>
-
-            <small *ngIf="!s.conectado"> Puedes continuar con las operaciones disponibles sin conexión. </small>
-          </div>
-        </div>
-
-        <div class="sync-details">
-          <span class="status-chip pending" *ngIf="s.pendientes">
-            <ion-icon name="cloud-upload-outline"></ion-icon>
-            {{ s.pendientes }} pendientes
-          </span>
-
-          <span class="status-chip conflict" *ngIf="s.conflictos">
-            <ion-icon name="warning-outline"></ion-icon>
-            {{ s.conflictos }} conflictos
-          </span>
-
-          <ion-button size="small" fill="clear" *ngIf="s.pendientes && s.conectado" (click)="sync.reintentar()">
-            Sincronizar
-          </ion-button>
-        </div>
-      </div>
-
-      <!-- =========================================
-         CARGANDO
-    ========================================== -->
-
-      <div *ngIf="cargando" class="loading">
-        <ion-spinner></ion-spinner>
-        <p>Preparando punto de venta...</p>
-      </div>
-
-      <!-- =========================================
-         APERTURA DE CAJA
-    ========================================== -->
-
-      <section class="opening-card" *ngIf="!cargando && !caja && !ultimaCaja">
-        <div class="opening-visual">
-          <div class="opening-icon">
-            <ion-icon name="cash-outline"></ion-icon>
-          </div>
-
-          <span class="eyebrow"> Apertura de caja </span>
-
-          <h1>Comienza tu turno</h1>
-
-          <p>Registra el efectivo inicial disponible en caja antes de comenzar a realizar ventas.</p>
-        </div>
-
-        <div class="opening-data">
-          <div class="employee-card">
-            <ion-icon name="person-circle-outline"></ion-icon>
-
-            <div>
-              <small>Cajero</small>
-              <strong> {{ auth.sesion?.empleado?.nombre }} </strong>
-            </div>
-          </div>
-
-          <div class="employee-card">
-            <ion-icon name="storefront-outline"></ion-icon>
-
-            <div>
-              <small>Sucursal</small>
-              <strong> {{ auth.sesion?.empleado?.nombreSuc }} </strong>
-            </div>
-          </div>
-
-          <div class="employee-card">
-            <ion-icon name="calendar-outline"></ion-icon>
-
-            <div>
-              <small>Fecha</small>
-              <strong> {{ fechaActual | date:'medium' }} </strong>
-            </div>
-          </div>
-
-          <ion-input
-            class="form-control"
-            fill="outline"
-            type="number"
-            min="0"
-            label="Fondo inicial"
-            labelPlacement="stacked"
-            placeholder="0.00"
-            [(ngModel)]="fondoInicial"
-          ></ion-input>
-
-          <ion-button
-            class="primary-action"
-            expand="block"
-            [disabled]="
-            abriendo ||
-            fondoInicial === null ||
-            fondoInicial < 0
-          "
-            (click)="abrirCaja()"
-          >
-            <ion-spinner *ngIf="abriendo" name="crescent"></ion-spinner>
-
-            <ion-icon *ngIf="!abriendo" slot="start" name="lock-open-outline"></ion-icon>
-
-            {{ abriendo ? 'Abriendo caja...' : 'Abrir caja' }}
-          </ion-button>
-        </div>
-      </section>
-
-      <!-- =========================================
-         CAJA CERRADA
-    ========================================== -->
-
-      <section class="opening-card closed-card" *ngIf="ultimaCaja as c">
-        <div class="opening-visual">
-          <div class="opening-icon">
-            <ion-icon name="checkmark-circle-outline"></ion-icon>
-          </div>
-
-          <span class="eyebrow"> Caja cerrada </span>
-
-          <h1>{{ c.diferencia === 0 ? 'CAJA CUADRADA' : c.diferencia > 0 ? 'SOBRANTE' : 'FALTANTE' }}</h1>
-
-          <p>El turno ha finalizado correctamente.</p>
-        </div>
-
-        <div class="closed-summary">
-          <div>
-            <span>Total vendido</span>
-            <strong> {{ c.totalVentas | currency:'MXN' }} </strong>
-          </div>
-
-          <div>
-            <span>Efectivo esperado</span>
-            <strong> {{ c.efectivoEsperado | currency:'MXN' }} </strong>
-          </div>
-
-          <div>
-            <span>Efectivo contado</span>
-            <strong> {{ c.efectivoContado | currency:'MXN' }} </strong>
-          </div>
-
-          <div class="difference-row">
-            <span>Diferencia</span>
-            <strong> {{ c.diferencia | currency:'MXN' }} </strong>
-          </div>
-
-          <div>
-            <span>Número de ventas</span>
-            <strong> {{ c.numeroVentas }} </strong>
-          </div>
-
-          <div>
-            <span>Apertura</span>
-            <strong> {{ c.fechaHoraApertura | date:'short' }} </strong>
-          </div>
-
-          <div>
-            <span>Cierre</span>
-            <strong> {{ c.fechaHoraCierre | date:'short' }} </strong>
-          </div>
-
-          <div class="closed-actions">
-            <ion-button routerLink="/caja">
-              <ion-icon slot="start" name="document-text-outline"></ion-icon>
-              Ver corte
-            </ion-button>
-
-            <ion-button fill="outline" (click)="auth.logout()"> Cerrar sesión </ion-button>
-          </div>
-        </div>
-      </section>
-
-      <!-- =========================================
-         POS
-    ========================================== -->
-
-      <ng-container *ngIf="caja">
-        <!-- CABECERA DE CAJA -->
-
-        <header class="pos-heading">
-          <div>
-            <span class="eyebrow"> Nueva venta </span>
-
-            <h1>Punto de venta</h1>
-
-            <div class="cashier-information">
-              <span class="cashier-chip">
-                <ion-icon name="person-outline"></ion-icon>
-                {{ auth.sesion?.empleado?.nombre }}
-              </span>
-
-              <span class="cashier-chip open">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                Caja abierta
-              </span>
-
-              <span class="cashier-chip"> Fondo {{ caja.fondoInicial | currency:'MXN' }} </span>
-            </div>
-          </div>
-
-          <div class="pos-heading-actions">
-            <ion-button fill="outline" (click)="mostrarMovimiento = true">
-              <ion-icon slot="start" name="swap-horizontal-outline"></ion-icon>
-              Movimiento
-            </ion-button>
-
-            <ion-button fill="outline" (click)="abrirCorte()">
-              <ion-icon slot="start" name="calculator-outline"></ion-icon>
-              Corte de caja
-            </ion-button>
-          </div>
-        </header>
-
-        <div class="pos-layout">
-          <!-- =========================================
-             CATÁLOGO
-        ========================================== -->
-
-          <section class="catalog-panel">
-            <div class="catalog-heading">
-              <div>
-                <span class="eyebrow"> Productos </span>
-
-                <h2>¿Qué vas a vender?</h2>
-              </div>
-
-              <span class="product-count"> {{ resultados.length }} productos </span>
-            </div>
-
-            <!-- BUSCADOR -->
-
-            <div class="scanner-card">
-              <div class="search-row">
-                <ion-searchbar
-                  #lector
-                  placeholder="Código o nombre del producto"
-                  [(ngModel)]="busqueda"
-                  (keyup.enter)="agregarDesdeEntrada()"
-                  [debounce]="120"
-                ></ion-searchbar>
-
-                <ion-button
-                  class="scan-button"
-                  [disabled]="leyendoCodigo"
-                  (click)="escanear()"
-                  aria-label="Escanear código"
-                >
-                  <ion-spinner *ngIf="leyendoCodigo" name="crescent"></ion-spinner>
-
-                  <ion-icon *ngIf="!leyendoCodigo" slot="icon-only" name="scan-outline"></ion-icon>
-                </ion-button>
-              </div>
-
-              <div class="scanner-help">
-                <ion-icon name="barcode-outline"></ion-icon>
-
-                <span>
-                  Escanea con la cámara o escribe el código y presiona Enter. El lector Bluetooth HID funciona con el
-                  mismo campo.
-                </span>
-              </div>
-            </div>
-
-            <!-- PRODUCTOS -->
-
-            <div class="empty-products" *ngIf="!resultados.length">
-              <ion-icon name="search-outline"></ion-icon>
-
-              <strong>No encontramos productos</strong>
-
-              <p>Intenta buscar con otro nombre o código.</p>
-            </div>
-
-            <div class="pos-products">
-              <button
-                type="button"
-                class="pos-product"
-                *ngFor="let producto of resultados"
-                (click)="agregar(producto)"
-                [disabled]="producto.existenciaPro <= 0"
-                [class.out-of-stock]="producto.existenciaPro <= 0"
-              >
-                <div class="product-image">
-                  <ion-icon name="cube-outline"></ion-icon>
-
-                  <img
-                    *ngIf="imagen(producto.imagenPro) as src"
-                    [src]="src"
-                    [alt]="producto.nombrePro"
-                    (load)="mostrarImagen($event)"
-                    (error)="ocultarImagen($event)"
-                  />
-                </div>
-
-                <div class="product-copy">
-                  <strong> {{ producto.nombrePro }} </strong>
-
-                  <small> {{ producto.nombreMarca || 'Sin marca' }} </small>
-
-                  <small *ngIf="producto.tamanoPro || producto.presentacionPro">
-                    {{ producto.tamanoPro || '' }} {{ producto.presentacionPro || '' }}
-                  </small>
-
-                  <div class="product-bottom">
-                    <b> {{ producto.precioVentaPro | currency:'MXN' }} </b>
-
-                    <span class="stock-chip" [class.empty]="producto.existenciaPro <= 0">
-                      {{ producto.existenciaPro > 0 ? 'Stock: ' + producto.existenciaPro : 'Agotado' }}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="add-product" *ngIf="producto.existenciaPro > 0">
-                  <ion-icon name="add-outline"></ion-icon>
-                </div>
-              </button>
-            </div>
-          </section>
-
-          <!-- =========================================
-             RESUMEN DE VENTA
-        ========================================== -->
-
-          <aside class="sale-panel" id="resumenVenta">
-            <div class="sale-heading">
-              <div>
-                <span class="eyebrow"> Tu venta </span>
-                <h2>Resumen</h2>
-              </div>
-
-              <span class="cart-count" *ngIf="carrito.length"> {{ cantidadArticulos }} artículos </span>
-            </div>
-
-            <!-- CARRITO VACÍO -->
-
-            <div class="empty-cart" *ngIf="!carrito.length">
-              <div class="empty-cart-icon">
-                <ion-icon name="cart-outline"></ion-icon>
-              </div>
-
-              <strong>Tu venta está vacía</strong>
-
-              <p>Escanea o selecciona un producto para comenzar.</p>
-            </div>
-
-            <!-- ARTÍCULOS -->
-
-            <div class="cart-list" *ngIf="carrito.length">
-              <article *ngFor="let item of carrito" class="cart-item">
-                <div class="cart-main">
-                  <div class="cart-product-image">
-                    <ion-icon name="cube-outline"></ion-icon>
-
-                    <img
-                      *ngIf="imagen(item.imagen) as src"
-                      [src]="src"
-                      [alt]="item.nombre"
-                      (load)="mostrarImagen($event)"
-                      (error)="ocultarImagen($event)"
-                    />
-                  </div>
-
-                  <div class="cart-copy">
-                    <strong> {{ item.nombre }} </strong>
-
-                    <small> {{ item.precioUnitario | currency:'MXN' }} c/u </small>
-                  </div>
-
-                  <strong class="cart-subtotal"> {{ item.subtotal | currency:'MXN' }} </strong>
-                </div>
-
-                <div class="quantity">
-                  <ion-button fill="clear" size="small" (click)="decrementar(item)" aria-label="Disminuir cantidad">
-                    <ion-icon slot="icon-only" name="remove-outline"></ion-icon>
-                  </ion-button>
-
-                  <span> {{ item.cantidad }} </span>
-
-                  <ion-button fill="clear" size="small" (click)="incrementar(item)" aria-label="Aumentar cantidad">
-                    <ion-icon slot="icon-only" name="add-outline"></ion-icon>
-                  </ion-button>
-
-                  <span class="available-stock"> de {{ item.existenciaDisponible }} </span>
-
-                  <ion-button
-                    fill="clear"
-                    size="small"
-                    class="remove-item"
-                    (click)="eliminar(item)"
-                    aria-label="Eliminar producto"
-                  >
-                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                  </ion-button>
-                </div>
-              </article>
-            </div>
-
-            <!-- TOTAL -->
-
-            <div class="totals" *ngIf="carrito.length">
-              <div class="articles-line">
-                <span> {{ cantidadArticulos }} {{ cantidadArticulos === 1 ? 'artículo' : 'artículos' }} </span>
-
-                <span> {{ total | currency:'MXN' }} </span>
-              </div>
-
-              <div class="grand-total">
-                <span>Total</span>
-
-                <strong> {{ total | currency:'MXN' }} </strong>
-              </div>
-            </div>
-
-            <!-- MÉTODO -->
-
-            <div class="payment-section" *ngIf="carrito.length">
-              <label>Método de pago</label>
-
-              <ion-segment [scrollable]="true" [(ngModel)]="metodoPago" (ionChange)="cambiarMetodo()">
-                <ion-segment-button value="EFECTIVO">
-                  <ion-icon name="cash-outline"></ion-icon>
-                  <ion-label>Efectivo</ion-label>
-                </ion-segment-button>
-
-                <ion-segment-button value="TARJETA">
-                  <ion-icon name="card-outline"></ion-icon>
-                  <ion-label>Tarjeta</ion-label>
-                </ion-segment-button>
-
-                <ion-segment-button value="TRANSFERENCIA">
-                  <ion-icon name="phone-portrait-outline"></ion-icon>
-                  <ion-label>Transferencia</ion-label>
-                </ion-segment-button>
-              </ion-segment>
-            </div>
-
-            <!-- EFECTIVO -->
-
-            <div
-              class="cash-fields"
-              *ngIf="
-              carrito.length &&
-              metodoPago === 'EFECTIVO'
-            "
-            >
-              <ion-input
-                class="form-control"
-                fill="outline"
-                type="number"
-                min="0"
-                inputmode="decimal"
-                label="Monto recibido"
-                labelPlacement="stacked"
-                placeholder="0.00"
-                [(ngModel)]="montoRecibido"
-              ></ion-input>
-
-              <div
-                class="change-card"
-                [class.ready]="
-                montoRecibido !== null &&
-                montoRecibido >= total
-              "
-              >
-                <span>Cambio</span>
-
-                <strong> {{ cambio | currency:'MXN' }} </strong>
-              </div>
-            </div>
-
-            <!-- COBRAR -->
-
-            <ion-button
-              *ngIf="carrito.length"
-              class="charge"
-              expand="block"
-              [disabled]="!puedeCobrar"
-              (click)="cobrar()"
-            >
-              <ion-spinner *ngIf="procesandoVenta" name="crescent"></ion-spinner>
-
-              <ng-container *ngIf="!procesandoVenta">
-                <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
-
-                Cobrar {{ total | currency:'MXN' }}
-              </ng-container>
-
-              <span *ngIf="procesandoVenta"> Procesando venta... </span>
-            </ion-button>
-          </aside>
-        </div>
-      </ng-container>
-    </main>
-  </ion-content>
-
-  <!-- =============================================
-     BARRA MÓVIL DEL CARRITO
-============================================== -->
-
-  <div class="mobile-cart-bar" *ngIf="caja && carrito.length">
-    <div>
-      <small> {{ cantidadArticulos }} {{ cantidadArticulos === 1 ? 'artículo' : 'artículos' }} </small>
-
-      <strong> {{ total | currency:'MXN' }} </strong>
-    </div>
-
-    <ion-button size="small" (click)="irAlResumen()">
-      Ver venta
-      <ion-icon slot="end" name="chevron-up-outline"></ion-icon>
-    </ion-button>
+<app-admin-shell
+  menuId="admin-pos-menu"
+  contentId="pos-main"
+  activeSection="cajero"
+  customTitle="Punto de venta"
+>
+  <!-- Subtitle for Header: Employee & Sync info -->
+  <p header-subtitle class="font-sans text-[10px] md:text-xs text-on-surface-variant flex items-center gap-1 mt-0.5" *ngIf="auth.sesion?.empleado as empleado">
+    {{ empleado.nombre }} · {{ empleado.cargo }}
+    <span class="hidden sm:inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-tertiary-fixed text-tertiary text-[10px] font-semibold" *ngIf="sync.estado$ | async as s">
+      <span class="w-1.5 h-1.5 rounded-full" [ngClass]="s.conectado ? 'bg-tertiary' : 'bg-error'"></span>
+      {{ s.conectado ? 'Online' : 'Offline' }}
+    </span>
+  </p>
+
+  <!-- Actions for Header: Movimiento, Corte, Escanear -->
+  <div header-actions class="flex items-center gap-1.5 md:gap-2">
+    <button
+      type="button"
+      class="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 rounded-xl border border-surface-variant hover:bg-surface-container text-on-surface-variant active:scale-95 transition-all text-xs font-sans font-semibold cursor-pointer shadow-sm"
+      (click)="mostrarMovimiento = true"
+      title="Registrar movimiento de caja"
+    >
+      <span class="material-symbols-outlined text-[18px]">sync_alt</span>
+      <span class="hidden md:inline">Movimiento</span>
+    </button>
+
+    <button
+      type="button"
+      class="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 rounded-xl border border-surface-variant hover:bg-surface-container text-on-surface-variant active:scale-95 transition-all text-xs font-sans font-semibold cursor-pointer shadow-sm"
+      (click)="abrirCorte()"
+      title="Realizar corte de caja"
+    >
+      <span class="material-symbols-outlined text-[18px]">calculate</span>
+      <span class="hidden md:inline">Corte</span>
+    </button>
+
+    <button
+      type="button"
+      aria-label="Escanear"
+      class="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary active:scale-95 transition-all text-xs font-sans font-semibold cursor-pointer shadow-sm"
+      [disabled]="leyendoCodigo"
+      (click)="escanear()"
+      title="Escanear código de barras"
+    >
+      <ion-spinner *ngIf="leyendoCodigo" name="crescent" class="w-4 h-4"></ion-spinner>
+      <span *ngIf="!leyendoCodigo" class="material-symbols-outlined text-[18px]" data-icon="barcode_scanner">barcode_scanner</span>
+      <span class="hidden sm:inline">Escanear</span>
+    </button>
   </div>
 
-  <!-- =============================================
-     MOVIMIENTO DE CAJA
-============================================== -->
+  <div class="text-on-surface antialiased flex flex-col w-full min-h-full md:h-full md:overflow-hidden bg-surface">
+    <!-- CARGANDO -->
+    <div *ngIf="cargando" class="flex-1 flex flex-col items-center justify-center p-6 text-on-surface-variant">
+      <ion-spinner color="primary"></ion-spinner>
+      <p class="mt-4 font-sans text-sm">Preparando punto de venta...</p>
+    </div>
 
-  <ion-modal cssClass="pos-modal" [isOpen]="mostrarMovimiento" (didDismiss)="mostrarMovimiento = false">
-    <ng-template>
-      <ion-header>
-        <ion-toolbar>
-          <ion-title> Movimiento de caja </ion-title>
-
-          <ion-buttons slot="end">
-            <ion-button (click)="mostrarMovimiento = false"> Cerrar </ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-
-      <ion-content class="ion-padding">
-        <div class="modal-intro">
-          <span class="eyebrow">Caja</span>
-          <h2>Registrar movimiento</h2>
-          <p>Registra cualquier entrada o salida de efectivo diferente a una venta.</p>
+    <!-- MAIN CONTENT CANVAS -->
+    <main class="flex-1 pb-6 pt-4 px-3 sm:px-4 md:px-6 flex flex-col md:flex-row gap-4 md:gap-6 md:overflow-hidden custom-scrollbar" *ngIf="caja && !cargando">
+      
+      <!-- LADO IZQUIERDO: PRODUCTOS -->
+      <section class="w-full flex-none md:flex-1 md:overflow-y-auto pr-0 md:pr-2 pb-6 md:pb-0 custom-scrollbar">
+        <!-- Search Section -->
+        <div class="mb-6">
+          <div class="relative flex items-center w-full h-12 rounded-xl bg-surface-container focus-within:ring-1 focus-within:ring-primary transition-all shadow-sm">
+            <span class="material-symbols-outlined absolute left-4 text-primary" data-icon="search">search</span>
+            <input #lector class="w-full h-full bg-transparent border-none focus:ring-0 pl-12 pr-4 font-sans text-sm text-on-surface placeholder:text-outline-variant/70 rounded-xl transition-colors" placeholder="Buscar producto o código..." type="text" [(ngModel)]="busqueda" (keyup.enter)="agregarDesdeEntrada()"/>
+          </div>
         </div>
 
-        <ion-segment [(ngModel)]="tipoMovimiento">
-          <ion-segment-button value="INGRESO">
-            <ion-icon name="arrow-down-circle-outline"></ion-icon>
-            <ion-label>Ingreso</ion-label>
-          </ion-segment-button>
+        <div class="flex flex-col items-center justify-center py-12 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm" *ngIf="!resultados.length">
+          <span class="material-symbols-outlined text-4xl text-primary/40 mb-2">search_off</span>
+          <h3 class="font-heading text-lg font-bold text-on-surface">No encontramos productos</h3>
+          <p class="font-sans text-sm mt-1">Intenta buscar con otro nombre o código.</p>
+        </div>
 
-          <ion-segment-button value="RETIRO">
-            <ion-icon name="arrow-up-circle-outline"></ion-icon>
-            <ion-label>Retiro</ion-label>
-          </ion-segment-button>
-        </ion-segment>
+        <!-- Product Grid (2 Columns) -->
+        <div class="grid grid-cols-2 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 pb-6">
+          
+          <ng-container *ngIf="cargandoProductos">
+            <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="bg-surface-container-lowest rounded-[22px] shadow-sm p-3 relative flex flex-col justify-between h-full border border-surface-variant/30 animate-pulse">
+              <div class="h-32 md:h-36 bg-surface-variant/30 rounded-xl mb-2"></div>
+              <div class="space-y-2">
+                <div class="h-2.5 bg-surface-variant/60 rounded w-1/3"></div>
+                <div class="h-3.5 bg-surface-variant/60 rounded w-4/5"></div>
+                <div class="flex justify-between items-center pt-2">
+                  <div class="h-5 bg-surface-variant/60 rounded w-1/3"></div>
+                  <div class="w-8 h-8 rounded-full bg-surface-variant/60"></div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
 
-        <div class="modal-fields">
-          <ion-input
-            fill="outline"
+          <ng-container *ngIf="!cargandoProductos">
+            <app-product-card
+              *ngFor="let producto of resultados"
+              [producto]="producto"
+              mode="cajero"
+              (add)="agregar($event)"
+            ></app-product-card>
+          </ng-container>
+        </div>
+      </section>
+
+      <!-- LADO DERECHO: TICKET -->
+      <aside id="resumenVenta" class="w-full md:w-[360px] lg:w-[400px] flex-none md:shrink-0 flex flex-col bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant md:sticky md:top-4 self-start">
+        
+        <div class="px-4 py-3 flex justify-between items-center bg-surface-container-low rounded-t-[24px] border-b border-surface-variant">
+          <h2 class="font-heading text-lg text-primary font-bold">Ticket Actual <span class="text-on-surface-variant font-sans font-normal text-xs ml-1" *ngIf="carrito.length">({{ cantidadArticulos }} prod)</span></h2>
+          <button class="text-secondary text-xs font-sans font-bold hover:bg-secondary/10 px-3 py-1 rounded-full transition-colors" *ngIf="carrito.length" (click)="carrito = [];">Limpiar</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar min-h-[140px] md:max-h-[calc(100vh-320px)]">
+           <div class="flex flex-col items-center justify-center py-10 opacity-50 text-center" *ngIf="!carrito.length">
+              <span class="material-symbols-outlined text-4xl text-outline mb-2">shopping_cart</span>
+              <strong class="font-heading text-sm text-on-surface">Tu venta está vacía</strong>
+              <p class="font-sans text-xs text-on-surface-variant mt-1">Escanea o selecciona un producto.</p>
+           </div>
+           
+           <ul class="space-y-0 mb-2" *ngIf="carrito.length">
+             <li *ngFor="let item of carrito" class="flex flex-col py-3 border-b border-surface-variant border-dashed">
+                <div class="flex justify-between items-start w-full">
+                  <div class="flex flex-col flex-1 pr-2">
+                    <span class="font-sans font-semibold text-sm text-on-surface leading-tight">{{ item.nombre }}</span>
+                    <span class="font-sans text-[11px] text-on-surface-variant mt-0.5">{{ item.cantidad }} x {{ item.precioUnitario | currency:'MXN' }}</span>
+                  </div>
+                  <span class="font-heading font-bold text-sm text-primary">{{ item.subtotal | currency:'MXN' }}</span>
+                </div>
+                <!-- Controles de cantidad -->
+                <div class="flex items-center justify-between mt-3">
+                   <div class="flex items-center bg-surface rounded-full border border-surface-variant shadow-sm">
+                     <button class="w-8 h-8 rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface active:scale-95 transition-all" (click)="decrementar(item)">
+                        <span class="material-symbols-outlined text-sm">remove</span>
+                     </button>
+                     <span class="font-sans font-bold text-xs w-6 text-center">{{ item.cantidad }}</span>
+                     <button class="w-8 h-8 rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface active:scale-95 transition-all" (click)="incrementar(item)">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                     </button>
+                   </div>
+                   <button class="w-8 h-8 rounded-full bg-error-container hover:bg-error text-on-error-container hover:text-on-error flex items-center justify-center active:scale-95 transition-colors" (click)="eliminar(item)">
+                      <span class="material-symbols-outlined text-[16px]">delete</span>
+                   </button>
+                </div>
+             </li>
+           </ul>
+        </div>
+
+        <div class="px-4 py-4 bg-surface-container-low md:rounded-b-[24px] border-t border-surface-variant">
+          <div class="flex justify-between items-end mb-4">
+            <span class="font-sans font-medium text-sm text-on-surface-variant">Total a pagar:</span>
+            <span class="font-heading text-2xl md:text-[28px] text-primary-container font-bold leading-none">{{ total | currency:'MXN' }}</span>
+          </div>
+          <button class="w-full bg-primary-container text-on-primary py-3.5 px-4 rounded-xl font-sans font-bold text-base flex items-center justify-center gap-2 shadow-sm hover:bg-primary active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-surface-variant disabled:text-outline" [disabled]="!carrito.length" (click)="abrirModalCobro()">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+            Cobrar Venta
+          </button>
+        </div>
+      </aside>
+
+      <!-- FLOATING MOBILE TICKET BAR (Only visible on mobile / zoom when items exist) -->
+      <div
+        *ngIf="carrito.length > 0"
+        (click)="irAlResumen()"
+        class="md:hidden fixed bottom-4 left-4 right-4 z-30 bg-primary text-on-primary rounded-2xl p-3.5 shadow-xl flex items-center justify-between animate-fadeIn cursor-pointer active:scale-[0.98] transition-transform"
+        role="button"
+        title="Ver ticket de venta"
+      >
+        <div class="flex items-center gap-2.5">
+          <span class="w-7 h-7 rounded-full bg-on-primary/20 text-on-primary flex items-center justify-center font-bold text-xs">
+            {{ cantidadArticulos }}
+          </span>
+          <span class="font-sans font-semibold text-sm">Ver Ticket</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-heading font-bold text-base">{{ total | currency:'MXN' }}</span>
+          <span class="material-symbols-outlined text-lg">arrow_downward</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- PANTALLAS DE CAJA (APERTURA / CERRADA) -->
+    <div class="flex-1 p-6 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar" *ngIf="!cargando && !caja && !ultimaCaja">
+      <div class="max-w-md w-full bg-surface-container-lowest p-8 rounded-[24px] shadow-sm border border-surface-variant text-center">
+        <span class="material-symbols-outlined text-[48px] text-primary/40 mb-4">lock_open</span>
+        <h1 class="font-heading font-bold text-xl text-primary">Apertura de caja</h1>
+        <p class="font-sans text-sm text-on-surface-variant mt-2 mb-8">Registra el efectivo inicial disponible en caja antes de comenzar a realizar ventas.</p>
+        
+        <ion-input class="mb-6 font-sans text-lg text-center" fill="outline" type="number" min="0" label="Fondo inicial" labelPlacement="stacked" placeholder="0.00" [(ngModel)]="fondoInicial"></ion-input>
+        
+        <button class="w-full py-3.5 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-sans font-bold shadow-md active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50" [disabled]="abriendo || fondoInicial === null || fondoInicial < 0" (click)="abrirCaja()">
+          <ion-spinner *ngIf="abriendo" name="crescent" class="w-5 h-5"></ion-spinner>
+          {{ abriendo ? 'Abriendo caja...' : 'Confirmar Apertura' }}
+        </button>
+      </div>
+    </div>
+    
+    <div class="flex-1 p-6 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar" *ngIf="ultimaCaja as c">
+       <div class="max-w-md w-full bg-surface-container-lowest p-8 rounded-[24px] shadow-sm border border-surface-variant text-center">
+          <span class="material-symbols-outlined text-[48px] mb-4" [ngClass]="c.diferencia === 0 ? 'text-tertiary' : c.diferencia > 0 ? 'text-secondary' : 'text-error'">
+             {{ c.diferencia === 0 ? 'check_circle' : 'warning' }}
+          </span>
+          <h1 class="font-heading font-bold text-xl mb-1" [ngClass]="c.diferencia === 0 ? 'text-tertiary' : c.diferencia > 0 ? 'text-secondary' : 'text-error'">
+             {{ c.diferencia === 0 ? 'CAJA CUADRADA' : c.diferencia > 0 ? 'SOBRANTE' : 'FALTANTE' }}
+          </h1>
+          <p class="font-sans text-sm text-on-surface-variant mb-6">El turno ha finalizado correctamente.</p>
+          
+          <div class="bg-surface rounded-xl border border-surface-variant p-4 mb-8">
+             <div class="flex justify-between items-center py-2 border-b border-surface-variant border-dashed font-sans text-sm">
+               <span class="text-on-surface-variant">Total vendido</span> 
+               <strong class="text-on-surface">{{ c.totalVentas | currency:'MXN' }}</strong>
+             </div>
+             <div class="flex justify-between items-center py-2 border-b border-surface-variant border-dashed font-sans text-sm">
+               <span class="text-on-surface-variant">Efectivo esperado</span> 
+               <strong class="text-on-surface">{{ c.efectivoEsperado | currency:'MXN' }}</strong>
+             </div>
+             <div class="flex justify-between items-center py-2 pt-3 font-sans">
+               <span class="text-on-surface-variant text-sm">Diferencia</span> 
+               <strong class="text-lg" [ngClass]="c.diferencia === 0 ? 'text-tertiary' : c.diferencia > 0 ? 'text-secondary' : 'text-error'">{{ c.diferencia | currency:'MXN' }}</strong>
+             </div>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3">
+             <button class="flex-1 py-3 bg-surface border border-outline-variant hover:bg-surface-variant rounded-xl font-sans font-bold text-sm text-on-surface transition-colors" (click)="ultimaCaja = null; fondoInicial = null">Abrir nuevo turno</button>
+             <button class="flex-1 py-3 bg-surface border border-outline-variant hover:bg-surface-variant rounded-xl font-sans font-bold text-sm text-on-surface transition-colors" routerLink="/caja">Ver detalles</button>
+             <button class="flex-1 py-3 bg-primary hover:bg-primary-container text-on-primary rounded-xl font-sans font-bold text-sm shadow-md transition-colors" (click)="auth.logout()">Cerrar sesión</button>
+          </div>
+       </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE COBRO -->
+  <app-modal-shell
+    [isOpen]="mostrarModalCobro"
+    [title]="'Cobrar Venta'"
+    [size]="'md'"
+    [showFooter]="true"
+    (closed)="mostrarModalCobro = false"
+  >
+    <div class="p-4 md:p-6 space-y-6">
+      <!-- Total -->
+      <section class="bg-surface-container-high rounded-2xl p-6 text-center shadow-sm border border-surface-variant/30">
+        <p class="font-sans text-xs text-primary/70 uppercase tracking-widest font-bold mb-2">Total a cobrar</p>
+        <p class="font-heading text-4xl md:text-5xl text-primary-container font-bold">{{ total | currency:'MXN' }}</p>
+      </section>
+      
+      <!-- Método -->
+      <section>
+        <h2 class="font-sans font-semibold text-sm text-on-surface-variant mb-3 px-1 uppercase tracking-wider">Método de Pago</h2>
+        <div class="grid grid-cols-3 gap-2">
+          <button class="py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all" [ngClass]="metodoPago === 'EFECTIVO' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface'" (click)="metodoPago = 'EFECTIVO'; cambiarMetodo()">
+            <span class="material-symbols-outlined text-2xl" [style.font-variation-settings]="metodoPago === 'EFECTIVO' ? '\'FILL\' 1' : '\'FILL\' 0'">payments</span>
+            <span class="font-sans font-semibold text-[10px] uppercase">Efectivo</span>
+          </button>
+          <button class="py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all" [ngClass]="metodoPago === 'TARJETA' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface'" (click)="metodoPago = 'TARJETA'; cambiarMetodo()">
+            <span class="material-symbols-outlined text-2xl" [style.font-variation-settings]="metodoPago === 'TARJETA' ? '\'FILL\' 1' : '\'FILL\' 0'">credit_card</span>
+            <span class="font-sans font-semibold text-[10px] uppercase">Tarjeta</span>
+          </button>
+          <button class="py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all" [ngClass]="metodoPago === 'TRANSFERENCIA' ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface'" (click)="metodoPago = 'TRANSFERENCIA'; cambiarMetodo()">
+            <span class="material-symbols-outlined text-2xl" [style.font-variation-settings]="metodoPago === 'TRANSFERENCIA' ? '\'FILL\' 1' : '\'FILL\' 0'">qr_code_scanner</span>
+            <span class="font-sans font-semibold text-[10px] uppercase">Transfer.</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Efectivo Monto -->
+      <section class="bg-surface-container-low border border-surface-variant rounded-2xl p-4 shadow-sm" *ngIf="metodoPago === 'EFECTIVO'">
+        <label class="font-sans font-semibold text-xs text-on-surface-variant block mb-2 px-1 uppercase tracking-wider">Monto recibido</label>
+        <ion-input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-2 font-heading font-bold text-2xl text-primary text-center" type="number" min="0" [(ngModel)]="montoRecibido" placeholder="0.00"></ion-input>
+        
+        <!-- Cambio Card -->
+        <div class="mt-4 bg-tertiary-fixed border border-tertiary/30 rounded-xl p-4 flex items-center justify-between shadow-sm relative overflow-hidden" *ngIf="(montoRecibido || 0) >= total">
+          <div class="absolute -right-2 -top-2 opacity-10">
+            <span class="material-symbols-outlined text-7xl" style="font-variation-settings: 'FILL' 1;">paid</span>
+          </div>
+          <div class="relative z-10 w-full text-center">
+            <p class="font-sans font-semibold text-[10px] text-tertiary/80 uppercase tracking-wider mb-1">Cambio a entregar</p>
+            <p class="font-heading font-bold text-3xl text-tertiary">{{ ((montoRecibido || 0) - total) | currency:'MXN' }}</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div footer class="p-4 bg-surface border-t border-surface-variant shadow-sm pb-safe w-full">
+      <button class="w-full py-4 bg-primary-container hover:bg-primary text-on-primary font-sans font-bold text-base rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:bg-surface-variant disabled:text-outline disabled:shadow-none" [disabled]="!puedeCobrar || procesandoVenta" (click)="cobrar()">
+        <ion-spinner *ngIf="procesandoVenta" name="crescent" class="w-5 h-5"></ion-spinner>
+        <span *ngIf="!procesandoVenta" class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        {{ procesandoVenta ? 'Procesando...' : 'Confirmar Pago' }}
+      </button>
+    </div>
+  </app-modal-shell>
+
+
+  <!-- MODAL MOVIMIENTO -->
+  <app-modal-shell
+    [isOpen]="mostrarMovimiento"
+    [title]="'Movimiento de caja'"
+    [subtitle]="'Entrada o salida de efectivo'"
+    [size]="'md'"
+    [showFooter]="true"
+    (closed)="mostrarMovimiento = false"
+  >
+    <div class="p-5 md:p-6 space-y-5">
+      <!-- Intro Card -->
+      <div class="bg-surface-container-lowest rounded-2xl p-4 border border-surface-variant/30 flex items-start gap-3 shadow-sm">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+          <span class="material-symbols-outlined text-[22px]">sync_alt</span>
+        </div>
+        <div>
+          <h3 class="font-heading font-semibold text-sm text-on-surface">Registro de efectivo</h3>
+          <p class="font-sans text-xs text-on-surface-variant mt-0.5">Registra cualquier entrada o salida de efectivo diferente al cobro de una venta.</p>
+        </div>
+      </div>
+
+      <!-- Tipo de Movimiento Toggle -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1 uppercase tracking-wider">Tipo de movimiento</label>
+        <div class="grid grid-cols-2 gap-2 p-1.5 bg-surface-container rounded-2xl border border-surface-variant/30">
+          <button
+            type="button"
+            class="py-3 px-4 rounded-xl font-sans font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            [ngClass]="tipoMovimiento === 'INGRESO' ? 'bg-surface-container-lowest text-tertiary shadow-sm border border-tertiary/20' : 'text-on-surface-variant hover:bg-surface-container-high/60'"
+            (click)="tipoMovimiento = 'INGRESO'"
+          >
+            <span class="material-symbols-outlined text-lg">arrow_downward</span>
+            Ingreso (Entrada)
+          </button>
+
+          <button
+            type="button"
+            class="py-3 px-4 rounded-xl font-sans font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            [ngClass]="tipoMovimiento === 'RETIRO' ? 'bg-surface-container-lowest text-error shadow-sm border border-error/20' : 'text-on-surface-variant hover:bg-surface-container-high/60'"
+            (click)="tipoMovimiento = 'RETIRO'"
+          >
+            <span class="material-symbols-outlined text-lg">arrow_upward</span>
+            Retiro (Salida)
+          </button>
+        </div>
+      </div>
+
+      <!-- Monto Input + Quick Chips -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1 uppercase tracking-wider">Monto a registrar *</label>
+        <div class="relative flex items-center mb-2.5">
+          <span class="absolute left-4 font-heading font-bold text-2xl" [ngClass]="tipoMovimiento === 'INGRESO' ? 'text-tertiary' : 'text-error'">$</span>
+          <input
+            class="w-full pl-10 pr-4 py-3.5 bg-surface-container border border-outline-variant/30 rounded-xl font-heading font-bold text-2xl placeholder:text-outline-variant/50 focus:ring-1 focus:bg-surface-container-lowest outline-none transition-all"
+            [ngClass]="tipoMovimiento === 'INGRESO' ? 'text-tertiary focus:border-tertiary focus:ring-tertiary' : 'text-error focus:border-error focus:ring-error'"
             type="number"
             min="0.01"
-            label="Monto"
-            labelPlacement="stacked"
+            step="any"
+            placeholder="0.00"
             [(ngModel)]="montoMovimiento"
-          ></ion-input>
-
-          <ion-textarea
-            fill="outline"
-            maxlength="255"
-            autoGrow="true"
-            label="Concepto"
-            labelPlacement="stacked"
-            placeholder="Ej. Pago a proveedor"
-            [(ngModel)]="conceptoMovimiento"
-          ></ion-textarea>
+          />
         </div>
 
-        <ion-button
-          class="primary-action"
-          expand="block"
-          [disabled]="
-          !montoMovimiento ||
-          montoMovimiento <= 0 ||
-          !conceptoMovimiento.trim()
-        "
-          (click)="registrarMovimiento()"
-        >
-          Registrar movimiento
-        </ion-button>
-
-        <div class="movement-history" *ngIf="movimientos.length">
-          <h3>Movimientos de este turno</h3>
-
-          <ion-list lines="none">
-            <ion-item *ngFor="let m of movimientos" class="movement-item">
-              <div class="movement-icon" slot="start" [class.withdraw]="m.tipoMovimiento === 'RETIRO'">
-                <ion-icon
-                  [name]="
-                  m.tipoMovimiento === 'INGRESO'
-                    ? 'arrow-down-outline'
-                    : 'arrow-up-outline'
-                "
-                ></ion-icon>
-              </div>
-
-              <ion-label>
-                <strong> {{ m.tipoMovimiento }} </strong>
-
-                <p>{{ m.concepto }}</p>
-
-                <small> {{ m.fechaHora | date:'short' }} </small>
-              </ion-label>
-
-              <ion-note slot="end"> {{ m.monto | currency:'MXN' }} </ion-note>
-            </ion-item>
-          </ion-list>
-        </div>
-      </ion-content>
-    </ng-template>
-  </ion-modal>
-</app-admin-shell>
-
-<!-- =============================================
-     CORTE DE CAJA
-============================================== -->
-
-<ion-modal cssClass="pos-modal cut-modal" [isOpen]="mostrarCorte" (didDismiss)="mostrarCorte = false">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title> Corte de caja </ion-title>
-
-        <ion-buttons slot="end">
-          <ion-button (click)="mostrarCorte = false"> Volver </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding">
-      <div *ngIf="resumen as r" class="cut-container">
-        <div class="modal-intro">
-          <span class="eyebrow"> Resumen del turno </span>
-
-          <h2>Corte de caja</h2>
-
-          <p>Verifica el efectivo físico antes de finalizar el turno.</p>
-        </div>
-
-        <div class="cut-summary">
-          <div>
-            <span>Fondo inicial</span>
-            <b>{{ r.fondoInicial | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Ventas en efectivo</span>
-            <b>{{ r.totalEfectivo | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Tarjeta</span>
-            <b>{{ r.totalTarjeta | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Transferencias</span>
-            <b>{{ r.totalTransferencia | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Ingresos</span>
-            <b>{{ r.totalIngresos | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Retiros</span>
-            <b>{{ r.totalRetiros | currency:'MXN' }}</b>
-          </div>
-
-          <div>
-            <span>Número de ventas</span>
-            <b>{{ r.numeroVentas }}</b>
-          </div>
-
-          <div class="cut-total">
-            <span>Total vendido</span>
-            <b>{{ r.totalVentas | currency:'MXN' }}</b>
-          </div>
-
-          <div class="expected-cash">
-            <span>Efectivo esperado</span>
-            <b>{{ r.efectivoEsperado | currency:'MXN' }}</b>
-          </div>
-        </div>
-
-        <div class="counted-section">
-          <ion-input
-            fill="outline"
-            type="number"
-            min="0"
-            label="Efectivo contado"
-            labelPlacement="stacked"
-            [(ngModel)]="efectivoContado"
-          ></ion-input>
-
-          <div
-            class="difference-card"
-            [class.ok]="diferenciaInformativa === 0"
-            [class.positive]="diferenciaInformativa > 0"
-            [class.negative]="diferenciaInformativa < 0"
+        <!-- Denominaciones rápidas -->
+        <div class="grid grid-cols-5 gap-1.5">
+          <button
+            type="button"
+            class="py-2 px-1 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 font-sans font-semibold text-xs text-on-surface transition-all active:scale-95 cursor-pointer text-center"
+            (click)="montoMovimiento = (montoMovimiento || 0) + 50"
           >
-            <span>Diferencia</span>
+            +$50
+          </button>
+          <button
+            type="button"
+            class="py-2 px-1 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 font-sans font-semibold text-xs text-on-surface transition-all active:scale-95 cursor-pointer text-center"
+            (click)="montoMovimiento = (montoMovimiento || 0) + 100"
+          >
+            +$100
+          </button>
+          <button
+            type="button"
+            class="py-2 px-1 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 font-sans font-semibold text-xs text-on-surface transition-all active:scale-95 cursor-pointer text-center"
+            (click)="montoMovimiento = (montoMovimiento || 0) + 200"
+          >
+            +$200
+          </button>
+          <button
+            type="button"
+            class="py-2 px-1 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 font-sans font-semibold text-xs text-on-surface transition-all active:scale-95 cursor-pointer text-center"
+            (click)="montoMovimiento = (montoMovimiento || 0) + 500"
+          >
+            +$500
+          </button>
+          <button
+            type="button"
+            class="py-2 px-1 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 font-sans font-semibold text-xs text-on-surface transition-all active:scale-95 cursor-pointer text-center"
+            (click)="montoMovimiento = (montoMovimiento || 0) + 1000"
+          >
+            +$1,000
+          </button>
+        </div>
+      </div>
 
-            <strong> {{ diferenciaInformativa | currency:'MXN' }} </strong>
+      <!-- Concepto Input + Quick Chips -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1 uppercase tracking-wider">Concepto o motivo *</label>
+        <textarea
+          class="w-full p-3.5 rounded-xl bg-surface-container border border-outline-variant/30 font-sans text-sm text-on-surface placeholder:text-outline-variant/70 focus:border-primary focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest outline-none transition-all resize-none"
+          rows="2"
+          maxlength="255"
+          placeholder="Ej. Pago a proveedor, compra de bolsas, cambio..."
+          [(ngModel)]="conceptoMovimiento"
+        ></textarea>
+        <div class="flex flex-wrap gap-1.5 mt-2">
+          <button
+            type="button"
+            class="px-3 py-1 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 text-on-surface-variant font-sans text-xs transition-colors cursor-pointer active:scale-95"
+            (click)="conceptoMovimiento = 'Pago a proveedor'"
+          >
+            Pago a proveedor
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 text-on-surface-variant font-sans text-xs transition-colors cursor-pointer active:scale-95"
+            (click)="conceptoMovimiento = 'Fondo de cambio'"
+          >
+            Fondo de cambio
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-variant/30 text-on-surface-variant font-sans text-xs transition-colors cursor-pointer active:scale-95"
+            (click)="conceptoMovimiento = 'Gastos operativos'"
+          >
+            Gastos operativos
+          </button>
+        </div>
+      </div>
 
-            <small>
-              {{ diferenciaInformativa === 0 ? 'CAJA CUADRADA' : diferenciaInformativa > 0 ? 'SOBRANTE' : 'FALTANTE' }}
-            </small>
-          </div>
-
-          <ion-textarea
-            fill="outline"
-            autoGrow="true"
-            maxlength="255"
-            label="Observaciones"
-            labelPlacement="stacked"
-            placeholder="Opcional"
-            [(ngModel)]="observaciones"
-          ></ion-textarea>
+      <!-- Historial de Movimientos del Turno -->
+      <div class="mt-4 pt-4 border-t border-surface-variant/30" *ngIf="movimientos.length">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-heading font-semibold text-xs uppercase tracking-wider text-outline">Movimientos registrados en este turno</h3>
+          <span class="text-xs font-sans text-on-surface-variant font-medium">{{ movimientos.length }} {{ movimientos.length === 1 ? 'registro' : 'registros' }}</span>
         </div>
 
-        <ion-button
-          class="close-cash-button"
-          expand="block"
-          [disabled]="
-            efectivoContado === null ||
-            efectivoContado < 0 ||
-            cerrando
-          "
-          (click)="cerrarCaja()"
-        >
-          <ion-spinner *ngIf="cerrando" name="crescent"></ion-spinner>
+        <div class="space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1">
+          <div
+            *ngFor="let m of movimientos"
+            class="bg-surface-container-lowest rounded-xl p-3 border border-surface-variant/30 flex items-center justify-between shadow-sm"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <div
+                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                [ngClass]="m.tipoMovimiento === 'INGRESO' ? 'bg-tertiary-fixed text-tertiary' : 'bg-error-container text-error'"
+              >
+                <span class="material-symbols-outlined text-[18px]">
+                  {{ m.tipoMovimiento === 'INGRESO' ? 'arrow_downward' : 'arrow_upward' }}
+                </span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="font-sans font-bold text-[9px] uppercase px-1.5 py-0.5 rounded"
+                    [ngClass]="m.tipoMovimiento === 'INGRESO' ? 'bg-tertiary-fixed text-tertiary' : 'bg-error-container text-error'"
+                  >
+                    {{ m.tipoMovimiento }}
+                  </span>
+                  <span class="font-sans text-[11px] text-on-surface-variant">
+                    {{ m.fechaHora | date:'shortTime' }}
+                  </span>
+                </div>
+                <p class="font-sans text-xs text-on-surface font-medium truncate mt-0.5">{{ m.concepto }}</p>
+              </div>
+            </div>
 
-          {{ cerrando ? 'Cerrando caja...' : 'Cerrar caja' }}
-        </ion-button>
+            <strong
+              class="font-heading font-bold text-sm shrink-0 ml-3"
+              [ngClass]="m.tipoMovimiento === 'INGRESO' ? 'text-tertiary' : 'text-error'"
+            >
+              {{ m.tipoMovimiento === 'INGRESO' ? '+' : '-' }}{{ m.monto | currency:'MXN' }}
+            </strong>
+          </div>
+        </div>
       </div>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+    </div>
+
+    <!-- Footer Modal -->
+    <div footer class="p-4 bg-surface border-t border-surface-variant shadow-sm pb-safe w-full">
+      <button
+        type="button"
+        class="w-full py-3.5 bg-primary-container hover:bg-primary text-on-primary font-sans font-bold text-base rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:bg-surface-variant disabled:text-outline disabled:shadow-none cursor-pointer"
+        [disabled]="!montoMovimiento || montoMovimiento <= 0 || !conceptoMovimiento.trim()"
+        (click)="registrarMovimiento()"
+      >
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        Registrar Movimiento
+      </button>
+    </div>
+  </app-modal-shell>
+
+  <!-- MODAL CORTE DE CAJA -->
+  <app-modal-shell
+    [isOpen]="mostrarCorte"
+    [title]="'Corte de caja'"
+    [subtitle]="'Control de turno y arqueo'"
+    [size]="'lg'"
+    [showFooter]="true"
+    (closed)="mostrarCorte = false"
+  >
+    <!-- SPINNER CARGANDO CORTE -->
+    <div *ngIf="cargandoCorte" class="flex flex-col items-center justify-center py-16 text-on-surface-variant">
+      <ion-spinner color="primary" class="w-8 h-8"></ion-spinner>
+      <p class="mt-4 font-sans text-sm font-medium">Calculando arqueo y resumen de caja...</p>
+    </div>
+
+    <!-- CONTENIDO DEL CORTE -->
+    <div *ngIf="!cargandoCorte && resumen as r" class="p-4 md:p-6 space-y-6">
+      <!-- Tarjeta Info del Turno -->
+      <div class="bg-surface-container-lowest rounded-2xl p-4 md:p-5 border border-surface-variant/30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary-container shrink-0">
+            <span class="material-symbols-outlined text-2xl">point_of_sale</span>
+          </div>
+          <div>
+            <h4 class="font-heading font-bold text-base text-on-surface">
+              {{ r.empleado || auth.sesion?.empleado?.nombre || 'Cajero' }}
+            </h4>
+            <p class="font-sans text-xs text-on-surface-variant">
+              {{ r.nombreSuc || 'Sucursal Principal' }} • Turno #{{ r.id || r.uuidSesionCaja.substring(0, 8) }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 border-t md:border-t-0 border-surface-variant/30 pt-3 md:pt-0">
+          <div>
+            <span class="block font-sans text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">Apertura</span>
+            <span class="font-sans text-xs text-on-surface font-medium">{{ r.fechaHoraApertura | date:'short' }}</span>
+          </div>
+          <div>
+            <span class="block font-sans text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">Fondo Inicial</span>
+            <span class="font-sans text-xs font-bold text-primary">{{ r.fondoInicial | currency:'MXN' }}</span>
+          </div>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-semibold font-sans">
+            <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+            Abierta
+          </span>
+        </div>
+      </div>
+
+      <!-- Resumen de Movimientos y Ventas -->
+      <div class="space-y-3">
+        <h5 class="font-heading font-bold text-sm text-on-surface-variant uppercase tracking-wider px-1">
+          Desglose Financiero
+        </h5>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- Fondo Inicial -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between">
+            <span class="text-xs text-on-surface-variant font-sans">Fondo Inicial</span>
+            <span class="text-base font-bold text-on-surface font-sans mt-1">{{ r.fondoInicial | currency:'MXN' }}</span>
+          </div>
+
+          <!-- Ventas en Efectivo -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant font-sans">Ventas Efectivo</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-tertiary-fixed text-tertiary font-semibold font-sans">+EFECTIVO</span>
+            </div>
+            <span class="text-base font-bold text-tertiary font-sans mt-1">{{ r.totalEfectivo | currency:'MXN' }}</span>
+          </div>
+
+          <!-- Entradas / Ingresos -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant font-sans">Ingresos Extra</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-tertiary-fixed text-tertiary font-semibold font-sans">+INGRESO</span>
+            </div>
+            <span class="text-base font-bold text-tertiary font-sans mt-1">{{ r.totalIngresos | currency:'MXN' }}</span>
+          </div>
+
+          <!-- Retiros de Caja -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant font-sans">Retiros / Salidas</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-error-container text-error font-semibold font-sans">-RETIRO</span>
+            </div>
+            <span class="text-base font-bold text-error font-sans mt-1">{{ r.totalRetiros | currency:'MXN' }}</span>
+          </div>
+
+          <!-- Tarjeta (Informativo) -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between opacity-85">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant font-sans">Tarjeta</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-semibold font-sans">DIGITAL</span>
+            </div>
+            <span class="text-base font-bold text-on-surface font-sans mt-1">{{ r.totalTarjeta | currency:'MXN' }}</span>
+          </div>
+
+          <!-- Transferencia (Informativo) -->
+          <div class="bg-surface-container-lowest rounded-2xl p-3.5 border border-surface-variant/30 shadow-sm flex flex-col justify-between opacity-85">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-on-surface-variant font-sans">Transferencias</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-semibold font-sans">DIGITAL</span>
+            </div>
+            <span class="text-base font-bold text-on-surface font-sans mt-1">{{ r.totalTransferencia | currency:'MXN' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen Totales (Total Ventas y Efectivo Esperado) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="bg-surface-container rounded-2xl p-4 border border-surface-variant/30 flex items-center justify-between">
+          <div>
+            <span class="block text-xs font-semibold text-on-surface-variant font-sans uppercase">Total Vendido</span>
+            <span class="text-xs text-on-surface-variant font-sans">{{ r.numeroVentas }} venta(s) registradas</span>
+          </div>
+          <span class="font-heading font-bold text-xl text-on-surface">{{ r.totalVentas | currency:'MXN' }}</span>
+        </div>
+
+        <div class="bg-primary/10 rounded-2xl p-4 border border-primary/20 flex items-center justify-between">
+          <div>
+            <span class="block text-xs font-bold text-primary font-sans uppercase tracking-wider">Efectivo Esperado</span>
+            <span class="text-[11px] text-on-surface-variant font-sans">En cajón de dinero</span>
+          </div>
+          <span class="font-heading font-bold text-2xl text-primary">{{ r.efectivoEsperado | currency:'MXN' }}</span>
+        </div>
+      </div>
+
+      <!-- Conteo Físico / Arqueo -->
+      <div class="bg-surface-container-lowest rounded-2xl p-4 md:p-5 border border-surface-variant/30 shadow-sm space-y-4">
+        <h5 class="font-heading font-bold text-sm text-on-surface">Declaración y Conteo de Efectivo</h5>
+
+        <div>
+          <label class="block text-xs font-semibold text-on-surface-variant font-sans uppercase tracking-wider mb-1.5" for="efectivoContado">
+            Efectivo Físico Contado ($) *
+          </label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[20px]">payments</span>
+            <input
+              id="efectivoContado"
+              type="number"
+              min="0"
+              step="any"
+              [(ngModel)]="efectivoContado"
+              placeholder="0.00"
+              class="w-full bg-surface border border-surface-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3 pl-11 pr-4 font-heading text-lg font-bold text-on-surface shadow-sm transition-all"
+            />
+          </div>
+        </div>
+
+        <!-- Diferencia informativa -->
+        <div *ngIf="efectivoContado !== null && efectivoContado !== undefined">
+          <!-- Cuadrada -->
+          <div
+            *ngIf="diferenciaInformativa === 0"
+            class="bg-tertiary-fixed/60 border border-tertiary/30 rounded-xl p-3.5 flex items-center gap-3 text-tertiary"
+          >
+            <span class="material-symbols-outlined text-2xl">check_circle</span>
+            <div>
+              <span class="block font-heading font-bold text-sm">Caja Cuadrada Exacta</span>
+              <span class="block font-sans text-xs opacity-90">Diferencia: $0.00 MXN</span>
+            </div>
+          </div>
+
+          <!-- Sobrante -->
+          <div
+            *ngIf="diferenciaInformativa > 0"
+            class="bg-amber-50 border border-amber-300 rounded-xl p-3.5 flex items-center gap-3 text-amber-900"
+          >
+            <span class="material-symbols-outlined text-2xl text-amber-700">arrow_upward</span>
+            <div>
+              <span class="block font-heading font-bold text-sm">Sobrante de Efectivo</span>
+              <span class="block font-sans text-xs opacity-90">Diferencia: +{{ diferenciaInformativa | currency:'MXN' }}</span>
+            </div>
+          </div>
+
+          <!-- Faltante -->
+          <div
+            *ngIf="diferenciaInformativa < 0"
+            class="bg-error-container/60 border border-error/30 rounded-xl p-3.5 flex items-center gap-3 text-error"
+          >
+            <span class="material-symbols-outlined text-2xl">warning</span>
+            <div>
+              <span class="block font-heading font-bold text-sm">Faltante de Efectivo</span>
+              <span class="block font-sans text-xs opacity-90">Diferencia: {{ diferenciaInformativa | currency:'MXN' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nota cuando no se ha ingresado monto -->
+        <p *ngIf="efectivoContado === null || efectivoContado === undefined" class="text-xs text-on-surface-variant font-sans italic">
+          * Cuenta los billetes y monedas en el cajón e ingresa el monto total para comparar contra el saldo esperado.
+        </p>
+
+        <!-- Observaciones -->
+        <div>
+          <label class="block text-xs font-semibold text-on-surface-variant font-sans uppercase tracking-wider mb-1.5" for="corteObservaciones">
+            Observaciones del turno (Opcional)
+          </label>
+          <textarea
+            id="corteObservaciones"
+            [(ngModel)]="observaciones"
+            maxlength="255"
+            rows="2"
+            class="w-full bg-surface border border-surface-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl p-3 font-sans text-sm text-on-surface shadow-sm resize-none transition-all"
+            placeholder="Aclaraciones sobre diferencias, billetes falsos, incidencias..."
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER ACTIONS -->
+    <div footer class="flex items-center justify-end gap-3 p-4">
+      <button
+        type="button"
+        class="px-4 py-2.5 rounded-xl border border-surface-variant hover:bg-surface-container text-on-surface-variant active:scale-95 transition-all text-sm font-sans font-semibold cursor-pointer"
+        (click)="mostrarCorte = false"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-sans font-semibold text-sm shadow-sm flex items-center gap-2 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="efectivoContado === null || efectivoContado < 0 || cerrando"
+        (click)="cerrarCaja()"
+      >
+        <ion-spinner *ngIf="cerrando" name="crescent" class="w-4 h-4"></ion-spinner>
+        <span *ngIf="!cerrando" class="material-symbols-outlined text-[18px]">lock</span>
+        <span>{{ cerrando ? 'Cerrando caja...' : 'Cerrar Turno y Caja' }}</span>
+      </button>
+    </div>
+  </app-modal-shell>
+</app-admin-shell>

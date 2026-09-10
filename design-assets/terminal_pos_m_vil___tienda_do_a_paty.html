@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Terminal Punto de Venta - Tienda Doña Paty</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans & Be Vietnam Pro -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#e3d6e4",
+                        "primary-fixed-dim": "#d7bcec",
+                        "outline-variant": "#ccc4ce",
+                        "on-secondary-fixed": "#400010",
+                        "inverse-on-surface": "#faedfb",
+                        "surface-container": "#f7eaf8",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#623e31",
+                        "secondary-fixed": "#ffdadc",
+                        "background": "#fff7fc",
+                        "surface-tint": "#6b557f",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#efbbaa",
+                        "tertiary-container": "#684336",
+                        "surface-variant": "#ebdeed",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#a93349",
+                        "on-secondary-fixed-variant": "#891933",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#ebdeed",
+                        "tertiary": "#4e2d21",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#f1e4f2",
+                        "primary-fixed": "#f0dbff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#fdeffe",
+                        "on-surface": "#201923",
+                        "on-tertiary-container": "#e4b1a1",
+                        "on-secondary-container": "#730425",
+                        "on-primary-container": "#cdb2e1",
+                        "surface-bright": "#fff7fc",
+                        "inverse-surface": "#352e38",
+                        "secondary-fixed-dim": "#ffb2b9",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#2f140a",
+                        "on-primary-fixed": "#251237",
+                        "inverse-primary": "#d7bcec",
+                        "primary": "#402c53",
+                        "secondary-container": "#fe7488",
+                        "on-background": "#201923",
+                        "surface": "#fff7fc",
+                        "on-surface-variant": "#4a454d",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#ffdbcf",
+                        "primary-container": "#58436b",
+                        "outline": "#7b757e",
+                        "on-primary-fixed-variant": "#533e66"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "md": "16px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    },
+                    "boxShadow": {
+                        'pastel': '0px 4px 20px rgba(88, 67, 107, 0.08)',
+                        'pastel-active': '0px 8px 30px rgba(88, 67, 107, 0.12)'
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #FAFAF9; /* Soft background from style guide */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Ticket Tray Animation */
+        .tray-expanded {
+            transform: translateY(0);
+        }
+        .tray-collapsed {
+            transform: translateY(calc(100% - 80px)); /* Keep only total bar visible */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased flex flex-col h-screen overflow-hidden">
+<!-- JSON Component: TopAppBar -->
+<header class="docked full-width top-0 bg-surface dark:bg-surface-container-highest flex justify-between items-center px-container-margin py-md w-full flat no shadows z-40 relative">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" data-icon="account_circle" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed-dim">Tienda Doña Paty</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-xs">
+                    Cajero: Juan Pérez · Turno #14 · Caja 1
+                    <span class="inline-flex items-center gap-xs ml-2 px-2 py-0.5 rounded-full bg-[#E0F2E9] text-[#1D7A46] text-[10px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#1D7A46]"></span>
+                        Online (Sincronizado)
+                    </span>
+</p>
+</div>
+</div>
+<button aria-label="Escanear" class="flex flex-col items-center justify-center p-2 rounded-xl bg-secondary-container text-on-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="barcode_scanner">barcode_scanner</span>
+<span class="font-label-sm text-[10px] leading-tight mt-1">Escanear</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto pb-48 pt-sm px-container-margin">
+<!-- Search Section -->
+<div class="mb-lg">
+<div class="relative flex items-center w-full h-12 rounded-xl bg-[#F8F7F8] focus-within:ring-1 focus-within:ring-primary transition-all">
+<span class="material-symbols-outlined absolute left-md text-primary" data-icon="search">search</span>
+<input class="w-full h-full bg-transparent border-none focus:ring-0 pl-12 pr-4 font-body-md text-body-md text-on-surface placeholder-outline rounded-xl" placeholder="Buscar por nombre, marca o código de barras..." type="text"/>
+</div>
+</div>
+<!-- Categories (Horizontal Scroll) -->
+<div class="mb-lg">
+<div class="flex overflow-x-auto hide-scrollbar gap-sm pb-2 -mx-container-margin px-container-margin">
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-[#F2BEAD]/20 text-primary font-label-md text-label-md border border-transparent flex items-center gap-1 transition-colors">
+                    🔥 Más Vendidos
+                </button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-transparent text-on-surface-variant font-label-md text-label-md border border-outline-variant hover:bg-surface-variant transition-colors">
+                    🥤 Bebidas
+                </button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-transparent text-on-surface-variant font-label-md text-label-md border border-outline-variant hover:bg-surface-variant transition-colors">
+                    🥫 Abarrotes
+                </button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-transparent text-on-surface-variant font-label-md text-label-md border border-outline-variant hover:bg-surface-variant transition-colors">
+                    🧀 Lácteos
+                </button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-transparent text-on-surface-variant font-label-md text-label-md border border-outline-variant hover:bg-surface-variant transition-colors">
+                    🥔 Botanas
+                </button>
+<button class="flex-shrink-0 px-4 py-2 rounded-full bg-transparent text-on-surface-variant font-label-md text-label-md border border-outline-variant hover:bg-surface-variant transition-colors">
+                    🧼 Limpieza
+                </button>
+</div>
+</div>
+<!-- Product Grid (2 Columns) -->
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Product Card 1 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-md relative flex flex-col h-full active:scale-[0.98] transition-transform">
+<div class="absolute top-2 left-2 bg-secondary-container text-on-primary text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
+                    -10%
+                </div>
+<div class="aspect-square bg-surface-variant rounded-lg mb-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A detailed, appetizing product shot of a 3-liter bottle of Coca-Cola, clearly showing the iconic red label against a clean, bright white background. The lighting is soft and studio-quality, creating a high-end grocery store aesthetic suitable for a modern POS system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOZQp0-6hCyzgnKs-RWwouTNjUXFkO3fbIkjgPNkZj7jBw3SbM-x3U7cxdEDwj64aPzs3Nsx2zUKumj4mhv4xsh7Sf9WpdcBQTL1Oe6ip2jdxa726SwlbvHhZiuZ7T-fq6Rc0bIL5JDOyhTawYEVWOgRwuS65XLA3nBKWhDVWMx7e9SLOcZV5NGfhrd5t4Y01j1Ob-rS4o7J79UYy9qVLv6gOONzCgNmec0fTjOUtyjCWM67Lwr-JEWvH6LAWxZaak8fdUZL84fCA"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<h3 class="font-label-md text-label-md text-[#201923] line-clamp-2 mb-1">Coca-Cola 3L</h3>
+<p class="font-label-md text-label-md text-primary">$50.00</p>
+</div>
+<button aria-label="Add to cart" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-secondary-container text-on-primary shadow-sm flex items-center justify-center hover:scale-105 active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Product Card 2 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-md relative flex flex-col h-full active:scale-[0.98] transition-transform">
+<div class="aspect-square bg-surface-variant rounded-lg mb-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A clean, bright product shot of Sabritas Sal potato chips bag (45g). The yellow packaging pops against a pristine white studio background with soft, diffused lighting, maintaining a premium, minimalist grocery UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlqGKSbqt5vPlcVsOWIHFKR-VHCVEYGG2WKQx_1Ib9HrYD77ofGt2SCWEcUV4WIvdIW9pJKFywE6MVQeY2QLa_IFZcE0PNnu4aP3gju-8iTEVt0loEY3U4XiH0jBxlMUR_VaTbQONzjewtUI8uCT6QE1acWiK8yxh2og4HJRt10Mcs2dKkJAFizMjGFuLBWBGBcXlbEdrS7xtPn65CXvKfSkUSsyahl_H0FtSuAwImckwcpBBFfaNk-jRp-QwlmsXFDfOlDfma250"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<h3 class="font-label-md text-label-md text-[#201923] line-clamp-2 mb-1">Sabritas Sal 45g</h3>
+<p class="font-label-md text-label-md text-primary">$22.00</p>
+</div>
+<button aria-label="Add to cart" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-secondary-container text-on-primary shadow-sm flex items-center justify-center hover:scale-105 active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Product Card 3 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-md relative flex flex-col h-full active:scale-[0.98] transition-transform">
+<div class="aspect-square bg-surface-variant rounded-lg mb-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A high-quality product image of a 1-liter carton of Lala Whole Milk (Leche Lala Entera). The carton is isolated on a pure white background with soft pastel shadows, creating an inviting and organized supermarket shelf look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCak6hi-AkrETd_OI7-kz04gBkefAHec-ezZb8caZ8Yvbg_7-94dJUXEtfJQ3RbXbHQSB5_g7n0vC8ydNrNApz5-tQXxrQtj4ivN222tdPaX_Deyf72E52hr91q5gKK8VAyhLLq6ewhLcmxxqDvyiPcwkVkdBDWDQU56bNl4wvIg1E3RPlEryc491hi1NtKvB8n-xshj0CAs3sdSKiH3HKg58SQkzQtv2ps0jOmzxmUhpbkgYOSWTCmCW-781F5rdTaVgTZ9im-mu4"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<h3 class="font-label-md text-label-md text-[#201923] line-clamp-2 mb-1">Leche Lala Entera 1L</h3>
+<p class="font-label-md text-label-md text-primary">$26.50</p>
+</div>
+<button aria-label="Add to cart" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-secondary-container text-on-primary shadow-sm flex items-center justify-center hover:scale-105 active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Product Card 4 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-md relative flex flex-col h-full active:scale-[0.98] transition-transform">
+<div class="aspect-square bg-surface-variant rounded-lg mb-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A detailed studio shot of a loaf of Pan Bimbo Blanco (680g). The white bread packaging is clearly visible against a seamless white background, illuminated evenly to fit a modern, clean point-of-sale interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4uDHbk-O5OopMtSB9-9HOPOXDj-FnZTjVW24s4I7oyRWZFXZK7GK_FdM7HtOm0--rlJGUWWvVSUnGiLNfRnnbwcvH2Kc6EeuX96nE8NI4bX0Wzs9uY31sXBBC6eERyyN1e8NXfqfFGdr1DxdI2LMn1ajSQ4zeHsZt1bHM1k-emkE0GPfGwp5J7h75QonXzzeWXa3qD97zlFVJFtKsuddEPQIz6KMGnjP6DPWF0hJw2llxjVBwDA5uck4nUjjWxbJPve-M08fiNEs"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<h3 class="font-label-md text-label-md text-[#201923] line-clamp-2 mb-1">Pan Bimbo Blanco 680g</h3>
+<p class="font-label-md text-label-md text-primary">$45.00</p>
+</div>
+<button aria-label="Add to cart" class="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-secondary-container text-on-primary shadow-sm flex items-center justify-center hover:scale-105 active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Expandable Ticket Tray (Bottom Sticky) -->
+<!-- Positioned above BottomNavBar -->
+<div class="fixed bottom-[72px] left-0 w-full bg-surface-container-lowest rounded-t-[24px] shadow-pastel-active z-40 transition-transform duration-300 tray-collapsed flex flex-col border-t border-surface-variant" id="ticketTray">
+<!-- Tray Header (Drag Handle area) -->
+<div class="w-full flex justify-center pt-2 pb-1 cursor-pointer" onclick="toggleTray()">
+<div class="w-12 h-1.5 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Tray Content (Scrollable when expanded) -->
+<div class="px-container-margin pb-md flex-1 overflow-y-auto max-h-[353px]">
+<div class="flex justify-between items-center mb-md mt-2">
+<h2 class="font-headline-md text-body-lg text-primary font-semibold">Ticket Actual <span class="text-on-surface-variant font-normal text-sm">(3 productos)</span></h2>
+<button class="text-secondary text-sm font-label-md hover:underline bg-transparent">Limpiar Ticket</button>
+</div>
+<!-- Compact Item List -->
+<ul class="space-y-3 mb-4">
+<li class="flex justify-between items-center py-2 border-b border-surface-variant border-dashed">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">Coca-Cola 3L</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2 x $50.00</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">$100.00</span>
+</li>
+<li class="flex justify-between items-center py-2 border-b border-surface-variant border-dashed">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">Sabritas Sal 45g</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1 x $22.00</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">$22.00</span>
+</li>
+</ul>
+</div>
+<!-- Checkout Bar (Always visible part of tray) -->
+<div class="px-container-margin py-md bg-surface-container-lowest rounded-t-xl" onclick="expandTrayIfCollapsed()">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-body-lg text-body-lg text-on-surface">Total:</span>
+<span class="font-display-lg-mobile text-[28px] text-primary-container font-bold">$122.00 MXN</span>
+</div>
+<button class="w-full bg-primary-container text-on-primary py-3 px-4 rounded-xl font-label-md text-body-lg font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                Cobrar $122.00
+            </button>
+</div>
+</div>
+<!-- JSON Component: BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-sm pb-safe bg-surface dark:bg-surface-container-low border-t border-outline-variant dark:border-outline shadow-sm rounded-t-xl">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="point_of_sale" style="font-variation-settings: 'FILL' 1;">point_of_sale</span>
+<span class="font-label-sm text-label-sm mt-1">Register</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 px-4 py-1">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 px-4 py-1">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-sm text-label-sm mt-1">Inventory</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-150 px-4 py-1">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</button>
+</nav>
+<script>
+        // Simple logic to toggle the expandable tray
+        const tray = document.getElementById('ticketTray');
+        let isTrayExpanded = false;
+
+        function toggleTray() {
+            if (isTrayExpanded) {
+                tray.classList.remove('tray-expanded');
+                tray.classList.add('tray-collapsed');
+            } else {
+                tray.classList.remove('tray-collapsed');
+                tray.classList.add('tray-expanded');
+            }
+            isTrayExpanded = !isTrayExpanded;
+        }
+
+        function expandTrayIfCollapsed() {
+            if (!isTrayExpanded) {
+                toggleTray();
+            }
+        }
+    </script>
+</body></html>

@@ -1,164 +1,428 @@
-<app-admin-shell menuId="admin-online-order-menu" contentId="online-order-main" activeSection="pedidos-online">
-  <ion-header class="ion-no-border"
-    ><ion-toolbar
-      ><ion-buttons slot="start"><ion-menu-button menu="admin-online-order-menu"></ion-menu-button></ion-buttons
-      ><ion-title>Detalle del pedido</ion-title></ion-toolbar
-    ></ion-header
-  >
-  <ion-content class="detail-page"
-    ><main class="detail-shell">
-      <section class="loading" *ngIf="cargando">
-        <ion-spinner></ion-spinner>
-        <p>Cargando pedido…</p>
-      </section>
-      <ng-container *ngIf="!cargando&&pedido as p">
-        <header class="detail-heading">
-          <a routerLink="/pedidos-online"><ion-icon name="arrow-back-outline"></ion-icon> Pedidos online</a>
+<app-admin-shell menuId="admin-online-order-menu" contentId="online-order-main" [activeSection]="'pedidos-online'">
+  <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24">
+      
+      <!-- Skeletons durante carga -->
+      <div class="space-y-6" *ngIf="cargando">
+        <!-- Skeleton Encabezado -->
+        <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-2">
+            <ion-skeleton-text animated style="width: 100px; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 180px; height: 28px; border-radius: 6px;"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 220px; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated style="width: 140px; height: 36px; border-radius: 9999px;"></ion-skeleton-text>
+        </div>
+
+        <!-- Skeleton Grid Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Skeleton Cliente -->
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <ion-skeleton-text animated style="width: 32px; height: 32px; border-radius: 12px;"></ion-skeleton-text>
+                <div class="space-y-1.5">
+                  <ion-skeleton-text animated style="width: 60px; height: 10px; border-radius: 4px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 140px; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <ion-skeleton-text animated style="width: 56px; height: 56px; border-radius: 16px;"></ion-skeleton-text>
+                <div class="space-y-2 flex-1">
+                  <ion-skeleton-text animated style="width: 180px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 240px; height: 14px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+            </div>
+
+            <!-- Skeleton Productos -->
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <ion-skeleton-text animated style="width: 32px; height: 32px; border-radius: 12px;"></ion-skeleton-text>
+                  <ion-skeleton-text animated style="width: 120px; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+                <ion-skeleton-text animated style="width: 70px; height: 20px; border-radius: 9999px;"></ion-skeleton-text>
+              </div>
+              <div class="space-y-3">
+                <div *ngFor="let i of [1,2]" class="flex items-center gap-4 py-2">
+                  <ion-skeleton-text animated style="width: 56px; height: 56px; border-radius: 12px;"></ion-skeleton-text>
+                  <div class="flex-1 space-y-2">
+                    <ion-skeleton-text animated style="width: 60%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                    <ion-skeleton-text animated style="width: 40%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+                  </div>
+                  <ion-skeleton-text animated style="width: 70px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skeleton Sidebar -->
+          <div class="space-y-6">
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <ion-skeleton-text animated style="width: 140px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 100%; height: 44px; border-radius: 12px;"></ion-skeleton-text>
+            </div>
+            <div class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <ion-skeleton-text animated style="width: 120px; height: 18px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 100%; height: 120px; border-radius: 16px;"></ion-skeleton-text>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!cargando && pedido as p">
+        
+        <!-- Botón de regreso -->
+        <div>
+          <a routerLink="/pedidos-online" class="inline-flex items-center gap-1.5 text-xs font-sans font-semibold text-primary hover:text-primary-container transition-colors py-1.5 px-3 rounded-full hover:bg-surface-container-high active:scale-95">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Volver a pedidos online
+          </a>
+        </div>
+
+        <!-- Encabezado del Pedido -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30">
           <div>
-            <span>Pedido online</span>
-            <h1>{{p.folio}}</h1>
-            <p>{{p.fechaPedido|date:'medium'}}</p>
+            <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Pedido online</span>
+            <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary font-mono tracking-wide">#{{ p.folio }}</h1>
+            <p class="font-sans text-xs text-on-surface-variant mt-1 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[15px] text-outline">schedule</span>
+              Registrado el {{ p.fechaPedido | date:'medium' }}
+            </p>
           </div>
-          <strong class="status" [attr.data-status]="p.estado">{{etiqueta(p.estado)}}</strong>
+
+          <div class="flex items-center gap-3 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold"
+                  [ngClass]="claseEstado(p.estado)">
+              <span class="w-2 h-2 rounded-full" [ngClass]="puntoEstado(p.estado)"></span>
+              <span class="material-symbols-outlined text-[16px]">{{ iconoEstado(p.estado) }}</span>
+              <span>{{ etiqueta(p.estado) }}</span>
+            </span>
+          </div>
         </header>
-        <div class="detail-grid">
-          <div class="main-column">
-            <section class="card customer-card">
-              <div class="section-title">
-                <ion-icon name="person-outline"></ion-icon>
+
+        <!-- Grid de Contenido Principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          
+          <!-- Columna Izquierda: Cliente y Productos (2 columnas) -->
+          <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Tarjeta: Información del Cliente -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">person</span>
+                </div>
                 <div>
-                  <small>Cliente</small>
-                  <h2>Información del cliente</h2>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Cliente</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Información del comprador</h2>
                 </div>
               </div>
-              <div class="customer">
-                <span class="avatar"
-                  ><img
-                    *ngIf="imagen(p.cliente.foto) as foto;else avatarFallback"
-                    [src]="foto"
-                    [alt]="p.cliente.nombre" /><ng-template #avatarFallback
-                    ><ion-icon name="person-outline"></ion-icon></ng-template
-                ></span>
-                <div>
-                  <strong>{{p.cliente.nombre}}</strong><a [href]="'mailto:'+p.cliente.correo">{{p.cliente.correo}}</a>
+
+              <div class="flex items-center gap-4">
+                <!-- Avatar -->
+                <div class="w-14 h-14 rounded-2xl bg-surface-container-low border border-surface-variant/40 overflow-hidden flex items-center justify-center shrink-0">
+                  <img *ngIf="imagen(p.cliente.foto) as foto; else avatarFallback" [src]="foto" (error)="onFotoError(p.cliente.foto)" referrerpolicy="no-referrer" [alt]="p.cliente.nombre" class="w-full h-full object-cover" />
+                  <ng-template #avatarFallback>
+                    <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
+                  </ng-template>
+                </div>
+
+                <div class="min-w-0 flex-1 space-y-1">
+                  <strong class="font-heading font-bold text-base text-on-surface block truncate">{{ p.cliente.nombre }}</strong>
+                  <a [href]="'mailto:' + p.cliente.correo" class="font-sans text-xs text-primary hover:underline flex items-center gap-1 truncate">
+                    <span class="material-symbols-outlined text-[14px]">mail</span>
+                    {{ p.cliente.correo }}
+                  </a>
                 </div>
               </div>
             </section>
-            <section class="card products-card">
-              <div class="section-title">
-                <ion-icon name="cube-outline"></ion-icon>
-                <div>
-                  <small>Productos</small>
-                  <h2>Resumen de compra</h2>
+
+            <!-- Tarjeta: Resumen de Compra -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-lg">inventory_2</span>
+                  </div>
+                  <div>
+                    <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Productos</span>
+                    <h2 class="font-heading font-bold text-base text-on-surface">Artículos en el pedido</h2>
+                  </div>
                 </div>
+                <span class="font-sans text-xs text-on-surface-variant font-medium bg-surface-container px-3 py-1 rounded-full">
+                  {{ p.items.length }} {{ p.items.length === 1 ? 'artículo' : 'artículos' }}
+                </span>
               </div>
-              <article *ngFor="let item of p.items">
-                <span class="product-image"
-                  ><img
-                    *ngIf="imagen(item.imagen) as foto;else productFallback"
-                    [src]="foto"
-                    [alt]="item.nombre" /><ng-template #productFallback
-                    ><ion-icon name="cube-outline"></ion-icon></ng-template
-                ></span>
-                <div>
-                  <strong>{{item.nombre}}</strong><small>{{item.presentacion}}</small>
-                  <p>{{item.cantidad}} × {{item.precioUnitario|currency:'MXN':'symbol-narrow':'1.2-2'}}</p>
-                </div>
-                <b>{{item.subtotal|currency:'MXN':'symbol-narrow':'1.2-2'}}</b>
-              </article>
-              <footer><span>Total</span><strong>{{p.total|currency:'MXN':'symbol-narrow':'1.2-2'}}</strong></footer>
+
+              <div class="divide-y divide-surface-variant/20">
+                <article *ngFor="let item of p.items" class="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4">
+                  <!-- Imagen del Producto -->
+                  <div class="w-14 h-14 rounded-xl bg-surface-container-low border border-surface-variant/30 overflow-hidden flex items-center justify-center shrink-0">
+                    <img *ngIf="imagen(item.imagen) as foto; else itemFallback" [src]="foto" (error)="onItemFotoError(item.imagen)" [alt]="item.nombre" class="w-full h-full object-cover" />
+                    <ng-template #itemFallback>
+                      <span class="material-symbols-outlined text-2xl text-outline-variant">package_2</span>
+                    </ng-template>
+                  </div>
+
+                  <!-- Nombre y Detalles -->
+                  <div class="flex-1 min-w-0">
+                    <strong class="font-sans font-semibold text-sm text-on-surface block truncate">{{ item.nombre }}</strong>
+                    <span class="font-sans text-xs text-outline block truncate" *ngIf="item.presentacion">{{ item.presentacion }}</span>
+                    <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+                      {{ item.cantidad }} × {{ item.precioUnitario | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                    </p>
+                  </div>
+
+                  <!-- Subtotal -->
+                  <div class="text-right shrink-0">
+                    <strong class="font-heading font-bold text-sm md:text-base text-on-surface">
+                      {{ item.subtotal | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                    </strong>
+                  </div>
+                </article>
+              </div>
+
+              <!-- Total Footer -->
+              <footer class="border-t border-surface-variant/30 pt-4 flex items-center justify-between">
+                <span class="font-heading font-bold text-base text-on-surface">Total del pedido</span>
+                <strong class="font-heading font-bold text-2xl text-primary">
+                  {{ p.total | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                </strong>
+              </footer>
             </section>
+
           </div>
-          <aside class="side-column">
-            <section class="card transfer-card">
-              <div class="section-title">
-                <ion-icon name="card-outline"></ion-icon>
+
+          <!-- Columna Derecha: Acciones, Comprobante y Banco (1 columna) -->
+          <div class="space-y-6">
+            
+            <!-- Tarjeta: Gestión / Siguiente Acción -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+                     *ngIf="['EN_REVISION','PAGADO','LISTO'].includes(p.estado)">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">bolt</span>
+                </div>
                 <div>
-                  <small>Transferencia</small>
-                  <h2>Datos entregados al cliente</h2>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Acciones</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Gestión del pedido</h2>
                 </div>
               </div>
-              <dl *ngIf="p.configuracionTransferencia as b;else noBank">
-                <div>
-                  <dt>Banco</dt>
-                  <dd>{{b.banco}}</dd>
+
+              <!-- Estado EN_REVISION -->
+              <div *ngIf="p.estado === 'EN_REVISION'" class="space-y-3">
+                <p class="font-sans text-xs text-on-surface-variant">
+                  Revisa que el comprobante de transferencia y el monto coincidan con el total antes de decidir.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    [disabled]="!!accionEnCurso"
+                    (click)="solicitarRechazo()"
+                    class="w-full border border-error/40 text-error hover:bg-error-container/20 font-sans font-semibold text-xs py-3 px-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-base">close</span>
+                    Rechazar
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="!!accionEnCurso"
+                    (click)="confirmarAprobacion()"
+                    class="w-full bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-xs py-3 px-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <span class="material-symbols-outlined text-base">verified</span>
+                    {{ accionEnCurso === 'aprobar' ? 'Aprobando…' : 'Aprobar pago' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Estado PAGADO -->
+              <div *ngIf="p.estado === 'PAGADO'" class="space-y-3">
+                <p class="font-sans text-xs text-on-surface-variant">
+                  El pago está confirmado. Cuando el pedido esté empacado y listo para entregar al cliente, márcalo como listo.
+                </p>
+                <button
+                  type="button"
+                  [disabled]="!!accionEnCurso"
+                  (click)="ejecutar('listo')"
+                  class="w-full bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span class="material-symbols-outlined text-base">inventory</span>
+                  {{ accionEnCurso === 'listo' ? 'Actualizando…' : 'Listo para recoger' }}
+                </button>
+              </div>
+
+              <!-- Estado LISTO -->
+              <div *ngIf="p.estado === 'LISTO'" class="space-y-3">
+                <p class="font-sans text-xs text-on-surface-variant">
+                  El cliente puede presentarse a recoger su pedido. Una vez entregado físicamente, concluye la orden.
+                </p>
+                <button
+                  type="button"
+                  [disabled]="!!accionEnCurso"
+                  (click)="ejecutar('entregar')"
+                  class="w-full bg-tertiary hover:opacity-90 text-on-primary font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span class="material-symbols-outlined text-base">task_alt</span>
+                  {{ accionEnCurso === 'entregar' ? 'Actualizando…' : 'Marcar como entregado' }}
+                </button>
+              </div>
+            </section>
+
+            <!-- Tarjeta: Comprobante Recibido -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">receipt_long</span>
                 </div>
                 <div>
-                  <dt>Titular</dt>
-                  <dd>{{b.titular}}</dd>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Comprobante</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Transferencia recibida</h2>
                 </div>
-                <div *ngIf="b.clabe">
-                  <dt>CLABE</dt>
-                  <dd>{{b.clabe}}</dd>
+              </div>
+
+              <ng-container *ngIf="p.comprobante as c; else noProof">
+                <!-- Preview visual si es imagen -->
+                <div
+                  *ngIf="esImagenComprobante() && p.comprobanteUrl && !comprobanteImgError; else previewAlternativo"
+                  class="relative group rounded-2xl overflow-hidden border border-surface-variant/30 bg-surface-container-low"
+                >
+                  <img
+                    [src]="p.comprobanteUrl"
+                    [alt]="c.nombre || 'Comprobante de pago'"
+                    class="w-full max-h-60 object-contain mx-auto transition-transform duration-300 group-hover:scale-[1.02] cursor-pointer"
+                    (click)="verComprobante()"
+                    (error)="onComprobanteImgError()"
+                  />
+                  <!-- Overlay con botón al pasar el mouse o tocar -->
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 cursor-pointer"
+                    (click)="verComprobante()"
+                  >
+                    <button
+                      type="button"
+                      (click)="verComprobante(); $event.stopPropagation()"
+                      class="bg-surface-container-lowest/95 hover:bg-surface-container-lowest text-on-surface font-sans font-semibold text-xs py-2 px-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span class="material-symbols-outlined text-[16px] text-primary">open_in_new</span>
+                      Ver en otra pestaña
+                    </button>
+                  </div>
                 </div>
-                <div *ngIf="b.numeroCuenta">
-                  <dt>Cuenta</dt>
-                  <dd>{{b.numeroCuenta}}</dd>
+
+                <!-- Preview alternativo si es PDF o no cargó la imagen -->
+                <ng-template #previewAlternativo>
+                  <div class="p-3.5 bg-surface-container rounded-2xl border border-surface-variant/30 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-2xl">
+                        {{ c.mime === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
+                      </span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <strong class="font-sans font-semibold text-xs text-on-surface block truncate" [title]="c.nombre">{{ c.nombre }}</strong>
+                      <span class="font-sans text-[11px] text-on-surface-variant block mt-0.5">
+                        {{ c.mime }} · {{ c.fecha | date:'short' }}
+                      </span>
+                    </div>
+                  </div>
+                </ng-template>
+
+                <button
+                  type="button"
+                  (click)="verComprobante()"
+                  class="w-full inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
+                >
+                  <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+                  Abrir en otra pestaña
+                </button>
+              </ng-container>
+
+              <ng-template #noProof>
+                <div class="p-4 bg-surface-container/60 rounded-2xl border border-dashed border-outline-variant/40 text-center">
+                  <span class="material-symbols-outlined text-outline-variant text-3xl mb-1">attach_file_off</span>
+                  <p class="font-sans text-xs text-on-surface-variant">El cliente todavía no ha cargado un comprobante de transferencia.</p>
+                </div>
+              </ng-template>
+            </section>
+
+            <!-- Tarjeta: Datos Bancarios Entregados -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">account_balance</span>
                 </div>
                 <div>
-                  <dt>Concepto</dt>
-                  <dd>{{p.folio}}</dd>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Transferencia</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Datos para el pago</h2>
+                </div>
+              </div>
+
+              <dl *ngIf="p.configuracionTransferencia as b; else noBank" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-2.5 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+                  <dt class="font-sans font-semibold text-[10px] text-outline uppercase tracking-wider">Banco</dt>
+                  <dd class="font-sans font-bold text-on-surface mt-0.5">{{ b.banco }}</dd>
+                </div>
+                <div class="p-2.5 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+                  <dt class="font-sans font-semibold text-[10px] text-outline uppercase tracking-wider">Titular</dt>
+                  <dd class="font-sans font-bold text-on-surface mt-0.5 truncate" [title]="b.titular">{{ b.titular }}</dd>
+                </div>
+                <div *ngIf="b.clabe" class="sm:col-span-2 p-2.5 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+                  <dt class="font-sans font-semibold text-[10px] text-outline uppercase tracking-wider">CLABE Interbancaria</dt>
+                  <dd class="font-mono font-bold text-on-surface mt-0.5 tracking-wider">{{ b.clabe }}</dd>
+                </div>
+                <div *ngIf="b.numeroCuenta" class="sm:col-span-2 p-2.5 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+                  <dt class="font-sans font-semibold text-[10px] text-outline uppercase tracking-wider">Número de Cuenta</dt>
+                  <dd class="font-mono font-bold text-on-surface mt-0.5 tracking-wider">{{ b.numeroCuenta }}</dd>
+                </div>
+                <div class="sm:col-span-2 p-2.5 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+                  <dt class="font-sans font-semibold text-[10px] text-outline uppercase tracking-wider">Concepto asignado</dt>
+                  <dd class="font-mono font-bold text-primary mt-0.5 tracking-wider">{{ p.folio }}</dd>
                 </div>
               </dl>
-              <p class="instructions" *ngIf="p.configuracionTransferencia?.instrucciones">
-                {{p.configuracionTransferencia?.instrucciones}}
+
+              <p class="font-sans text-xs text-on-surface-variant bg-surface-container p-3 rounded-xl border border-surface-variant/30 italic" *ngIf="p.configuracionTransferencia?.instrucciones">
+                "{{ p.configuracionTransferencia?.instrucciones }}"
               </p>
-              <ng-template #noBank><p class="muted">No hay datos bancarios históricos disponibles.</p></ng-template>
+
+              <ng-template #noBank>
+                <p class="font-sans text-xs text-outline italic">No hay datos bancarios registrados para esta orden.</p>
+              </ng-template>
             </section>
-            <section class="card proof-card">
-              <div class="section-title">
-                <ion-icon name="document-attach-outline"></ion-icon>
-                <div>
-                  <small>Comprobante</small>
-                  <h2>Transferencia recibida</h2>
-                </div>
+
+            <!-- Tarjeta: Historial de Revisión -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-3" *ngIf="p.fechaRevision">
+              <div class="flex items-center gap-2 border-b border-surface-variant/20 pb-2">
+                <span class="material-symbols-outlined text-outline text-lg">history_edu</span>
+                <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">Registro de revisión</span>
               </div>
-              <ng-container *ngIf="p.comprobante as c;else noProof"
-                ><div class="file">
-                  <ion-icon [name]="c.mime==='application/pdf'?'document-text-outline':'image-outline'"></ion-icon>
-                  <div><strong>{{c.nombre}}</strong><small>{{c.mime}} · {{c.fecha|date:'short'}}</small></div>
-                </div>
-                <ion-button expand="block" fill="outline" (click)="verComprobante()"
-                  >Ver comprobante</ion-button
-                ></ng-container
-              ><ng-template #noProof><p class="muted">El cliente todavía no ha cargado un comprobante.</p></ng-template>
-            </section>
-            <section class="card review-card" *ngIf="p.fechaRevision">
-              <small>Revisión</small>
-              <p>Revisó: <strong>{{p.empleadoRevisa||'Administrador'}}</strong></p>
-              <p>{{p.fechaRevision|date:'medium'}}</p>
-              <p class="rejection" *ngIf="p.motivoRechazo"><strong>Motivo:</strong> {{p.motivoRechazo}}</p>
-            </section>
-            <section class="card actions-card" *ngIf="['EN_REVISION','PAGADO','LISTO'].includes(p.estado)">
-              <h2>Siguiente acción</h2>
-              <p *ngIf="p.estado==='EN_REVISION'">Verifica el comprobante y el monto antes de decidir.</p>
-              <div class="review-actions" *ngIf="p.estado==='EN_REVISION'">
-                <ion-button fill="outline" color="danger" [disabled]="!!accionEnCurso" (click)="solicitarRechazo()"
-                  >Rechazar pago</ion-button
-                ><ion-button [disabled]="!!accionEnCurso" (click)="confirmarAprobacion()"
-                  >{{accionEnCurso==='aprobar'?'Aprobando…':'Aprobar pago'}}</ion-button
-                >
+              <div class="space-y-1 text-xs font-sans text-on-surface">
+                <p><span class="text-outline">Revisó:</span> <strong class="font-semibold">{{ p.empleadoRevisa || 'Administrador' }}</strong></p>
+                <p><span class="text-outline">Fecha:</span> {{ p.fechaRevision | date:'medium' }}</p>
               </div>
-              <ion-button
-                expand="block"
-                *ngIf="p.estado==='PAGADO'"
-                [disabled]="!!accionEnCurso"
-                (click)="ejecutar('listo')"
-                >{{accionEnCurso==='listo'?'Actualizando…':'Marcar como listo'}}</ion-button
-              ><ion-button
-                expand="block"
-                *ngIf="p.estado==='LISTO'"
-                [disabled]="!!accionEnCurso"
-                (click)="ejecutar('entregar')"
-                >{{accionEnCurso==='entregar'?'Actualizando…':'Marcar como entregado'}}</ion-button
-              >
+              <div *ngIf="p.motivoRechazo" class="p-3 bg-error-container/40 rounded-xl border border-error/20 text-xs text-error font-sans space-y-1">
+                <strong class="block font-semibold">Motivo de rechazo:</strong>
+                <p>{{ p.motivoRechazo }}</p>
+              </div>
             </section>
-            <a class="sale-link" *ngIf="p.idVenta" [routerLink]="['/ventas',p.idVenta]"
-              ><ion-icon name="receipt-outline"></ion-icon><span>Ver venta #{{p.idVenta}}</span
-              ><ion-icon name="arrow-forward-outline"></ion-icon
-            ></a>
-          </aside>
+
+            <!-- Enlace a la venta -->
+            <a *ngIf="p.id" [routerLink]="['/ventas', p.id]"
+               class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 hover:border-primary/40 hover:shadow-md transition-all flex items-center justify-between text-xs font-sans font-semibold text-primary group active:scale-[0.99]">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">receipt</span>
+                </div>
+                <span>Ver registro de venta #{{ p.id }}</span>
+              </div>
+              <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </a>
+
+          </div>
+
         </div>
-      </ng-container></main
-  ></ion-content>
+
+      </ng-container>
+
+  </div>
 </app-admin-shell>

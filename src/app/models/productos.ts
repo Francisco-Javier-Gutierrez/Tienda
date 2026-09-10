@@ -1,20 +1,19 @@
 export interface Producto {
-  idPro: number;
-  nombrePro: string | null;
-  precioVentaPro: number | null;
-  costoPro: number | null;
-  existenciaPro: number | null;
-  stockMinimoPro: number | null;
-  tamanoPro: string | null;
-  presentacionPro: string | null;
-  tipoPro: string | null;
+  id: string;
+  nombre: string;
+  precioVenta: number;
+  costo: number | null;
+  existencia: number;
+  stockMinimo: number | null;
+  tamano: string | null;
+  presentacion: string | null;
+  tipo: string | null;
   codigoQR: string | null;
-  skuPro: string | null;
-  imagenPro: string | null;
-  idMarca: number | null;
-  idCat: number | null;
-  nombreMarca?: string | null;
-  nombreCat?: string | null;
+  sku: string | null;
+  imagen: string | null;
+  activo: boolean;
+  marca: { id: string | null; nombre: string | null } | null;
+  categoria: { id: string | null; nombre: string | null } | null;
   pendienteSync?: number;
 }
 
@@ -30,8 +29,8 @@ export interface CrearProductoDto {
   codigoQR: string | null;
   sku: string | null;
   imagen: string | null;
-  idMarca: number;
-  idCat: number;
+  idMarca: string | null;
+  idCat: string | null;
 }
 
 export type ProductoResponse = Producto;

@@ -12,22 +12,22 @@ export class PedidosAdminService {
   listar(): Observable<PedidoAdminResumen[]> {
     return this.http.get<PedidoAdminResumen[]>(this.url);
   }
-  detalle(id: number): Observable<PedidoAdminDetalle> {
+  detalle(id: string | number): Observable<PedidoAdminDetalle> {
     return this.http.get<PedidoAdminDetalle>(`${this.url}/${id}`);
   }
-  comprobante(id: number): Observable<Blob> {
+  comprobante(id: string | number): Observable<Blob> {
     return this.http.get(`${this.url}/${id}/comprobante`, { responseType: 'blob' });
   }
-  aprobar(id: number): Observable<PedidoAdminDetalle> {
+  aprobar(id: string | number): Observable<PedidoAdminDetalle> {
     return this.http.post<PedidoAdminDetalle>(`${this.url}/${id}/aprobar`, {});
   }
-  rechazar(id: number, motivo: string): Observable<PedidoAdminDetalle> {
+  rechazar(id: string | number, motivo: string): Observable<PedidoAdminDetalle> {
     return this.http.post<PedidoAdminDetalle>(`${this.url}/${id}/rechazar`, { motivo });
   }
-  listo(id: number): Observable<PedidoAdminDetalle> {
+  listo(id: string | number): Observable<PedidoAdminDetalle> {
     return this.http.post<PedidoAdminDetalle>(`${this.url}/${id}/listo`, {});
   }
-  entregar(id: number): Observable<PedidoAdminDetalle> {
+  entregar(id: string | number): Observable<PedidoAdminDetalle> {
     return this.http.post<PedidoAdminDetalle>(`${this.url}/${id}/entregar`, {});
   }
 }

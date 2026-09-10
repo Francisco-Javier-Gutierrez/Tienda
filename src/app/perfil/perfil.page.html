@@ -1,55 +1,109 @@
-<app-cliente-shell>
-  <ion-content class="profile-page">
-    <main class="profile-container" *ngIf="clienteAuth.sesion as sesion">
-      <header>
-        <span>Tu cuenta</span>
-        <h1>Perfil</h1>
-        <p>Información asociada a tu inicio de sesión con Google.</p>
+<app-admin-shell
+  *ngIf="esEmpleado; else clientShell"
+  menuId="admin-perfil-menu"
+  contentId="admin-perfil-content"
+  activeSection="inicio"
+  customTitle="Perfil"
+>
+  <ng-container *ngTemplateOutlet="perfilContent"></ng-container>
+</app-admin-shell>
+
+<ng-template #clientShell>
+  <app-cliente-shell>
+    <ng-container *ngTemplateOutlet="perfilContent"></ng-container>
+  </app-cliente-shell>
+</ng-template>
+
+<ng-template #perfilContent>
+  <div class="bg-surface min-h-screen pb-32">
+    <main class="w-full max-w-2xl mx-auto pt-6 md:pt-10 px-4 md:px-6" *ngIf="usuario as u">
+      
+      <header class="mb-8">
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Tu cuenta</span>
+        <h1 class="font-heading font-bold text-3xl md:text-4xl text-on-surface mb-2">Perfil</h1>
+        <p class="font-sans text-sm text-on-surface-variant">
+          {{ u.esEmpleado ? 'Información de tu cuenta de colaborador en el sistema.' : 'Información asociada a tu cuenta.' }}
+        </p>
       </header>
 
-      <section class="profile-card">
-        <div class="profile-identity">
-          <span class="profile-photo">
-            <img
-              *ngIf="foto(sesion.cliente.fotoPerfil) as src; else profilePlaceholder"
-              [src]="src"
-              alt="Foto de perfil"
-            />
-            <ng-template #profilePlaceholder><ion-icon name="person-outline"></ion-icon></ng-template>
-          </span>
-          <div>
-            <h2>{{ sesion.cliente.nombre }} {{ sesion.cliente.apellidoPat }} {{ sesion.cliente.apellidoMat }}</h2>
-            <p>{{ sesion.cliente.correo }}</p>
+      <section class="bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 overflow-hidden">
+        
+        <!-- Header de Identidad -->
+        <div class="p-6 md:p-8 flex flex-col items-center sm:flex-row sm:items-start gap-6 border-b border-surface-variant/30 bg-surface-container-low">
+          <div class="w-24 h-24 rounded-full bg-surface-variant overflow-hidden flex-shrink-0 shadow-sm border-2 border-white flex items-center justify-center">
+            <img *ngIf="foto(u.fotoPerfil) as src; else profilePlaceholder" [src]="src" (error)="onFotoError(u.fotoPerfil)" referrerpolicy="no-referrer" alt="Foto de perfil" class="w-full h-full object-cover" />
+            <ng-template #profilePlaceholder>
+              <img [src]="imagenes.AVATAR_GENERICO" alt="Foto de perfil" class="w-full h-full object-cover" />
+            </ng-template>
+          </div>
+          <div class="flex flex-col items-center sm:items-start text-center sm:text-left mt-2 sm:mt-0">
+            <h2 class="font-heading font-bold text-2xl text-primary">{{ u.nombre }} {{ u.apellidos !== '—' ? u.apellidos : '' }}</h2>
+            <p class="font-sans text-sm text-on-surface-variant mt-1">{{ u.correo }}</p>
+            <div class="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full font-sans font-medium text-[11px] uppercase tracking-wider"
+                 [ngClass]="u.esEmpleado ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-highest text-on-surface-variant'">
+              <span class="material-symbols-outlined text-[15px]">{{ u.esEmpleado ? 'shield_person' : 'verified_user' }}</span>
+              <span>{{ u.rol }}</span>
+            </div>
           </div>
         </div>
 
-        <dl>
-          <div>
-            <dt>Nombre</dt>
-            <dd>{{ sesion.cliente.nombre }}</dd>
+        <!-- Campos de Información Directos (Siempre disponibles) -->
+        <div class="p-6 md:p-8">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Nombre</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ u.nombre || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Apellidos</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ u.apellidos || '—' }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Correo Electrónico</span>
+              <span class="font-sans font-medium text-base text-on-surface break-all">{{ u.correo || '—' }}</span>
+            </div>
+            <div class="flex flex-col" *ngIf="u.telefono">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Teléfono</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ u.telefono }}</span>
+            </div>
+            <div class="flex flex-col" *ngIf="u.sucursal">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">Sucursal</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ u.sucursal }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-[10px] text-primary/70 uppercase tracking-widest mb-1">{{ u.etiquetaFecha }}</span>
+              <span class="font-sans font-medium text-base text-on-surface">{{ u.fecha ? (u.fecha | date:'longDate') : '—' }}</span>
+            </div>
           </div>
-          <div>
-            <dt>Apellidos</dt>
-            <dd>{{ sesion.cliente.apellidoPat || '—' }} {{ sesion.cliente.apellidoMat || '' }}</dd>
-          </div>
-          <div>
-            <dt>Correo</dt>
-            <dd>{{ sesion.cliente.correo }}</dd>
-          </div>
-          <div>
-            <dt>Cliente desde</dt>
-            <dd>{{ sesion.cliente.fechaRegistro | date:'longDate' }}</dd>
-          </div>
-        </dl>
+        </div>
 
-        <div class="profile-actions">
-          <p>La información de esta cuenta se administra desde Google.</p>
-          <ion-button fill="outline" color="danger" (click)="clienteAuth.logout()">
-            <ion-icon slot="start" name="log-out-outline"></ion-icon>
+        <!-- Acciones / Cerrar sesión -->
+        <div class="p-6 md:p-8 bg-error-container border-t border-error/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="font-sans text-xs text-secondary/80 max-w-xs text-center sm:text-left flex items-start gap-2">
+            <span class="material-symbols-outlined text-[16px] mt-0.5">info</span>
+            {{ u.esEmpleado ? 'La sesión está vinculada a tu cuenta de personal en la tienda.' : 'La información de esta cuenta se administra desde tu proveedor de Google.' }}
+          </p>
+          <button class="w-full sm:w-auto border border-error text-error hover:bg-error hover:text-on-error font-sans font-bold text-sm px-6 py-2.5 rounded-full transition-colors flex items-center justify-center gap-2 active:scale-95" (click)="logout()">
+            <span class="material-symbols-outlined text-[18px]">logout</span>
             Cerrar sesión
-          </ion-button>
+          </button>
         </div>
+
       </section>
     </main>
-  </ion-content>
-</app-cliente-shell>
+
+    <!-- Estado si no hay sesión activa -->
+    <div *ngIf="!usuario" class="max-w-md mx-auto pt-20 px-4 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-surface-container text-outline-variant flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-4xl">account_circle</span>
+      </div>
+      <h2 class="font-heading font-bold text-xl text-on-surface mb-2">No has iniciado sesión</h2>
+      <p class="font-sans text-sm text-on-surface-variant mb-6">Inicia sesión para ver y administrar la información de tu cuenta.</p>
+      <a routerLink="/login" class="bg-primary text-on-primary font-sans font-bold text-sm px-6 py-3 rounded-full inline-flex items-center gap-2 shadow-sm hover:bg-primary-container transition-all">
+        <span class="material-symbols-outlined text-lg">login</span>
+        Iniciar sesión
+      </a>
+    </div>
+
+  </div>
+</ng-template>

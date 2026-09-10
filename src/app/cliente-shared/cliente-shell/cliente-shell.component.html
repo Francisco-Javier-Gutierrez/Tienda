@@ -1,64 +1,88 @@
-<div class="client-layout">
-  <ion-header class="client-header">
-    <ion-toolbar>
-      <div class="client-toolbar">
-        <a class="client-brand" routerLink="/catalogo" aria-label="Ir al catálogo">
-          <span class="client-logo"
-            ><img *ngIf="logo() as src; else logoFallback" [src]="src" alt="Logo de la tienda" /><ng-template
-              #logoFallback
-              ><ion-icon name="storefront-outline"></ion-icon></ng-template
-          ></span>
-          <strong>{{ nombreTienda }}</strong>
+<div class="bg-background text-on-background font-sans flex flex-col h-full w-full overflow-hidden">
+  
+  <!-- TopAppBar -->
+  <header class="bg-surface dark:bg-on-surface sticky top-0 z-40 shadow-sm border-b border-surface-variant/30 shrink-0" style="padding-top: var(--safe-area-top);">
+    <div class="flex justify-between items-center px-4 py-3 w-full max-w-7xl mx-auto">
+      
+      <!-- Brand & Profile -->
+      <a routerLink="/catalogo" class="flex items-center gap-3 cursor-pointer transition-all duration-200 active:scale-95 hover:bg-surface-variant/50 rounded-full p-2 -ml-2">
+        <ng-container *ngIf="estaAutenticado; else noSessionAvatar">
+          <div class="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden flex items-center justify-center shrink-0">
+            <img *ngIf="avatar() as src; else avatarFallback" [src]="src" (error)="onAvatarError()" referrerpolicy="no-referrer" alt="User profile" class="w-full h-full object-cover" />
+            <ng-template #avatarFallback>
+              <img [src]="imagenes.AVATAR_GENERICO" alt="Avatar" class="w-full h-full object-cover" />
+            </ng-template>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-heading text-lg font-bold text-primary">{{ nombreTienda }}</span>
+            <span class="font-sans text-xs text-on-surface-variant flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px]">handshake</span> ¡Hola, {{ nombreUsuario }}!
+              <span *ngIf="esEmpleado" class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-semibold">{{ rolEmpleado }}</span>
+            </span>
+          </div>
+        </ng-container>
+        <ng-template #noSessionAvatar>
+          <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container border-2 border-surface-container overflow-hidden flex items-center justify-center shrink-0">
+            <img *ngIf="logo() as src; else logoFallback" [src]="src" alt="Store logo" class="w-full h-full object-cover" />
+            <ng-template #logoFallback>
+              <span class="material-symbols-outlined text-primary">storefront</span>
+            </ng-template>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-heading text-lg font-bold text-primary">{{ nombreTienda }}</span>
+            <span class="font-sans text-xs text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">storefront</span> ¡Bienvenido!
+            </span>
+          </div>
+        </ng-template>
+      </a>
+
+      <!-- Desktop Nav & Actions -->
+      <div class="flex items-center gap-4">
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-6 mr-4">
+          <a routerLink="/catalogo" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Productos</a>
+          <a *ngIf="clienteAuth.estaAutenticado()" routerLink="/mis-pedidos" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Mis Pedidos</a>
+          <a *ngIf="estaAutenticado" routerLink="/perfil" routerLinkActive="text-primary font-semibold" class="font-sans text-on-surface-variant hover:text-primary transition-colors text-sm">Perfil</a>
+          <a *ngIf="esEmpleado" [routerLink]="rutaPanel" class="font-sans text-primary font-semibold hover:text-primary-container transition-colors text-sm flex items-center gap-1.5 bg-primary-container/30 px-3 py-1.5 rounded-full">
+            <span class="material-symbols-outlined text-base">dashboard</span> Volver al Panel
+          </a>
+          <a *ngIf="!estaAutenticado" routerLink="/login" class="font-sans text-primary font-semibold hover:text-primary-container transition-colors text-sm">Iniciar Sesión</a>
+        </nav>
+        
+        <!-- Cart -->
+        <a routerLink="/carrito" class="relative transition-all duration-200 active:scale-95 hover:bg-surface-variant/50 p-2 rounded-full text-primary">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+          <span *ngIf="carrito.cantidadTotal$ | async as cantidad" class="absolute top-0 right-0 bg-secondary text-on-secondary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ cantidad }}</span>
         </a>
 
-        <nav class="desktop-client-nav" aria-label="Navegación de la tienda">
-          <a routerLink="/catalogo" routerLinkActive="active">Productos</a>
-          <a routerLink="/mis-pedidos" routerLinkActive="active">Mis pedidos</a>
-        </nav>
-
-        <div class="client-actions">
-          <a class="cart-link" routerLink="/carrito" routerLinkActive="active" aria-label="Abrir carrito">
-            <ion-icon name="bag-handle-outline"></ion-icon><span class="cart-label">Carrito</span>
-            <span class="cart-count" *ngIf="carrito.cantidadTotal$ | async as cantidad">{{ cantidad }}</span>
-          </a>
-          <a class="client-profile" *ngIf="clienteAuth.sesion as sesion; else loginLink" routerLink="/perfil">
-            <span
-              ><small>Hola,</small><strong>{{ sesion.cliente.nombre }}</strong></span
-            >
-            <span class="client-avatar"
-              ><img *ngIf="avatar() as src; else avatarFallback" [src]="src" alt="Foto de perfil" /><ng-template
-                #avatarFallback
-                ><ion-icon name="person-outline"></ion-icon></ng-template
-            ></span>
-          </a>
-          <ion-button
-            class="client-logout"
-            *ngIf="clienteAuth.estaAutenticado()"
-            fill="clear"
-            size="small"
-            title="Cerrar sesión"
-            aria-label="Cerrar sesión"
-            (click)="clienteAuth.logout()"
-          >
-            <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-          </ion-button>
-          <ng-template #loginLink><a class="login-link" routerLink="/login">Iniciar sesión</a></ng-template>
-        </div>
+        <!-- Logout (Desktop) -->
+        <button *ngIf="estaAutenticado" (click)="logout()" class="hidden md:flex transition-all duration-200 active:scale-95 hover:bg-error/10 p-2 rounded-full text-error" title="Cerrar sesión">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
       </div>
-    </ion-toolbar>
-  </ion-header>
+    </div>
+  </header>
 
-  <main class="client-content"><ng-content></ng-content></main>
+  <!-- Main Content -->
+  <main class="flex-1 w-full relative overflow-y-auto custom-scrollbar">
+    <ng-content></ng-content>
+  </main>
 
-  <nav class="mobile-client-nav" aria-label="Navegación inferior">
-    <a routerLink="/catalogo" routerLinkActive="active"
-      ><ion-icon name="storefront-outline"></ion-icon><span>Productos</span></a
-    >
-    <a routerLink="/mis-pedidos" routerLinkActive="active"
-      ><ion-icon name="cube-outline"></ion-icon><span>Pedidos</span></a
-    >
-    <a [routerLink]="clienteAuth.estaAutenticado() ? '/perfil' : '/login'" routerLinkActive="active"
-      ><ion-icon name="person-outline"></ion-icon><span>Perfil</span></a
-    >
+  <!-- Mobile Bottom Nav (Solo para clientes/invitados, nunca para empleados) -->
+  <nav *ngIf="!esEmpleado" class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-surface-variant/30 shadow-[0_-4px_24px_rgba(88,67,107,0.06)] z-40 flex items-center justify-around px-2 py-2" style="padding-bottom: calc(0.5rem + var(--safe-area-bottom));">
+    <a routerLink="/catalogo" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
+      <span class="material-symbols-outlined text-[24px]">storefront</span>
+      <span class="font-sans text-[10px] mt-1 font-medium">Catálogo</span>
+    </a>
+    <a routerLink="/mis-pedidos" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
+      <span class="material-symbols-outlined text-[24px]">receipt_long</span>
+      <span class="font-sans text-[10px] mt-1 font-medium">Pedidos</span>
+    </a>
+    <a [routerLink]="estaAutenticado ? '/perfil' : '/login'" routerLinkActive="text-primary" class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors flex-1">
+      <span class="material-symbols-outlined text-[24px]">person</span>
+      <span class="font-sans text-[10px] mt-1 font-medium">{{ estaAutenticado ? 'Perfil' : 'Ingresar' }}</span>
+    </a>
   </nav>
+
 </div>

@@ -61,14 +61,31 @@ export class LoginPage implements OnInit {
     const correo = this.correo.trim().toLowerCase();
     if (!correo) return this.feedback('Ingresa tu correo.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return this.feedback('Ingresa un correo válido.');
-    if (!this.password) return this.feedback('Ingresa tu contraseña.');
     this.autenticando = true;
     try {
-      const sesion = await firstValueFrom(this.auth.login(correo, this.password));
-      this.clienteAuth.limpiarSesion();
-      this.auth.guardarSesion(sesion);
-      this.password = '';
-      await this.irSegunRol();
+      try {
+        const sesion = await firstValueFrom(this.auth.login(correo, this.password));
+        this.clienteAuth.limpiarSesion();
+        this.auth.guardarSesion(sesion, this.password);
+        this.password = '';
+        await this.irSegunRol();
+        return;
+      } catch (error: unknown) {
+        const esErrorConexion =
+          error instanceof HttpErrorResponse && (error.status === 0 || error.status === 504 || error.status === 503);
+        if (esErrorConexion) {
+          const sesionOffline = await this.auth.loginOffline(correo, this.password);
+          if (sesionOffline) {
+            this.clienteAuth.limpiarSesion();
+            this.auth.guardarSesion(sesionOffline);
+            this.password = '';
+            await this.feedback('Sesión iniciada en modo offline.', 'warning');
+            await this.irSegunRol();
+            return;
+          }
+        }
+        throw error;
+      }
     } catch (error: unknown) {
       await this.feedback(this.mensajeError(error));
     } finally {
@@ -99,12 +116,12 @@ export class LoginPage implements OnInit {
     const solicitada = this.route.snapshot.queryParamMap.get('returnUrl') || '';
     return permitidas.includes(solicitada) || /^\/mis-pedidos\/\d+$/.test(solicitada) ? solicitada : '/catalogo';
   }
-  private async feedback(message: string): Promise<void> {
+  private async feedback(message: string, color: string = 'danger'): Promise<void> {
     const t = await this.toast.create({
       message,
       duration: 3200,
       position: 'top',
-      color: 'danger',
+      color,
       cssClass: 'pastel-toast',
     });
     await t.present();

@@ -1,73 +1,160 @@
 <app-cliente-shell>
-  <ion-content class="cart-page">
-    <main class="cart-container">
-      <header class="page-heading">
-        <div>
-          <span>Tu selección</span>
-          <h1>Carrito</h1>
-          <p>Revisa cantidades y productos antes de continuar.</p>
-        </div>
-        <button type="button" *ngIf="carrito.items.length" (click)="confirmarVaciar()">Vaciar carrito</button>
-      </header>
+  <div class="px-4 py-6 md:py-8 max-w-4xl mx-auto flex flex-col gap-6 w-full pb-32">
+    
+    <!-- Header -->
+    <header class="flex items-center justify-between">
+      <div>
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Tu selección</span>
+        <h1 class="font-heading font-bold text-3xl text-primary">Mi Carrito</h1>
+        <p class="font-sans text-sm text-on-surface-variant mt-1">Revisa cantidades y productos antes de continuar.</p>
+      </div>
+      <button *ngIf="carrito.items.length" (click)="confirmarVaciar()" class="font-sans font-semibold text-sm text-secondary hover:bg-secondary/10 px-4 py-2 rounded-full transition-colors hidden sm:block">
+        Vaciar carrito
+      </button>
+    </header>
 
-      <section *ngIf="carrito.items.length === 0" class="empty-cart">
-        <span class="empty-icon"><ion-icon name="bag-handle-outline"></ion-icon></span>
-        <h2>Tu carrito está vacío</h2>
-        <p>Explora el catálogo y agrega los productos que necesitas.</p>
-        <ion-button routerLink="/catalogo" shape="round">Ver productos</ion-button>
+    <!-- Empty State -->
+    <section *ngIf="!cargando && carrito.items.length === 0" class="flex flex-col items-center justify-center py-16 bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 text-center">
+      <div class="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center mb-6">
+        <span class="material-symbols-outlined text-5xl text-primary/40">shopping_bag</span>
+      </div>
+      <h2 class="font-heading font-bold text-2xl text-on-surface mb-2">Tu carrito está vacío</h2>
+      <p class="font-sans text-on-surface-variant max-w-md mx-auto mb-8">Explora el catálogo y agrega los productos que necesitas para comenzar tu compra.</p>
+      <button routerLink="/catalogo" class="font-sans font-bold text-base bg-primary-container text-on-primary hover:bg-primary px-8 py-3.5 rounded-full transition-all active:scale-95 shadow-sm flex items-center gap-2">
+        <span class="material-symbols-outlined">storefront</span>
+        Ver productos
+      </button>
+    </section>
+
+    <!-- Skeleton Layout -->
+    <div class="flex flex-col lg:flex-row gap-6 md:gap-8" *ngIf="cargando">
+      <section class="flex-1 space-y-4">
+        <ion-skeleton-text animated style="width: 100%; height: 80px; border-radius: 20px;"></ion-skeleton-text>
+        <article *ngFor="let i of [1,2,3]" class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex gap-4">
+          <ion-skeleton-text animated style="width: 96px; height: 96px; border-radius: 12px; margin: 0;"></ion-skeleton-text>
+          <div class="flex-1 flex flex-col justify-between py-0.5 gap-2">
+            <div>
+              <ion-skeleton-text animated style="width: 60%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 40%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+              <ion-skeleton-text animated style="width: 100px; height: 32px; border-radius: 16px; margin: 0;"></ion-skeleton-text>
+              <ion-skeleton-text animated style="width: 60px; height: 20px; border-radius: 4px; margin: 0;"></ion-skeleton-text>
+            </div>
+          </div>
+        </article>
       </section>
+      <aside class="w-full lg:w-[320px] xl:w-[360px]">
+        <div class="bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 p-5 md:p-6 sticky top-24">
+          <ion-skeleton-text animated style="width: 40%; height: 12px; border-radius: 4px; mb-1"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 60%; height: 24px; border-radius: 4px; mb-6"></ion-skeleton-text>
+          <div class="border-b border-surface-variant/30 pb-4 mb-4">
+             <ion-skeleton-text animated style="width: 100%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+          </div>
+          <ion-skeleton-text animated style="width: 100%; height: 28px; border-radius: 4px; mb-6"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 100%; height: 48px; border-radius: 12px; mb-3"></ion-skeleton-text>
+        </div>
+      </aside>
+    </div>
 
-      <div class="cart-layout" *ngIf="carrito.items.length > 0">
-        <section class="cart-items" aria-label="Productos del carrito">
-          <article class="cart-item" *ngFor="let item of carrito.items">
-            <div class="item-image">
-              <img *ngIf="imagen(item.imagen) as src; else itemPlaceholder" [src]="src" [alt]="item.nombre" />
-              <ng-template #itemPlaceholder><ion-icon name="cube-outline"></ion-icon></ng-template>
+    <!-- Cart Layout -->
+    <div class="flex flex-col lg:flex-row gap-6 md:gap-8" *ngIf="!cargando && carrito.items.length > 0">
+      
+      <!-- Lista de Productos -->
+      <section class="flex-1 space-y-4">
+        
+        <!-- Banner Recolección -->
+        <div class="bg-surface-container-high rounded-[20px] p-4 flex items-start gap-3 shadow-sm border border-surface-variant/30">
+          <span class="material-symbols-outlined text-primary mt-1" style="font-variation-settings: 'FILL' 1;">storefront</span>
+          <p class="font-sans text-sm text-on-surface-variant">
+            <strong class="text-primary font-semibold block mb-0.5">Recolección en Mostrador</strong>
+            Tus productos se reservarán para recoger en la sucursal de Doña Paty
+          </p>
+        </div>
+
+        <button (click)="confirmarVaciar()" class="w-full sm:hidden font-sans font-semibold text-sm text-secondary border border-secondary/30 rounded-xl py-2.5 mt-2 mb-4">
+          Vaciar carrito
+        </button>
+
+        <!-- Cart Items -->
+        <article *ngFor="let item of carrito.items" class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex gap-4 relative group">
+          
+          <div class="w-20 h-20 md:w-24 md:h-24 bg-surface-container/40 border border-surface-variant/20 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative select-none">
+            <img
+              *ngIf="imagenUrl(item) as src; else itemPlaceholder"
+              [src]="src"
+              [alt]="item.nombre"
+              class="w-full h-full object-cover"
+              (error)="onImageError(item.id, item.imagen)"
+            />
+            <ng-template #itemPlaceholder>
+              <div class="flex flex-col items-center justify-center text-outline-variant/60 gap-1.5 py-2 select-none">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-outline-variant/80 border border-outline-variant/20">
+                  <span class="material-symbols-outlined text-xl">inventory_2</span>
+                </div>
+                <span class="text-[10px] font-sans font-medium text-outline-variant">Sin foto</span>
+              </div>
+            </ng-template>
+          </div>
+          
+          <div class="flex-1 flex flex-col justify-between py-0.5">
+            <div class="pr-6">
+              <h3 class="font-sans font-semibold text-sm md:text-base text-on-surface leading-tight mb-1">{{ item.nombre }}</h3>
+              <p class="font-sans text-xs text-on-surface-variant" *ngIf="item.presentacion">{{ item.presentacion }}</p>
+              <p class="font-sans text-[11px] text-outline font-medium mt-1">{{ item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }} c/u</p>
             </div>
-            <div class="item-detail">
-              <h2>{{ item.nombre }}</h2>
-              <p *ngIf="item.presentacion">{{ item.presentacion }}</p>
-              <strong>{{ item.precioMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
-            </div>
-            <div class="item-controls">
-              <div class="quantity" aria-label="Cantidad">
-                <button
-                  type="button"
-                  [disabled]="item.cantidad <= 1"
-                  (click)="carrito.decrementar(item.idPro)"
-                  [attr.aria-label]="'Reducir ' + item.nombre"
-                >
-                  <ion-icon name="remove-outline"></ion-icon>
+            
+            <div class="flex items-center justify-between mt-3">
+              <div class="flex items-center bg-surface-container rounded-full border border-surface-variant/30">
+                <button type="button" class="w-8 h-8 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                        [disabled]="item.cantidad <= 1" (click)="carrito.decrementar(item.id)">
+                  <span class="material-symbols-outlined text-lg">remove</span>
                 </button>
-                <span>{{ item.cantidad }}</span>
-                <button
-                  type="button"
-                  [disabled]="item.cantidad >= item.stockConocido"
-                  (click)="incrementar(item)"
-                  [attr.aria-label]="'Aumentar ' + item.nombre"
-                >
-                  <ion-icon name="add-outline"></ion-icon>
+                <span class="font-sans font-bold text-xs md:text-sm text-primary w-6 text-center">{{ item.cantidad }}</span>
+                <button type="button" class="w-8 h-8 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                        [disabled]="item.cantidad >= item.stockConocido" (click)="incrementar(item)">
+                  <span class="material-symbols-outlined text-lg">add</span>
                 </button>
               </div>
-              <strong>{{ item.precioMostrado * item.cantidad | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
-              <button class="remove-item" type="button" (click)="carrito.eliminar(item.idPro)">Quitar</button>
+              <span class="font-heading font-bold text-base md:text-lg text-primary">{{ item.precioMostrado * item.cantidad | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
-          </article>
-        </section>
-
-        <aside class="cart-summary">
-          <span>Resumen</span>
-          <h2>Tu compra</h2>
-          <div><span>Productos</span><strong>{{ carrito.cantidadTotal }}</strong></div>
-          <div class="summary-total">
-            <span>Total mostrado</span
-            ><strong>{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
           </div>
-          <p>Los precios y la disponibilidad se confirmarán al realizar el pedido.</p>
-          <ion-button expand="block" (click)="continuarCompra()">Continuar con la compra</ion-button>
-          <a routerLink="/catalogo">Continuar viendo productos</a>
-        </aside>
-      </div>
-    </main>
-  </ion-content>
+
+          <button type="button" (click)="carrito.eliminar(item.id)" aria-label="Quitar producto" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 rounded-full transition-colors lg:opacity-0 lg:group-hover:opacity-100">
+            <span class="material-symbols-outlined text-xl">delete</span>
+          </button>
+        </article>
+      </section>
+
+      <!-- Sidebar Resumen -->
+      <aside class="w-full lg:w-[320px] xl:w-[360px]">
+        <div class="bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30 p-5 md:p-6 sticky top-24">
+          <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Resumen</span>
+          <h2 class="font-heading font-bold text-2xl text-primary mb-6">Tu compra</h2>
+          
+          <div class="flex items-center justify-between mb-4 border-b border-surface-variant/50 pb-4">
+            <span class="font-sans text-sm text-on-surface-variant">Productos ({{ carrito.cantidadTotal }})</span>
+            <span class="font-sans font-bold text-sm text-on-surface">{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+          </div>
+          
+          <div class="flex items-end justify-between mb-2">
+            <span class="font-sans font-semibold text-sm text-on-surface">Total estimado</span>
+            <strong class="font-heading font-bold text-3xl text-primary-container leading-none">{{ carrito.totalMostrado | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong>
+          </div>
+          
+          <p class="font-sans text-[11px] text-on-surface-variant leading-tight mb-6">Los precios y la disponibilidad se confirmarán al realizar el pedido.</p>
+          
+          <button (click)="continuarCompra()" class="w-full bg-primary-container text-on-primary hover:bg-primary font-sans font-bold text-base py-3.5 px-4 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 mb-3">
+            Continuar compra
+            <span class="material-symbols-outlined text-xl">arrow_forward</span>
+          </button>
+          
+          <a routerLink="/catalogo" class="block w-full text-center font-sans font-semibold text-sm text-primary hover:text-primary-container py-2 transition-colors">
+            Seguir comprando
+          </a>
+        </div>
+      </aside>
+
+    </div>
+  </div>
 </app-cliente-shell>

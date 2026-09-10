@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tienda Doña Paty - Mi Carrito</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#58436b",
+                        "surface-container-low": "#fdeffe",
+                        "on-tertiary-container": "#e4b1a1",
+                        "outline": "#7b757e",
+                        "tertiary-container": "#684336",
+                        "on-secondary-container": "#730425",
+                        "surface-tint": "#6b557f",
+                        "on-tertiary-fixed": "#2f140a",
+                        "inverse-primary": "#d7bcec",
+                        "surface-bright": "#fff7fc",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#533e66",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#623e31",
+                        "surface": "#fff7fc",
+                        "outline-variant": "#ccc4ce",
+                        "surface-container-high": "#f1e4f2",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#faedfb",
+                        "primary-fixed-dim": "#d7bcec",
+                        "secondary-fixed": "#ffdadc",
+                        "secondary-container": "#fe7488",
+                        "primary": "#402c53",
+                        "surface-variant": "#ebdeed",
+                        "secondary": "#a93349",
+                        "on-primary-fixed": "#251237",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#400010",
+                        "tertiary-fixed-dim": "#efbbaa",
+                        "surface-container": "#f7eaf8",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#201923",
+                        "inverse-surface": "#352e38",
+                        "secondary-fixed-dim": "#ffb2b9",
+                        "background": "#fff7fc",
+                        "on-primary-container": "#cdb2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#4e2d21",
+                        "on-background": "#201923",
+                        "surface-dim": "#e3d6e4",
+                        "surface-container-highest": "#ebdeed",
+                        "on-surface-variant": "#4a454d",
+                        "primary-fixed": "#f0dbff",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-secondary-fixed-variant": "#891933"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "container-margin": "20px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    },
+                    "boxShadow": {
+                        "pastel": "0px 4px 20px rgba(88, 67, 107, 0.08)",
+                        "pastel-floating": "0px 8px 30px rgba(88, 67, 107, 0.15)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #FAFAF9; /* Override background for this specific screen per instructions */
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface font-body-md antialiased pb-[120px]">
+<!-- Header -->
+<header class="bg-surface-container-lowest sticky top-0 z-40 px-container-margin py-md flex items-center justify-between shadow-pastel">
+<button class="w-10 h-10 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary truncate max-w-[60%]">Mi Carrito (3)</h1>
+<button class="font-label-md text-label-md text-primary px-3 py-2 rounded-lg hover:bg-surface-variant transition-colors">
+            Vaciar
+        </button>
+</header>
+<main class="px-container-margin py-md space-y-lg max-w-3xl mx-auto">
+<!-- Banner Recolección -->
+<div class="bg-surface-container-high rounded-xl p-md flex items-start gap-sm shadow-pastel">
+<span class="material-symbols-outlined text-primary mt-1" style="font-variation-settings: 'FILL' 1;">storefront</span>
+<p class="font-body-md text-body-md text-on-surface-variant">
+<strong class="text-primary font-semibold block mb-1">Recolección en Mostrador</strong>
+                Tus productos se reservarán para recoger en Sucursal Doña Paty Toluca
+            </p>
+</div>
+<!-- Lista de Productos -->
+<section class="space-y-md">
+<!-- Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-pastel flex gap-md relative">
+<img alt="Coca-Cola Original 3L" class="w-20 h-20 object-contain rounded-lg bg-surface-variant/30 flex-shrink-0" data-alt="A 3-liter bottle of classic Coca-Cola, standing upright on a clean, bright white surface. The lighting is soft and studio-quality, creating gentle highlights on the plastic bottle and the vibrant red label. The background is a soft, warm pastel tone, complementing the deep mauve and coral pink aesthetic of the UI. The overall mood is refreshing, crisp, and highly polished, suitable for a premium grocery store." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMVWUJM6cgxaXC97lLWVrrlr26Hkho6zrYJ86xhfT_mvenc0pFqvHu58ZiMT1cZlICwTKQwG2lmPsym1gHZcpITuss1Di62M1HaSM__IvqSXOerUiLZRtTPF3zro6YpaHhwYHhGgQP6v5VrRbBOuQ64mypboMUqc225qkuoXQySnfhi2t7kfehmP7d_gDxCCcN5xYQR-e-UORuJI7NUHSRPxhlX7J5KMosrHRZAudiY-weqXsIrt8k2KB8xhk85L0I1s4zvF_aU_w"/>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Coca-Cola Original 3L</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Botella No Retornable</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">$50.00 c/u</p>
+</div>
+<div class="flex items-center justify-between mt-sm">
+<div class="flex items-center gap-2 bg-surface-container rounded-full px-2 py-1">
+<button class="w-6 h-6 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+</button>
+<span class="font-label-md text-label-md text-primary w-4 text-center">2</span>
+<button class="w-6 h-6 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+</button>
+</div>
+<span class="font-headline-md text-lg text-primary">$100.00</span>
+</div>
+</div>
+<button aria-label="Eliminar Coca-Cola" class="absolute top-md right-md text-secondary-container hover:text-secondary transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-pastel flex gap-md relative">
+<img alt="Papas Sabritas Original 45g" class="w-20 h-20 object-contain rounded-lg bg-surface-variant/30 flex-shrink-0" data-alt="A small bag of Sabritas Original potato chips, brightly lit on a pristine white surface. The yellow packaging is vivid and clear, catching a soft, studio-quality light that emphasizes its texture. The background features a subtle, warm off-white hue to maintain the minimalist, high-end grocery aesthetic. The composition is clean, modern, and appetizing, fitting perfectly within a sophisticated e-commerce interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbnJWNftw7wJnSYmGvUkBjSNy53km2_Geo8fPw12Nh4NREjEdMGCja5O46ExgSzJoKYW4G25Me59K2d04Pis9XSEA3GQpcZpteMVR2UnXUHxVN8O6c5gViQNNjkGM55yETjZ7W1sysz8bgAQFT34jhFofeXeaW8O4VfHkAnrQ3J9LXGnnK8Afw7gJY7NYwUKwxXymlTMu40IZpOAwRrkoRfYeFdOngqZKaFXM9bl6sV2vDodlp3wAA5C_XB0VHTp4_e9EVkzAIq_8"/>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Papas Sabritas Original 45g</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Bolsa individual</p>
+<p class="font-label-sm text-label-sm text-outline mt-1">$22.00 c/u</p>
+</div>
+<div class="flex items-center justify-between mt-sm">
+<div class="flex items-center gap-2 bg-surface-container rounded-full px-2 py-1">
+<button class="w-6 h-6 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 18px;">remove</span>
+</button>
+<span class="font-label-md text-label-md text-primary w-4 text-center">1</span>
+<button class="w-6 h-6 flex items-center justify-center text-primary rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+</button>
+</div>
+<span class="font-headline-md text-lg text-primary">$22.00</span>
+</div>
+</div>
+<button aria-label="Eliminar Sabritas" class="absolute top-md right-md text-secondary-container hover:text-secondary transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</section>
+<!-- Upsell: ¿Olvidaste algo? -->
+<section class="-mx-container-margin px-container-margin">
+<h2 class="font-headline-md text-[20px] text-primary mb-md">¿Olvidaste algo?</h2>
+<div class="flex overflow-x-auto hide-scrollbar gap-md pb-sm snap-x">
+<!-- Upsell Item 1 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-pastel p-sm w-36 flex-shrink-0 snap-start flex flex-col items-center text-center relative border border-transparent hover:border-surface-variant transition-all">
+<img alt="Hielo 5kg" class="w-24 h-24 object-contain mb-2" data-alt="A 5kg bag of clear ice cubes, displayed against a soft, bright, minimalist background. The lighting is crisp and cool, highlighting the translucency and fresh appearance of the ice. The setting is clean and modern, designed to fit into a premium digital grocery store aesthetic with subtle pastel tones surrounding the pristine white subject." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrkMNEy6ikprqi0y3JFPA1WYdO9UzNSbv5y1G3rY1pxB9CjGSv6yIJ4LyYT13IEUZwuRJpyAUZlaXia2NhH95NbzyEb22yqneS91hm_A6ZaqZON5QV9WuKCUAM7cxwV3A5lpV3OZjFp79y8qvP5HmHZ-3qJYqZ-k88xHDaHXSI8KkLA1udLwwhkWp-Q736lukqj0S3xu6ppSJt-WZKdju4gtfKpYmm00nlNDs7-LTp5sH9yJzYybjjtahJ7eA2tNvWAY3YDMvwJlU"/>
+<h4 class="font-label-sm text-label-sm text-on-surface line-clamp-2 min-h-[32px]">Hielo en Cubos 5kg</h4>
+<p class="font-label-md text-label-md text-primary mt-1 mb-2">$28.00</p>
+<button aria-label="Agregar Hielo" class="w-8 h-8 rounded-full bg-secondary-container text-on-primary flex items-center justify-center shadow-sm absolute bottom-sm right-sm hover:bg-secondary transition-colors">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+</button>
+</div>
+<!-- Upsell Item 2 -->
+<div class="bg-surface-container-lowest rounded-xl shadow-pastel p-sm w-36 flex-shrink-0 snap-start flex flex-col items-center text-center relative border border-transparent hover:border-surface-variant transition-all">
+<img alt="Chicles Trident" class="w-24 h-24 object-contain mb-2" data-alt="A small pack of Trident chewing gum, neatly presented on a soft, warm white background. The studio lighting enhances the vivid colors of the packaging, giving it a tactile, premium feel. The environment is minimalist and airy, aligning with a high-end mobile application design. The overall aesthetic is fresh, organized, and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjT-VDg0ImsyTIZQaHaYNul_6fQxDoNgf-dQzCyraJA4XvyJz7Z-AszbN-nEVGZL2zDMIuM_EP2zfnMUdkF9rTRKnPqJ0C3YLP81vl_vhQY4FnwRBfwM0rWXzPE0GsH7z3ZzdOiy0sitFcFy7lv_QBawdiF_ANYmv5FcMSi9ME-dAAvWt9vpJF5eszi15SVDxEeS9pNvFYwr5tyX7L_35ZmK-1TWTkiiRLV8hmeg1x-qhevoQZXMRbLICviIiJTOHn6eY1ZsXvXpM"/>
+<h4 class="font-label-sm text-label-sm text-on-surface line-clamp-2 min-h-[32px]">Chicles Trident Menta</h4>
+<p class="font-label-md text-label-md text-primary mt-1 mb-2">$12.00</p>
+<button aria-label="Agregar Chicles" class="w-8 h-8 rounded-full bg-secondary-container text-on-primary flex items-center justify-center shadow-sm absolute bottom-sm right-sm hover:bg-secondary transition-colors">
+<span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Resumen -->
+<section class="bg-surface-container-lowest rounded-xl p-md shadow-pastel border border-surface-variant/50">
+<h2 class="font-label-md text-label-md text-primary mb-sm">Resumen de Pago</h2>
+<div class="space-y-2 font-body-md text-body-md text-on-surface-variant">
+<div class="flex justify-between">
+<span>Productos (3)</span>
+<span>$122.00</span>
+</div>
+<div class="flex justify-between text-secondary-container font-medium">
+<span>Descuentos</span>
+<span>-$5.00</span>
+</div>
+</div>
+<div class="border-t border-surface-variant mt-sm pt-sm flex justify-between items-center">
+<span class="font-headline-md text-[20px] text-primary">Total</span>
+<span class="font-headline-md text-[24px] text-primary">$117.00</span>
+</div>
+</section>
+</main>
+<!-- Sticky Checkout Bar -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t border-surface-variant/30 shadow-[0_-4px_20px_rgba(88,67,107,0.08)] p-md z-50 rounded-t-xl flex items-center justify-between max-w-3xl mx-auto left-1/2 -translate-x-1/2">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total a pagar</span>
+<span class="font-headline-md text-headline-md text-primary">$117.00</span>
+</div>
+<button class="bg-[#58436B] hover:bg-primary-fixed-variant text-on-primary font-label-md text-label-md px-6 py-3 rounded-full shadow-pastel-floating transition-transform active:scale-95 flex items-center gap-2">
+            Continuar
+            <span class="material-symbols-outlined" style="font-size: 20px;">arrow_forward</span>
+</button>
+</div>
+</body></html>

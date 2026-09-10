@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tienda Doña Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#faedfb",
+                    "secondary": "#a93349",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#201923",
+                    "on-primary-fixed-variant": "#533e66",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#fdeffe",
+                    "surface-container": "#f7eaf8",
+                    "primary-fixed-dim": "#d7bcec",
+                    "surface-variant": "#ebdeed",
+                    "outline-variant": "#ccc4ce",
+                    "on-secondary-fixed": "#400010",
+                    "surface-dim": "#e3d6e4",
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#f1e4f2",
+                    "on-surface-variant": "#4a454d",
+                    "on-primary-fixed": "#251237",
+                    "tertiary-fixed-dim": "#efbbaa",
+                    "on-tertiary-fixed-variant": "#623e31",
+                    "on-secondary-container": "#730425",
+                    "on-secondary": "#ffffff",
+                    "background": "#fff7fc",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbcf",
+                    "surface": "#fff7fc",
+                    "secondary-container": "#fe7488",
+                    "on-error-container": "#93000a",
+                    "primary": "#402c53",
+                    "tertiary": "#4e2d21",
+                    "inverse-primary": "#d7bcec",
+                    "secondary-fixed": "#ffdadc",
+                    "on-background": "#201923",
+                    "surface-bright": "#fff7fc",
+                    "outline": "#7b757e",
+                    "on-secondary-fixed-variant": "#891933",
+                    "on-tertiary-container": "#e4b1a1",
+                    "on-primary-container": "#cdb2e1",
+                    "primary-container": "#58436b",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#ffb2b9",
+                    "primary-fixed": "#f0dbff",
+                    "on-tertiary-fixed": "#2f140a",
+                    "inverse-surface": "#352e38",
+                    "surface-container-highest": "#ebdeed",
+                    "tertiary-container": "#684336",
+                    "surface-tint": "#6b557f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "md": "16px",
+                    "container-margin": "20px",
+                    "base": "4px",
+                    "sm": "8px",
+                    "xl": "32px",
+                    "gutter": "12px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "label-md": [
+                            "Be Vietnam Pro"
+                    ],
+                    "display-lg-mobile": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-lg": [
+                            "Be Vietnam Pro"
+                    ],
+                    "label-sm": [
+                            "Be Vietnam Pro"
+                    ],
+                    "body-md": [
+                            "Be Vietnam Pro"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "display-lg": [
+                            "Plus Jakarta Sans"
+                    ]
+            },
+            "fontSize": {
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "48px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            },
+            boxShadow: {
+              'pastel': '0px 4px 20px rgba(88, 67, 107, 0.08)',
+              'pastel-lg': '0px 8px 30px rgba(88, 67, 107, 0.12)'
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .text-coral {
+            color: #FB7185;
+        }
+        .bg-coral {
+            background-color: #FB7185;
+        }
+        .bg-peach-light {
+            background-color: rgba(242, 190, 173, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md pb-24 max-w-7xl mx-auto">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-on-surface sticky docked full-width top-0 z-40">
+<div class="flex justify-between items-center px-container-margin py-md w-full">
+<div class="flex items-center gap-sm cursor-pointer transition-all duration-200 active:scale-95 hover:bg-surface-variant/50 dark:hover:bg-surface-container-highest/20 rounded-full p-2 -ml-2">
+<img alt="User profile picture" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container" data-alt="A small circular user profile picture of a cheerful person in a bright, modern light-mode setting. Soft pastel tones, high-key lighting, approachable and premium grocery app style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd8vLYfogpKv4eIzzOMFVjZHJDUNDpQYmfyzeGBHs_kPlJHnq_60onE7MSOJmb1Ib3QPtTEcMqYUZc3K57ACdn9fWqiobf4M5K67w3Z89ES0ScY1Mdq87Ltkwi7wkDuIB8LH1p9ZkXF2mIawdWZuYU78lqHTMem4YEFaIOpppsAzHtvZtiOgsg-OZGY0Z5I09skeOKd9N6mJ-_ciVW4S8NwfIyWqmO3L5W5FhziPBhMp6OKIeIAlZnClod5H3HD4bWhZFGxoUReFc"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Tienda Doña Paty</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">handshake</span> ¡Hola! Bienvenido</span>
+</div>
+</div>
+<button class="relative transition-all duration-200 active:scale-95 hover:bg-surface-variant/50 dark:hover:bg-surface-container-highest/20 p-2 rounded-full text-primary dark:text-primary-fixed-dim">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="absolute top-0 right-0 bg-coral text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">3</span>
+</button>
+</div>
+<!-- Branch Selector -->
+<div class="px-container-margin pb-sm">
+<button class="w-full flex items-center justify-between bg-surface-container-low p-sm rounded-lg border border-surface-variant/50 active:scale-95 transition-transform duration-200">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-opacity-70">location_on</span>
+<div class="flex flex-col text-left">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Entregar en:</span>
+<span class="font-label-md text-label-md text-primary truncate max-w-[200px] md:max-w-md">Av. Hidalgo #101, Toluca</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">Abierto hoy hasta 10:00 PM</span>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</div>
+</button>
+</div>
+</header>
+<main class="px-container-margin pt-md flex flex-col gap-lg">
+<!-- Search -->
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary">search</span>
+</div>
+<input class="block w-full pl-10 pr-12 py-3 bg-[#F8F7F8] border-none rounded-xl focus:ring-1 focus:ring-primary focus:bg-white font-body-md text-on-surface placeholder:text-outline transition-colors duration-200" placeholder="Buscar por producto, marca o código..." type="text"/>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+<button class="p-2 text-primary hover:bg-surface-variant/50 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined">barcode_scanner</span>
+</button>
+</div>
+</div>
+<!-- Promo Banner -->
+<div class="relative rounded-2xl overflow-hidden shadow-pastel-lg group cursor-pointer active:scale-[0.98] transition-transform duration-300">
+<div class="absolute inset-0 bg-gradient-to-r from-primary-container via-[#8F8598] to-primary-container opacity-90"></div>
+<!-- Decorative touches simulating #F2BEAD details -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-[#F2BEAD] rounded-full mix-blend-overlay opacity-50 blur-xl"></div>
+<div class="absolute -bottom-10 -left-10 w-24 h-24 bg-[#F2BEAD] rounded-full mix-blend-overlay opacity-50 blur-lg"></div>
+<div class="relative p-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-md z-10">
+<div class="flex-1 text-white">
+<span class="inline-block bg-white/20 backdrop-blur-sm text-white font-label-sm text-label-sm px-2 py-1 rounded-md mb-2 uppercase tracking-wider">Especial de la Semana</span>
+<h2 class="font-headline-md text-headline-md font-bold mb-2 md:text-display-lg-mobile md:leading-tight">15% de descuento en Bebidas y Botanas</h2>
+<button class="mt-2 bg-white text-primary-container font-label-md text-label-md px-6 py-2 rounded-full hover:bg-surface-container-lowest transition-colors shadow-sm">Ver ofertas</button>
+</div>
+<div class="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 relative">
+<img alt="Groceries" class="w-full h-full object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-500" data-alt="A stylized, high-quality 3D render of a cold soda bottle and an open bag of crispy potato chips floating slightly. Set against a transparent or solid soft pastel background. Modern light-mode aesthetic, vibrant but refined colors, premium grocery shopping concept." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2a4_rXPht7tHZLMgzF6naay_1jQcKo69Or01RifcnsF1SQooBvKx5hEeg2mCEqmkHv0DA6mwxNtApz7F5F8o7cLjguc1xFZhQxf5OxHzU6LFkodBktzjNx7wIU4E8XrWkiS-02V8ItC9zqVhSdoTnWK-mALsuUnCs4WU7Izm7el14HvnnB0yhrf3vzCirfdeIyKnpKssbSyjKVAqFO0ufDxxexV-5BohSln4IdcR31q7juoSaxEeQwuASXlZmmbeZdi2M4v1RwLk"/>
+</div>
+</div>
+</div>
+<!-- Categories -->
+<div class="flex overflow-x-auto no-scrollbar gap-3 pb-2 -mx-container-margin px-container-margin">
+<button class="flex-shrink-0 flex items-center gap-1 bg-primary-container text-white font-label-md text-label-md px-4 py-2 rounded-full shadow-pastel transition-transform active:scale-95">
+<span>🔥</span> Todos
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🥤</span> Bebidas
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🥫</span> Abarrotes
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🧀</span> Lácteos
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🥔</span> Botanas &amp; Snacks
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🧼</span> Limpieza
+            </button>
+<button class="flex-shrink-0 flex items-center gap-1 bg-peach-light text-primary font-label-md text-label-md px-4 py-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 border border-transparent hover:border-outline-variant/30">
+<span>🍎</span> Frutas &amp; Verduras
+            </button>
+</div>
+<!-- Brand Pills -->
+<div class="flex overflow-x-auto no-scrollbar gap-2 pb-2 -mx-container-margin px-container-margin">
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Coca-Cola</button>
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Sabritas</button>
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Gamesa</button>
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Bimbo</button>
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Lala</button>
+<button class="flex-shrink-0 bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant font-label-sm text-label-sm px-4 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors active:scale-95 shadow-sm">Obao</button>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter pb-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-3 flex flex-col relative group cursor-pointer hover:shadow-pastel-lg transition-shadow duration-300">
+<span class="absolute top-2 left-2 bg-coral text-white font-label-sm text-[10px] px-2 py-0.5 rounded-md z-10">Más vendido</span>
+<div class="aspect-square w-full rounded-lg overflow-hidden bg-[#F8F7F8] mb-3 p-4 flex items-center justify-center">
+<img alt="Coca-Cola Original 3L" class="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300" data-alt="A clean product shot of a 3L original Coca-Cola bottle. High-key lighting, pure white or soft pastel background, premium grocery app presentation, crisp and refreshing look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnIwNvcZRxdpA--BS5-rRHyiwcpfNHwU_DstIlCu1XeLXkIyvEdS-1AHNLLXaZJ2AE5JJRuTysxq698sDfrTmG9Tidc66ZmJDXRRtt2DWqDw1IEAsNw0CNfsHqRqs5OIiq5ihzwj66tsG3Wx_GF57Z1HLeVJ8KjH4j0vu9dgco-En-wFO44uHM-IaXBUVOqkdzfXQmWL9wNaQq4BwF2awaAxrvHoJnpUXH4RsRrC6nkmUBatZN3cVnhmQv2fNXEbJQLyXncQCfkoE"/>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-label-sm text-[11px] text-outline mb-1">Coca-Cola Company</span>
+<h3 class="font-label-md text-label-md text-on-surface leading-tight mb-1 line-clamp-2">Coca-Cola Original 3L</h3>
+<span class="font-body-md text-[12px] text-on-surface-variant mb-2">Botella No Retornable · 3000 ml</span>
+<div class="mt-auto flex items-end justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-[11px] text-outline line-through">$55.00</span>
+<span class="font-label-md text-label-md text-primary font-bold">$50.00 MXN</span>
+</div>
+<button class="bg-coral text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary-container active:scale-90 transition-all shadow-md">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-3 flex flex-col relative group cursor-pointer hover:shadow-pastel-lg transition-shadow duration-300">
+<div class="aspect-square w-full rounded-lg overflow-hidden bg-[#F8F7F8] mb-3 p-4 flex items-center justify-center">
+<img alt="Papas Sabritas Original Sal 45g" class="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300" data-alt="A clean product shot of a 45g bag of original Sabritas potato chips. High-key lighting, pure white or soft pastel background, premium grocery app presentation, crisp packaging." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMk4OgYZnGOWmGNQ3-Cq3oxJsa8TsLI0sEP94b7XL09CpvPt_GeW4DlscX-Nk6ja_dMw2qGtjEBBJYlbKGCVYDXnkDjx0JC97uJMgSIcAZ_3005mw3IeDi8mOHmdMw4urIDfMYQseO_q_MPgJSkz4ixJwMjHK8Wwp4Td9MdevQc4EY6Y8HAV1Mt5-7oWxLbi5zgu6GicVEbeGRGz_ptJ-00A6yFhMaD8_hv9MGZCxFfhfafGIdHpKm_wY95K0Dxu7yQpyIz_8x6cE"/>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-label-sm text-[11px] text-outline mb-1">Sabritas</span>
+<h3 class="font-label-md text-label-md text-on-surface leading-tight mb-1 line-clamp-2">Papas Sabritas Original Sal 45g</h3>
+<div class="mt-auto flex items-end justify-between pt-2">
+<span class="font-label-md text-label-md text-primary font-bold">$22.00 MXN</span>
+<button class="bg-coral text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary-container active:scale-90 transition-all shadow-md">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-3 flex flex-col relative group cursor-pointer hover:shadow-pastel-lg transition-shadow duration-300">
+<div class="aspect-square w-full rounded-lg overflow-hidden bg-[#F8F7F8] mb-3 p-4 flex items-center justify-center">
+<img alt="Desodorante Obao For Men 65g" class="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300" data-alt="A clean product shot of an Obao For Men deodorant roll-on 65g. High-key lighting, pure white or soft pastel background, premium grocery app presentation, sharp details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlFgRf_oqpA6AXXqONsX0MTG2X1mzvxKnKE9Knf5AX3Kl_ImxnxEaNGe_rWncZn8yKjks0aDFbka3M7dJJgxe9ghNvOn4JbBaIYdZL10RvXAO5zZLVhKzQO18n3YBXFyrE6ecMagQBPU6pC0ostQRLkteCkh9tVNQHyFYrO_sOY4f6TJNfHsyxvhTnZ-xhNKvZ3S1FXToEP7zfyFBj9VcNttw3c2S7kQ-Y2uOeGt_7uHQ_z71WGnMra3bKTP1rSa_-lIC-3ulcmos"/>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-label-sm text-[11px] text-outline mb-1">Obao</span>
+<h3 class="font-label-md text-label-md text-on-surface leading-tight mb-1 line-clamp-2">Desodorante Obao For Men 65g</h3>
+<div class="mt-auto flex items-end justify-between pt-2">
+<span class="font-label-md text-label-md text-primary font-bold">$30.00 MXN</span>
+<button class="bg-coral text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary-container active:scale-90 transition-all shadow-md">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-pastel p-3 flex flex-col relative group cursor-pointer hover:shadow-pastel-lg transition-shadow duration-300">
+<div class="aspect-square w-full rounded-lg overflow-hidden bg-[#F8F7F8] mb-3 p-4 flex items-center justify-center">
+<img alt="Leche Entera 1 Litro" class="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300" data-alt="A clean product shot of a 1 Liter carton of Lala Whole Milk (Leche Entera). High-key lighting, pure white or soft pastel background, premium grocery app presentation, appetizing look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmUg3LK0Sd_eH71knsGWPMXTE257j1R4Oixe0bov5acgPUFKk9VmCwNBoYZwt2m8stMFZkI1hZQducmgvN_-qnRTNWsCzECk3Oorb2xJhLmcrbMzGD7PnB_reAvbgTqVu606lF-CSMXIAp2sz3t70dn8Gm3Hvy4B-jI2gP7Zo6GNet0wSYTQlNXeCHHW0dfDa50YqANRvpI8Fol-zZGAd7zgRKBu8H_TIkA32goGNJZ9CsOXe3wfzRO9h0xZZHBznbmFZj9EMtHck"/>
+</div>
+<div class="flex flex-col flex-grow">
+<span class="font-label-sm text-[11px] text-outline mb-1">Lala</span>
+<h3 class="font-label-md text-label-md text-on-surface leading-tight mb-1 line-clamp-2">Leche Entera 1 Litro</h3>
+<div class="mt-auto flex items-end justify-between pt-2">
+<span class="font-label-md text-label-md text-primary font-bold">$26.50 MXN</span>
+<button class="bg-coral text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-secondary-container active:scale-90 transition-all shadow-md">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-md fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 md:hidden border-t border-surface-variant/30 dark:border-outline-variant/20 shadow-lg rounded-t-xl">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-secondary-container dark:text-on-secondary-container rounded-full px-4 py-1 hover:bg-primary-fixed/20 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-[10px] mt-0.5">Inicio</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-primary-fixed/20 rounded-full px-2 py-1 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-sm text-[10px] mt-0.5">Explorar</span>
+</button>
+<button class="relative flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-primary-fixed/20 rounded-full px-2 py-1 transition-transform duration-300 ease-in-out active:scale-90">
+<div class="relative">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border border-white rounded-full"></span>
+</div>
+<span class="font-label-sm text-[10px] mt-0.5">Mis Pedidos</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-primary-fixed/20 rounded-full px-2 py-1 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined">shopping_basket</span>
+<span class="font-label-sm text-[10px] mt-0.5 font-bold text-primary">$122.00</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-primary-fixed/20 rounded-full px-2 py-1 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-[10px] mt-0.5">Perfil</span>
+</button>
+</nav>
+</body></html>

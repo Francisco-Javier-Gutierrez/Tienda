@@ -1,0 +1,316 @@
+<section class="space-y-6">
+  
+  <!-- Encabezado de la sección -->
+  <header>
+    <h2 class="font-heading font-bold text-2xl md:text-3xl text-primary">Mi tienda</h2>
+    <p class="font-sans text-sm text-on-surface-variant mt-1">Personaliza la información de tu negocio, contacto y cuentas de transferencia bancaria.</p>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-2xl border border-surface-variant/30 shadow-sm">
+    <ion-spinner name="crescent" color="primary" class="w-5 h-5"></ion-spinner>
+    <span class="font-sans text-sm text-on-surface-variant">Cargando información de la tienda...</span>
+  </div>
+
+  <!-- Selector de Sucursales (si hay múltiples) -->
+  <div *ngIf="sucursales.length > 1" class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-2 max-w-md">
+    <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Sucursal a configurar</label>
+    <app-custom-select
+      [ngModel]="sucursalActual?.id || sucursalActual?.sucursalId || sucursalActual?.idSuc"
+      (ngModelChange)="seleccionar($event)"
+      [options]="opcionesSucursales"
+      placeholder="Selecciona una sucursal"
+    ></app-custom-select>
+    <p class="text-xs font-sans text-outline ml-1" *ngIf="!sucursalActual">
+      Selecciona explícitamente la sucursal que deseas editar.
+    </p>
+  </div>
+
+  <ng-container *ngIf="sucursales.length <= 1 || sucursalActual">
+    
+    <!-- TARJETA 1: LOGO DE LA TIENDA -->
+    <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+        <!-- Logo Image Preview -->
+        <div class="w-24 h-24 rounded-2xl bg-surface-container-low border border-surface-variant/40 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+          <img *ngIf="resolverLogo() as logo; else logoFallback" [src]="logo" alt="Logo de la tienda" class="w-full h-full object-cover" />
+          <ng-template #logoFallback>
+            <span class="material-symbols-outlined text-4xl text-primary/60" style="font-variation-settings: 'FILL' 1;">storefront</span>
+          </ng-template>
+        </div>
+
+        <div class="flex-1 text-center sm:text-left space-y-3">
+          <div>
+            <h3 class="font-heading font-bold text-lg text-on-surface">Logo de la tienda</h3>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">Formatos admitidos: JPEG, PNG o WEBP (máximo 5 MB).</p>
+          </div>
+
+          <!-- Botones de Acción de Logo -->
+          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+            <button type="button" 
+                    class="border border-outline-variant/40 text-on-surface hover:bg-surface-container px-4 py-2 rounded-xl font-sans font-semibold text-xs flex items-center gap-1.5 transition-colors active:scale-95 shadow-xs"
+                    (click)="tomarLogo()">
+              <span class="material-symbols-outlined text-base">photo_camera</span>
+              Tomar foto
+            </button>
+            <button type="button" 
+                    class="border border-outline-variant/40 text-on-surface hover:bg-surface-container px-4 py-2 rounded-xl font-sans font-semibold text-xs flex items-center gap-1.5 transition-colors active:scale-95 shadow-xs"
+                    (click)="elegirLogo()">
+              <span class="material-symbols-outlined text-base">image</span>
+              Elegir imagen
+            </button>
+            <button *ngIf="logoPendiente" 
+                    type="button" 
+                    class="text-error hover:bg-error-container/20 px-3 py-2 rounded-xl font-sans font-semibold text-xs transition-colors"
+                    (click)="quitarPreview()">
+              Descartar cambio
+            </button>
+            <button *ngIf="!logoPendiente && sucursalActual?.logoSuc" 
+                    type="button" 
+                    class="text-error hover:bg-error-container/20 px-3 py-2 rounded-xl font-sans font-semibold text-xs transition-colors disabled:opacity-50"
+                    [disabled]="guardando"
+                    (click)="quitarLogoActual()">
+              Quitar logo
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TARJETA 2: INFORMACIÓN Y CONTACTO -->
+    <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-5">
+      
+      <!-- Subtítulo Datos de la Tienda -->
+      <div class="border-b border-surface-variant pb-2">
+        <h3 class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest">Información de la tienda</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- Nombre -->
+        <div class="md:col-span-2">
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Nombre del negocio *</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            [class.border-error]="!!errores.nombreSuc"
+            type="text"
+            maxlength="100"
+            placeholder="Ej. Tienda Doña Paty"
+            [(ngModel)]="form.nombreSuc"
+            (input)="errores.nombreSuc = ''"
+          />
+          <p *ngIf="errores.nombreSuc" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.nombreSuc }}</p>
+        </div>
+
+        <!-- Descripción -->
+        <div class="md:col-span-2">
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Descripción o lema</label>
+          <textarea
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y min-h-[90px] placeholder:text-outline-variant/70"
+            [class.border-error]="!!errores.descripcionSuc"
+            maxlength="255"
+            placeholder="Productos para tu día a día, en un solo lugar..."
+            [(ngModel)]="form.descripcionSuc"
+            (input)="errores.descripcionSuc = ''"
+          ></textarea>
+          <div class="flex justify-between items-center mt-1 px-1">
+            <p *ngIf="errores.descripcionSuc" class="text-xs text-error font-sans">{{ errores.descripcionSuc }}</p>
+            <span class="text-[11px] font-sans text-outline ml-auto">{{ (form.descripcionSuc?.length || 0) }}/255</span>
+          </div>
+        </div>
+
+        <!-- Subtítulo Contacto y Presencia Online -->
+        <div class="md:col-span-2 border-b border-surface-variant pb-2 pt-3">
+          <h3 class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest">Contacto y redes</h3>
+        </div>
+
+        <!-- Teléfono -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Teléfono</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            [class.border-error]="!!errores.telefonoSuc"
+            type="tel"
+            maxlength="15"
+            placeholder="Ej. 722 123 4567"
+            [(ngModel)]="form.telefonoSuc"
+            (input)="errores.telefonoSuc = ''"
+          />
+          <p *ngIf="errores.telefonoSuc" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.telefonoSuc }}</p>
+        </div>
+
+        <!-- Correo -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Correo electrónico</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            [class.border-error]="!!errores.correoSuc"
+            type="email"
+            maxlength="100"
+            placeholder="contacto@mitienda.com"
+            [(ngModel)]="form.correoSuc"
+            (input)="errores.correoSuc = ''"
+          />
+          <p *ngIf="errores.correoSuc" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.correoSuc }}</p>
+        </div>
+
+        <!-- Página Web -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Página web</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            [class.border-error]="!!errores.paginaWebSuc"
+            type="url"
+            maxlength="100"
+            placeholder="https://mitienda.com"
+            [(ngModel)]="form.paginaWebSuc"
+            (input)="errores.paginaWebSuc = ''"
+          />
+          <p *ngIf="errores.paginaWebSuc" class="text-xs text-error mt-1 ml-1 font-sans">{{ errores.paginaWebSuc }}</p>
+        </div>
+
+        <!-- Red Social -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Red social</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            type="text"
+            maxlength="100"
+            placeholder="Ej. @tiendadpaty"
+            [(ngModel)]="form.redSocialSuc"
+          />
+        </div>
+
+        <!-- Dirección Registrada -->
+        <div class="md:col-span-2 p-3.5 bg-surface-container/60 rounded-xl border border-outline-variant/20 flex items-start gap-3 mt-1" *ngIf="sucursalActual?.direccion">
+          <span class="material-symbols-outlined text-primary shrink-0 mt-0.5">location_on</span>
+          <div class="flex flex-col">
+            <span class="font-sans font-semibold text-xs text-on-surface-variant">Dirección registrada</span>
+            <span class="font-sans text-sm text-on-surface mt-0.5">{{ sucursalActual?.direccion }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Botón Guardar Información -->
+      <div class="pt-3 border-t border-surface-variant/30 flex justify-end">
+        <button
+          type="button"
+          class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-sm py-3.5 px-8 rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          [disabled]="guardando"
+          (click)="guardar()"
+        >
+          <ion-spinner *ngIf="guardando" name="crescent" class="w-4 h-4"></ion-spinner>
+          <span>{{ guardando ? 'Guardando...' : (sucursalActual ? 'Guardar cambios' : 'Crear configuración') }}</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- TARJETA 3: PAGOS POR TRANSFERENCIA -->
+    <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-5">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-variant pb-3">
+        <div>
+          <h3 class="font-heading font-bold text-lg text-primary">Pagos por transferencia</h3>
+          <p class="font-sans text-xs text-on-surface-variant mt-0.5">Configura los datos bancarios que recibirán los clientes al reservar un pedido online.</p>
+        </div>
+        <div class="flex items-center gap-2 self-start sm:self-auto bg-surface-container px-3 py-1.5 rounded-full border border-surface-variant/40">
+          <span class="font-sans font-semibold text-xs text-on-surface">Habilitado</span>
+          <ion-toggle 
+            [(ngModel)]="transferencia.activo" 
+            [disabled]="cargandoTransferencia || guardandoTransferencia"
+            color="primary"
+            class="scale-90"
+          ></ion-toggle>
+        </div>
+      </div>
+
+      <!-- Cargando Transferencia -->
+      <div class="flex items-center gap-2 py-4 text-on-surface-variant" *ngIf="cargandoTransferencia">
+        <ion-spinner name="crescent" class="w-4 h-4"></ion-spinner>
+        <span class="font-sans text-xs">Cargando configuración bancaria...</span>
+      </div>
+
+      <!-- Grid de Datos Bancarios -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="!cargandoTransferencia">
+        
+        <!-- Banco -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Banco</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            type="text"
+            maxlength="100"
+            placeholder="Ej. BBVA, Banorte, Santander..."
+            [(ngModel)]="transferencia.banco"
+          />
+        </div>
+
+        <!-- Titular -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Titular de la cuenta</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
+            type="text"
+            maxlength="150"
+            placeholder="Nombre completo o razón social..."
+            [(ngModel)]="transferencia.titular"
+          />
+        </div>
+
+        <!-- CLABE -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">CLABE interbancaria (18 dígitos)</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70 font-mono tracking-wider"
+            type="text"
+            inputmode="numeric"
+            maxlength="18"
+            placeholder="012345678901234567"
+            [(ngModel)]="transferencia.clabe"
+          />
+        </div>
+
+        <!-- Número de cuenta -->
+        <div>
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Número de cuenta o tarjeta (opcional)</label>
+          <input
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70 font-mono tracking-wider"
+            type="text"
+            maxlength="50"
+            placeholder="Ej. 1234 5678 9012"
+            [(ngModel)]="transferencia.numeroCuenta"
+          />
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="md:col-span-2">
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Instrucciones de pago para el cliente</label>
+          <textarea
+            class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y min-h-[90px] placeholder:text-outline-variant/70"
+            maxlength="1000"
+            placeholder="Ej. Favor de poner tu número de pedido en el concepto de pago..."
+            [(ngModel)]="transferencia.instrucciones"
+          ></textarea>
+        </div>
+
+      </div>
+
+      <!-- Botón Guardar Configuración Bancaria -->
+      <div class="pt-3 border-t border-surface-variant/30 flex justify-end" *ngIf="!cargandoTransferencia">
+        <button
+          type="button"
+          class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-sm py-3.5 px-8 rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+          [disabled]="cargandoTransferencia || guardandoTransferencia"
+          (click)="guardarTransferencia()"
+        >
+          <ion-spinner *ngIf="guardandoTransferencia" name="crescent" class="w-4 h-4"></ion-spinner>
+          <span>{{ guardandoTransferencia ? 'Guardando...' : 'Guardar configuración bancaria' }}</span>
+        </button>
+      </div>
+
+    </section>
+
+  </ng-container>
+</section>

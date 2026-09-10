@@ -2,20 +2,21 @@ export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
 export type EstadoVenta = 'COMPLETADA' | 'CANCELADA';
 
 export interface ProductoPos {
-  idPro: number;
-  nombrePro: string;
-  precioVentaPro: number;
-  existenciaPro: number;
+  id: string;
+  nombre: string;
+  precioVenta: number;
+  existencia: number;
   codigoQR: string | null;
-  skuPro: string | null;
-  imagenPro: string | null;
-  tamanoPro: string | null;
-  presentacionPro: string | null;
-  nombreMarca: string | null;
-  nombreCat: string | null;
+  sku: string | null;
+  imagen: string | null;
+  tamano: string | null;
+  presentacion: string | null;
+  marca: string | null;
+  categoria: string | null;
 }
+
 export interface ItemVenta {
-  idPro: number;
+  id: string;
   nombre: string;
   precioUnitario: number;
   cantidad: number;
@@ -23,58 +24,87 @@ export interface ItemVenta {
   subtotal: number;
   imagen: string | null;
 }
+
 export interface VentaResumen {
-  idVenta: number;
-  fechaVenta: string;
-  horaVenta: string;
+  id: string;
+  uuid: string;
+  sesionCajaId: string;
+  fecha: string;
+  hora: string;
   total: number;
   metodoPago: MetodoPago;
-  estadoVenta: EstadoVenta;
-  idEmp: number;
-  cajero: string;
-  origenVenta: 'ONLINE' | 'POS';
+  estado: EstadoVenta;
+  origen: 'ONLINE' | 'POS';
+  cajero: string | null;
 }
-export interface VentaDetalle extends VentaResumen {
-  uuidVenta: string | null;
-  idSesionCaja: number | null;
-  folioPedido: string | null;
+
+export interface VentaDetalle {
+  id: string;
+  uuid: string;
+  sesionCajaId: string;
+  fecha: string;
+  hora: string;
+  total: number;
+  metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
+  estado: EstadoVenta;
   fechaCancelacion: string | null;
   motivoCancelacion: string | null;
-  idEmpCancela: number | null;
-  nombreEmpleadoCancela: string | null;
-  nombreSuc: string | null;
-  descripcionSuc: string | null;
-  telefonoSuc: string | null;
-  correoSuc: string | null;
-  logoSuc: string | null;
-  items: Array<{ idPro: number; nombre: string; cantidad: number; precioUnitario: number; subtotal: number }>;
+  cajeroCancela: string | null;
+  sucursal?: string | null;
+  nombreSuc?: string | null;
+  descripcionSuc?: string | null;
+  telefonoSuc?: string | null;
+  correoSuc?: string | null;
+  logoSuc?: string | null;
+  origen: 'ONLINE' | 'POS';
+  cajero: { id: string; nombre: string | null } | string | null;
+  items: Array<{
+    idDetalle?: string;
+    productoId?: string;
+    id?: string;
+    nombre: string;
+    codigoQR?: string | null;
+    sku?: string | null;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }>;
 }
+
 export interface VentaRegistrada {
-  idVenta: number;
-  uuidVenta: string;
-  idSesionCaja: number;
-  fechaVenta: string;
-  horaVenta: string;
+  id: string;
+  uuid: string;
+  sesionCajaId: string;
+  fecha: string;
+  hora: string;
   total: number;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
-  estadoVenta: EstadoVenta;
-  cajero: { idEmp: number; nombre: string };
-  items: Array<{ idPro: number; nombre: string; cantidad: number; precioUnitario: number; subtotal: number }>;
+  estado: EstadoVenta;
+  cajero: { id: string; nombre: string | null };
+  items: Array<{
+    id: string;
+    nombre: string;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }>;
 }
+
 export interface CrearVentaDto {
   uuidVenta: string;
-  items: Array<{ idPro: number; cantidad: number }>;
+  items: Array<{ id: string; cantidad: number }>;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
 }
+
 export interface VentaCancelada {
-  idVenta: number;
-  estadoVenta: 'CANCELADA';
-  fechaCancelacion: string;
-  motivoCancelacion: string;
-  idEmpCancela: number;
+  id: string;
+  estado: 'CANCELADA';
+  fechaCancelacion: string | null;
+  motivoCancelacion: string | null;
+  cajeroCancelaId?: string | null;
 }

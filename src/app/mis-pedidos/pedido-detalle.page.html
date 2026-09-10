@@ -1,115 +1,454 @@
-<app-cliente-shell
-  ><ion-content class="detail-page"
-    ><main class="detail-container">
-      <section class="loading" *ngIf="cargando">
-        <ion-spinner></ion-spinner>
-        <p>Cargando pedido…</p>
-      </section>
-      <ng-container *ngIf="!cargando && pedido as actual">
-        <header>
-          <a routerLink="/mis-pedidos"><ion-icon name="arrow-back-outline"></ion-icon> Mis pedidos</a>
-          <div>
-            <span>Pedido</span>
-            <h1>{{actual.folio}}</h1>
-            <p>{{actual.fechaPedido|date:'medium'}}</p>
-          </div>
-          <strong class="status" [attr.data-status]="actual.estado">{{etiqueta(actual.estado)}}</strong>
-        </header>
-        <div class="detail-layout">
-          <section class="items-card">
-            <h2>Productos</h2>
-            <article *ngFor="let item of actual.items">
-              <span class="product-image"
-                ><img *ngIf="imagen(item.imagen) as src;else noImage" [src]="src" [alt]="item.nombre" /><ng-template
-                  #noImage
-                  ><ion-icon name="cube-outline"></ion-icon></ng-template
-              ></span>
-              <div>
-                <strong>{{item.nombre}}</strong><small>{{item.presentacion}}</small>
-                <p>{{item.cantidad}} × {{item.precioUnitario|currency:'MXN':'symbol-narrow':'1.2-2'}}</p>
-              </div>
-              <b>{{item.subtotal|currency:'MXN':'symbol-narrow':'1.2-2'}}</b>
-            </article>
-          </section>
-          <aside class="summary-card">
-            <span>Total</span><strong>{{actual.total|currency:'MXN':'symbol-narrow':'1.2-2'}}</strong>
-            <div><small>Fecha límite</small><b>{{actual.fechaLimitePago|date:'medium'}}</b></div>
-          </aside>
+<app-cliente-shell>
+  <div class="bg-surface min-h-screen pb-32">
+    <main class="w-full max-w-4xl mx-auto pt-6 md:pt-10 px-4 md:px-6 space-y-6">
+
+      <!-- Skeletons durante carga -->
+      <div class="space-y-6 animate-pulse" *ngIf="cargando">
+        <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 space-y-4">
+          <div class="h-5 bg-surface-variant/50 rounded w-32"></div>
+          <div class="h-8 bg-surface-variant/40 rounded w-64"></div>
+          <div class="h-4 bg-surface-variant/30 rounded w-48"></div>
         </div>
-        <section
-          class="payment-card"
-          *ngIf="actual.estado==='PENDIENTE_PAGO' && actual.configuracionTransferencia as banco"
-        >
+        <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-64"></div>
+      </div>
+
+      <ng-container *ngIf="!cargando && pedido as actual">
+        
+        <!-- Botón de regreso -->
+        <div>
+          <a routerLink="/mis-pedidos" class="inline-flex items-center gap-1.5 text-xs font-sans font-semibold text-primary hover:text-primary-container transition-colors py-1.5 px-3 rounded-full hover:bg-surface-container-high active:scale-95">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Mis pedidos
+          </a>
+        </div>
+
+        <!-- Encabezado del Pedido -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30">
           <div>
-            <span>Transferencia bancaria</span>
-            <h2>Realiza tu pago</h2>
-            <p>Usa {{actual.folio}} como concepto.</p>
+            <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Pedido en línea</span>
+            <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary font-mono tracking-wide">
+              #{{ actual.folio }}
+            </h1>
+            <p class="font-sans text-xs text-on-surface-variant mt-1.5 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[15px] text-primary">schedule</span>
+              Registrado el {{ actual.fechaPedido | date:'medium' }}
+            </p>
           </div>
-          <dl>
+
+          <div class="flex flex-col sm:items-end gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
+                  [ngClass]="{
+                    'bg-amber-100 text-amber-800 border border-amber-300/40': actual.estado === 'PENDIENTE_PAGO',
+                    'bg-primary-container/20 text-primary border border-primary/20': actual.estado === 'EN_REVISION',
+                    'bg-tertiary-fixed text-tertiary border border-tertiary/20': actual.estado === 'PAGADO' || actual.estado === 'LISTO' || actual.estado === 'ENTREGADO',
+                    'bg-error-container text-on-error-container border border-error/20': actual.estado === 'CANCELADO' || actual.estado === 'EXPIRADO' || actual.estado === 'RECHAZADO'
+                  }">
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'PENDIENTE_PAGO'">schedule</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'EN_REVISION'">hourglass_empty</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'PAGADO'">check_circle</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'LISTO'">storefront</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'ENTREGADO'">check</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'CANCELADO' || actual.estado === 'RECHAZADO'">cancel</span>
+              <span class="material-symbols-outlined text-[16px]" *ngIf="actual.estado === 'EXPIRADO'">timer_off</span>
+              {{ etiqueta(actual.estado) }}
+            </span>
+            <span class="font-heading font-bold text-xl md:text-2xl text-on-surface">
+              {{ actual.total | currency:'MXN':'symbol-narrow':'1.2-2' }}
+            </span>
+          </div>
+        </header>
+
+        <!-- Banners de Estado -->
+        <!-- EN_REVISION -->
+        <section class="bg-primary-container/15 border border-primary/25 rounded-[24px] p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4" *ngIf="actual.estado === 'EN_REVISION'">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-2xl bg-primary-container/30 text-primary flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-2xl">hourglass_top</span>
+            </div>
             <div>
-              <dt>Banco</dt>
-              <dd>{{banco.banco}}</dd>
+              <h2 class="font-heading font-bold text-base text-on-surface">Estamos verificando tu comprobante</h2>
+              <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+                Tu transferencia fue recibida y está en cola de validación por nuestro personal. Te avisaremos en cuanto sea aprobada.
+              </p>
             </div>
-            <div>
-              <dt>Titular</dt>
-              <dd>{{banco.titular}}</dd>
-            </div>
-            <div *ngIf="banco.clabe">
-              <dt>CLABE</dt>
-              <dd>{{banco.clabe}} <button (click)="copiarClabe()">Copiar</button></dd>
-            </div>
-            <div *ngIf="banco.numeroCuenta">
-              <dt>Cuenta</dt>
-              <dd>{{banco.numeroCuenta}}</dd>
-            </div>
-          </dl>
-          <p class="instructions" *ngIf="banco.instrucciones">{{banco.instrucciones}}</p>
-          <div class="proof-actions">
-            <label
-              ><input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                (change)="seleccionarArchivo($event)"
-              /><ion-icon name="cloud-upload-outline"></ion-icon>{{archivo?.name||'Seleccionar comprobante'}}</label
-            ><ion-button [disabled]="!archivo||procesando" (click)="subir()"
-              >{{procesando?'Subiendo…':'Enviar a revisión'}}</ion-button
-            ><ion-button fill="clear" color="danger" [disabled]="procesando" (click)="confirmarCancelar()"
-              >Cancelar pedido</ion-button
-            >
           </div>
-        </section>
-        <section class="review-card" *ngIf="actual.estado==='EN_REVISION'">
-          <ion-icon name="time-outline"></ion-icon>
-          <div>
-            <h2>Estamos verificando tu transferencia</h2>
-            <p>Tu comprobante fue recibido. El pedido aún no está marcado como pagado.</p>
-          </div>
-          <ion-button fill="outline" *ngIf="actual.tieneComprobante" (click)="verComprobante()"
-            >Ver comprobante</ion-button
+          <button
+            *ngIf="actual.tieneComprobante"
+            type="button"
+            (click)="verComprobante()"
+            class="shrink-0 inline-flex items-center gap-2 bg-surface-container-lowest hover:bg-surface-container text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
           >
+            <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+            Ver en otra pestaña
+          </button>
         </section>
-        <section class="notice-card success" *ngIf="actual.estado==='PAGADO'">
-          <h2>Tu pago fue aprobado</h2>
-          <p>Estamos preparando tu pedido.</p>
+
+        <!-- PAGADO -->
+        <section class="bg-tertiary-fixed/30 border border-tertiary/20 rounded-[24px] p-5 md:p-6 shadow-sm flex items-start gap-3.5" *ngIf="actual.estado === 'PAGADO'">
+          <div class="w-10 h-10 rounded-2xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">check_circle</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-on-surface">¡Tu pago fue aprobado!</h2>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              Estamos preparando tu pedido en tienda. En cuanto esté empacado y listo para que pases por él, cambiaremos el estado a "Listo para recoger".
+            </p>
+          </div>
         </section>
-        <section class="notice-card ready" *ngIf="actual.estado==='LISTO'">
-          <h2>Tu pedido está listo para recoger</h2>
-          <p>Preséntate en la tienda con el folio {{actual.folio}}.</p>
+
+        <!-- LISTO -->
+        <section class="bg-tertiary-fixed/40 border border-tertiary/30 rounded-[24px] p-5 md:p-6 shadow-sm flex items-start gap-3.5" *ngIf="actual.estado === 'LISTO'">
+          <div class="w-10 h-10 rounded-2xl bg-tertiary text-on-tertiary flex items-center justify-center shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-2xl">storefront</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-on-surface">¡Tu pedido está listo para recoger!</h2>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              Ya puedes presentarte en la sucursal de la tienda. Presenta tu folio <strong class="font-mono text-primary font-bold">#{{ actual.folio }}</strong> en caja para entregarte tus productos.
+            </p>
+          </div>
         </section>
-        <section class="notice-card success" *ngIf="actual.estado==='ENTREGADO'">
-          <h2>Pedido entregado</h2>
-          <p>Gracias por comprar con nosotros.</p>
+
+        <!-- ENTREGADO -->
+        <section class="bg-tertiary-fixed/20 border border-tertiary/20 rounded-[24px] p-5 md:p-6 shadow-sm flex items-start gap-3.5" *ngIf="actual.estado === 'ENTREGADO'">
+          <div class="w-10 h-10 rounded-2xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">task_alt</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-on-surface">Pedido entregado</h2>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              Este pedido ya fue recogido en tienda. ¡Muchas gracias por tu compra!
+            </p>
+          </div>
         </section>
-        <section class="notice-card rejected" *ngIf="actual.estado==='RECHAZADO'">
-          <h2>Tu pago fue rechazado</h2>
-          <p *ngIf="actual.motivoRechazo"><strong>Motivo:</strong> {{actual.motivoRechazo}}</p>
-          <p>Si deseas comprar nuevamente, crea un pedido nuevo.</p>
+
+        <!-- RECHAZADO -->
+        <section class="bg-error-container/30 border border-error-container rounded-[24px] p-5 md:p-6 shadow-sm space-y-2" *ngIf="actual.estado === 'RECHAZADO'">
+          <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-2xl bg-error-container text-error flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-2xl">cancel</span>
+            </div>
+            <div>
+              <h2 class="font-heading font-bold text-base text-error">Tu pago fue rechazado</h2>
+              <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+                El comprobante proporcionado no pudo ser validado.
+              </p>
+              <p class="font-sans text-xs font-semibold text-error mt-1" *ngIf="actual.motivoRechazo">
+                Motivo: {{ actual.motivoRechazo }}
+              </p>
+            </div>
+          </div>
         </section>
-        <section class="notice-card" *ngIf="actual.estado==='EXPIRADO'">
-          <h2>Tu reserva expiró</h2>
-          <p>Los productos volvieron al inventario.</p>
+
+        <!-- EXPIRADO -->
+        <section class="bg-surface-variant/40 border border-surface-variant rounded-[24px] p-5 md:p-6 shadow-sm flex items-start gap-3.5" *ngIf="actual.estado === 'EXPIRADO'">
+          <div class="w-10 h-10 rounded-2xl bg-surface-variant text-on-surface-variant flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">timer_off</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-on-surface">Tu reserva expiró</h2>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              El tiempo límite para realizar la transferencia venció y los productos reservados han regresado al inventario disponible.
+            </p>
+          </div>
         </section>
+
+        <!-- CANCELADO -->
+        <section class="bg-surface-variant/40 border border-surface-variant rounded-[24px] p-5 md:p-6 shadow-sm flex items-start gap-3.5" *ngIf="actual.estado === 'CANCELADO'">
+          <div class="w-10 h-10 rounded-2xl bg-surface-variant text-on-surface-variant flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">cancel</span>
+          </div>
+          <div>
+            <h2 class="font-heading font-bold text-base text-on-surface">Pedido cancelado</h2>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5 leading-relaxed">
+              Este pedido fue cancelado y los productos fueron devueltos al inventario disponible.
+            </p>
+          </div>
+        </section>
+
+        <!-- Layout Grid de Productos e Instrucciones -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+
+          <!-- Columna Izquierda: Artículos (2 cols) -->
+          <div class="md:col-span-2 space-y-6">
+
+            <!-- Tarjeta de Productos -->
+            <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-lg">inventory_2</span>
+                  </div>
+                  <div>
+                    <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Artículos</span>
+                    <h2 class="font-heading font-bold text-base text-on-surface">Detalle de compra</h2>
+                  </div>
+                </div>
+                <span class="font-sans text-xs text-on-surface-variant font-medium bg-surface-container px-3 py-1 rounded-full">
+                  {{ actual.items.length }} {{ actual.items.length === 1 ? 'artículo' : 'artículos' }}
+                </span>
+              </div>
+
+              <div class="divide-y divide-surface-variant/20">
+                <article *ngFor="let item of actual.items" class="py-3.5 first:pt-0 last:pb-0 flex items-center gap-4">
+                  <!-- Imagen -->
+                  <div class="w-14 h-14 rounded-xl bg-surface-container-low border border-surface-variant/30 overflow-hidden flex items-center justify-center shrink-0 text-outline">
+                    <img *ngIf="imagen(item.imagen) as src; else noImage" [src]="src" [alt]="item.nombre" class="w-full h-full object-cover" />
+                    <ng-template #noImage>
+                      <span class="material-symbols-outlined text-2xl">package_2</span>
+                    </ng-template>
+                  </div>
+
+                  <!-- Info -->
+                  <div class="flex-1 min-w-0">
+                    <strong class="font-sans font-semibold text-sm text-on-surface block truncate">{{ item.nombre }}</strong>
+                    <span class="font-sans text-xs text-outline block truncate" *ngIf="item.presentacion">{{ item.presentacion }}</span>
+                    <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+                      {{ item.cantidad }} × {{ item.precioUnitario | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                    </p>
+                  </div>
+
+                  <!-- Subtotal -->
+                  <div class="text-right shrink-0">
+                    <strong class="font-heading font-bold text-sm md:text-base text-on-surface">
+                      {{ item.subtotal | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                    </strong>
+                  </div>
+                </article>
+              </div>
+
+              <!-- Total Footer -->
+              <footer class="border-t border-surface-variant/30 pt-4 flex items-center justify-between">
+                <div>
+                  <span class="font-sans text-xs text-on-surface-variant block">Importe total</span>
+                  <span class="font-heading font-bold text-base text-on-surface">Total a pagar</span>
+                </div>
+                <strong class="font-heading font-bold text-2xl text-primary">
+                  {{ actual.total | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                </strong>
+              </footer>
+            </section>
+
+            <!-- Pago por Transferencia: Instrucciones y Carga de Comprobante -->
+            <section
+              class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-5"
+              *ngIf="actual.estado === 'PENDIENTE_PAGO' && actual.configuracionTransferencia as banco"
+            >
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">account_balance</span>
+                </div>
+                <div>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Pago bancario</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Realiza tu transferencia</h2>
+                </div>
+              </div>
+
+              <div class="bg-surface-container/60 rounded-2xl p-4 border border-surface-variant/30 space-y-3">
+                <p class="font-sans text-xs text-on-surface-variant">
+                  Transfiere el total exacto e ingresa tu folio <strong class="text-primary font-mono font-bold">#{{ actual.folio }}</strong> en el concepto o motivo del pago.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-sans">
+                  <div class="bg-surface-container-lowest p-3 rounded-xl border border-surface-variant/30">
+                    <span class="text-on-surface-variant block font-medium">Banco:</span>
+                    <strong class="text-on-surface text-sm">{{ banco.banco }}</strong>
+                  </div>
+                  <div class="bg-surface-container-lowest p-3 rounded-xl border border-surface-variant/30">
+                    <span class="text-on-surface-variant block font-medium">Titular:</span>
+                    <strong class="text-on-surface text-sm">{{ banco.titular }}</strong>
+                  </div>
+                  <div *ngIf="banco.clabe" class="bg-surface-container-lowest p-3 rounded-xl border border-surface-variant/30 sm:col-span-2 flex items-center justify-between gap-2">
+                    <div>
+                      <span class="text-on-surface-variant block font-medium">CLABE Interbancaria:</span>
+                      <strong class="font-mono text-sm text-primary select-all">{{ banco.clabe }}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      (click)="copiarClabe()"
+                      class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:bg-primary-container/20 px-3 py-1.5 rounded-lg transition-colors border border-primary/20 active:scale-95 shrink-0"
+                    >
+                      <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                      Copiar
+                    </button>
+                  </div>
+                  <div *ngIf="banco.numeroCuenta" class="bg-surface-container-lowest p-3 rounded-xl border border-surface-variant/30 sm:col-span-2">
+                    <span class="text-on-surface-variant block font-medium">Número de cuenta:</span>
+                    <strong class="font-mono text-sm text-on-surface">{{ banco.numeroCuenta }}</strong>
+                  </div>
+                </div>
+
+                <p *ngIf="banco.instrucciones" class="font-sans text-xs text-outline italic pt-1">
+                  {{ banco.instrucciones }}
+                </p>
+              </div>
+
+              <!-- Carga de Comprobante -->
+              <div class="space-y-3 pt-2">
+                <label class="font-sans font-bold text-xs text-on-surface block">
+                  Adjuntar comprobante de pago:
+                </label>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-3">
+                  <label class="w-full sm:w-auto flex-1 cursor-pointer flex items-center gap-2.5 px-4 py-3 rounded-xl bg-surface-container border border-dashed border-outline-variant/50 hover:border-primary text-xs font-sans text-on-surface-variant transition-colors">
+                    <span class="material-symbols-outlined text-xl text-primary shrink-0">upload_file</span>
+                    <span class="truncate font-medium">{{ archivo?.name || 'Seleccionar imagen o PDF (máx 5MB)' }}</span>
+                    <input
+                      type="file"
+                      class="hidden"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      (change)="seleccionarArchivo($event)"
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    [disabled]="!archivo || procesando"
+                    (click)="subir()"
+                    class="w-full sm:w-auto bg-primary hover:bg-primary-container text-on-primary font-sans font-bold text-xs py-3 px-5 rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm shrink-0"
+                  >
+                    <ion-spinner *ngIf="procesando" name="crescent" class="w-4 h-4"></ion-spinner>
+                    <span *ngIf="!procesando" class="material-symbols-outlined text-[18px]">send</span>
+                    <span>{{ procesando ? 'Subiendo…' : 'Enviar comprobante' }}</span>
+                  </button>
+                </div>
+
+                <div class="pt-2 text-center sm:text-right">
+                  <button
+                    type="button"
+                    [disabled]="procesando"
+                    (click)="confirmarCancelar()"
+                    class="text-xs font-sans font-semibold text-error hover:underline transition-colors py-1 px-2 rounded-lg"
+                  >
+                    Cancelar este pedido
+                  </button>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- Columna Derecha: Tarjeta de Resumen (1 col) -->
+          <div class="space-y-6">
+            
+            <aside class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+              <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-lg">receipt</span>
+                </div>
+                <div>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Resumen</span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">Información general</h2>
+                </div>
+              </div>
+
+              <div class="space-y-3 font-sans text-xs text-on-surface-variant">
+                <div>
+                  <span class="block text-outline">Importe total:</span>
+                  <strong class="font-heading font-bold text-xl text-primary block mt-0.5">
+                    {{ actual.total | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                  </strong>
+                </div>
+
+                <div *ngIf="actual.fechaLimitePago && actual.estado === 'PENDIENTE_PAGO'" class="pt-3 border-t border-surface-variant/20">
+                  <span class="block text-outline">Fecha límite para pagar:</span>
+                  <strong class="text-amber-800 font-bold block mt-0.5">
+                    {{ actual.fechaLimitePago | date:'medium' }}
+                  </strong>
+                </div>
+
+                <div class="pt-3 border-t border-surface-variant/20">
+                  <span class="block text-outline">Tipo de entrega:</span>
+                  <strong class="text-on-surface font-semibold block mt-0.5">Recoger en tienda física</strong>
+                </div>
+              </div>
+            </aside>
+
+            <!-- Tarjeta: Comprobante Recibido con Preview -->
+            <section
+              *ngIf="actual.tieneComprobante"
+              class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+            >
+              <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
+                    <span class="material-symbols-outlined text-lg">receipt_long</span>
+                  </div>
+                  <div>
+                    <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Tu pago</span>
+                    <h2 class="font-heading font-bold text-base text-on-surface">Comprobante</h2>
+                  </div>
+                </div>
+                <span class="text-[10px] font-sans font-bold uppercase px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">check_circle</span>
+                  Adjunto
+                </span>
+              </div>
+
+              <!-- Preview visual si es imagen -->
+              <div
+                *ngIf="esImagenComprobante() && actual.comprobanteUrl && !comprobanteImgError; else previewAlternativo"
+                class="relative group rounded-2xl overflow-hidden border border-surface-variant/30 bg-surface-container-low"
+              >
+                <img
+                  [src]="actual.comprobanteUrl"
+                  [alt]="actual.comprobante?.nombre || 'Comprobante de pago'"
+                  class="w-full max-h-60 object-contain mx-auto transition-transform duration-300 group-hover:scale-[1.02] cursor-pointer"
+                  (click)="verComprobante()"
+                  (error)="onComprobanteImgError()"
+                />
+                <!-- Overlay con botón al pasar el mouse o tocar -->
+                <div
+                  class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 cursor-pointer"
+                  (click)="verComprobante()"
+                >
+                  <button
+                    type="button"
+                    (click)="verComprobante(); $event.stopPropagation()"
+                    class="bg-surface-container-lowest/95 hover:bg-surface-container-lowest text-on-surface font-sans font-semibold text-xs py-2 px-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span class="material-symbols-outlined text-[16px] text-primary">open_in_new</span>
+                    Ver en otra pestaña
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview alternativo si es PDF o no cargó la imagen -->
+              <ng-template #previewAlternativo>
+                <div class="p-3.5 bg-surface-container rounded-2xl border border-surface-variant/30 flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-error/10 text-error flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-2xl">
+                      {{ actual.comprobante?.mime === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
+                    </span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <strong class="font-sans font-semibold text-xs text-on-surface block truncate" [title]="actual.comprobante?.nombre || 'Comprobante adjunto'">
+                      {{ actual.comprobante?.nombre || 'Comprobante adjunto' }}
+                    </strong>
+                    <span class="font-sans text-[11px] text-on-surface-variant block mt-0.5" *ngIf="actual.fechaComprobante">
+                      {{ actual.fechaComprobante | date:'short' }}
+                    </span>
+                  </div>
+                </div>
+              </ng-template>
+
+              <!-- Botón Ver en otra pestaña -->
+              <button
+                type="button"
+                (click)="verComprobante()"
+                class="w-full inline-flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high text-on-surface font-sans font-semibold text-xs py-2.5 px-4 rounded-xl border border-surface-variant/30 transition-all active:scale-95 shadow-sm"
+              >
+                <span class="material-symbols-outlined text-[18px] text-primary">open_in_new</span>
+                Abrir en otra pestaña
+              </button>
+            </section>
+
+          </div>
+
+        </div>
+
       </ng-container>
-    </main></ion-content
-  ></app-cliente-shell
->
+
+    </main>
+  </div>
+</app-cliente-shell>

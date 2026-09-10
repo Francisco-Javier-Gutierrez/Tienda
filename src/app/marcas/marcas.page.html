@@ -1,0 +1,75 @@
+<app-admin-shell menuId="admin-marcas-menu" contentId="admin-marcas-content" activeSection="marcas">
+  <div class="p-4 md:p-6 max-w-5xl mx-auto pb-32 flex flex-col gap-6">
+        
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Organización</span>
+            <h1 class="font-heading font-bold text-3xl text-primary mb-1">Marcas</h1>
+            <p class="font-sans text-sm text-on-surface-variant">Administra las marcas de tus productos.</p>
+          </div>
+        </header>
+
+        <!-- Search -->
+        <div class="relative w-full shadow-sm rounded-xl">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+          <input class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3.5 pl-12 pr-4 text-on-surface font-sans text-sm placeholder:text-outline-variant/80 focus:ring-1 focus:ring-primary focus:outline-none transition-shadow" placeholder="Buscar marca..." type="text" [(ngModel)]="busquedaMarca"/>
+        </div>
+
+        <!-- Skeleton List -->
+        <div class="flex flex-col gap-3" *ngIf="cargando">
+          <article *ngFor="let i of [1,2,3,4,5]" class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center justify-between">
+            <div class="flex items-center gap-4 w-full">
+              <ion-skeleton-text animated style="width: 48px; height: 48px; border-radius: 12px; margin: 0;"></ion-skeleton-text>
+              <div class="flex flex-col gap-2 flex-grow">
+                <ion-skeleton-text animated style="width: 40%; height: 16px; border-radius: 4px;"></ion-skeleton-text>
+                <ion-skeleton-text animated style="width: 60%; height: 12px; border-radius: 4px;"></ion-skeleton-text>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <section class="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest rounded-[24px] shadow-sm border border-surface-variant/30" *ngIf="!cargando && marcasFiltradas.length === 0">
+          <span class="material-symbols-outlined text-5xl text-primary/40 mb-4">sell</span>
+          <h2 class="font-heading font-bold text-xl text-on-surface mb-2">{{ marcas.length ? 'No encontramos marcas' : 'No hay marcas registradas' }}</h2>
+          <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-sm mx-auto">{{ marcas.length ? 'Prueba con otro término de búsqueda.' : 'Crea una marca para organizar tus productos.' }}</p>
+        </section>
+
+        <!-- List -->
+        <div class="flex flex-col gap-3" *ngIf="!cargando && marcasFiltradas.length">
+          <article *ngFor="let item of marcasFiltradas" class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center justify-between group hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">sell</span>
+              </div>
+              <div class="flex flex-col">
+                <h3 class="font-sans font-bold text-base text-on-surface">{{ item.nombre }}</h3>
+                <p class="font-sans text-xs text-on-surface-variant">{{ item.descripcion || 'Sin descripción' }}</p>
+              </div>
+            </div>
+            
+            <div class="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+              <button class="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors" (click)="editarMarca(item)">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="w-10 h-10 rounded-full flex items-center justify-center text-error hover:bg-error/10 transition-colors" (click)="eliminarMarca(item)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </article>
+        </div>
+
+      <button class="fixed bottom-6 right-4 md:right-8 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-sm flex items-center justify-center active:scale-95 transition-all z-40 hover:bg-primary-container hover:rounded-3xl" (click)="abrirNuevoCatalogo()">
+        <span class="material-symbols-outlined text-3xl">add</span>
+      </button>
+
+  </div>
+</app-admin-shell>
+
+<app-catalogo-modal
+  [isOpen]="mostrarModalCatalogo"
+  [tipo]="'marca'"
+  [item]="itemEditando"
+  [saving]="guardandoCatalogo"
+  (saved)="guardarCatalogo($event)"
+  (cancelled)="cancelarModalCatalogo()"
+></app-catalogo-modal>

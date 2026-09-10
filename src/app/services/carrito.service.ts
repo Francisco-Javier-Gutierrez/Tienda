@@ -23,23 +23,24 @@ export class CarritoService {
   }
 
   agregar(producto: ProductoParaCarrito): boolean {
-    const stock = Math.max(0, Math.trunc(Number(producto.existenciaPro ?? 0)));
+    const stock = Math.max(0, Math.trunc(Number(producto.existencia ?? 0)));
     if (!Number.isFinite(stock) || stock <= 0) return false;
-    const precio = Number(producto.precioVentaPro);
+    const precio = Number(producto.precioVenta);
     if (!Number.isFinite(precio) || precio < 0) return false;
 
-    const existente = this.items.find((item) => item.idPro === Number(producto.idPro));
+    const idStr = String(producto.id);
+    const existente = this.items.find((item) => item.id === idStr);
     if (existente && existente.cantidad >= stock) return false;
-    const presentacion = [producto.tamanoPro, producto.presentacionPro].filter(Boolean).join(' · ') || null;
+    const presentacion = [producto.tamano, producto.presentacion].filter(Boolean).join(' · ') || null;
     const actualizados = existente
       ? this.items.map((item) =>
-          item.idPro === existente.idPro
+          item.id === existente.id
             ? {
                 ...item,
                 cantidad: item.cantidad + 1,
                 precioMostrado: precio,
                 stockConocido: stock,
-                imagen: producto.imagenPro,
+                imagen: producto.imagen,
                 presentacion,
               }
             : item,
@@ -47,11 +48,11 @@ export class CarritoService {
       : [
           ...this.items,
           {
-            idPro: Number(producto.idPro),
-            nombre: producto.nombrePro,
+            id: idStr,
+            nombre: producto.nombre,
             precioMostrado: precio,
             cantidad: 1,
-            imagen: producto.imagenPro,
+            imagen: producto.imagen,
             stockConocido: stock,
             presentacion,
           },
@@ -60,40 +61,40 @@ export class CarritoService {
     return true;
   }
 
-  incrementar(idPro: number): boolean {
-    const item = this.items.find((actual) => actual.idPro === idPro);
+  incrementar(id: string): boolean {
+    const item = this.items.find((actual) => actual.id === id);
     if (!item || item.cantidad >= item.stockConocido) return false;
     this.actualizar(
-      this.items.map((actual) => (actual.idPro === idPro ? { ...actual, cantidad: actual.cantidad + 1 } : actual)),
+      this.items.map((actual) => (actual.id === id ? { ...actual, cantidad: actual.cantidad + 1 } : actual)),
     );
     return true;
   }
 
-  decrementar(idPro: number): void {
-    const item = this.items.find((actual) => actual.idPro === idPro);
+  decrementar(id: string): void {
+    const item = this.items.find((actual) => actual.id === id);
     if (!item || item.cantidad <= 1) return;
     this.actualizar(
-      this.items.map((actual) => (actual.idPro === idPro ? { ...actual, cantidad: actual.cantidad - 1 } : actual)),
+      this.items.map((actual) => (actual.id === id ? { ...actual, cantidad: actual.cantidad - 1 } : actual)),
     );
   }
 
-  eliminar(idPro: number): void {
-    this.actualizar(this.items.filter((item) => item.idPro !== idPro));
+  eliminar(id: string): void {
+    this.actualizar(this.items.filter((item) => item.id !== id));
   }
   vaciar(): void {
     this.actualizar([]);
   }
 
   actualizarDisponibilidad(
-    productos: Array<{ idPro: number; existenciaPro: number | null; precioVentaPro: number }>,
+    productos: Array<{ id: string; existencia?: number | null; precioVenta?: number; existenciaPro?: number | null; precioVentaPro?: number }>,
   ): void {
-    const disponibles = new Map(productos.map((producto) => [Number(producto.idPro), producto]));
+    const disponibles = new Map(productos.map((producto) => [String(producto.id), producto]));
     const actualizados = this.items.reduce<ItemCarrito[]>((resultado, item) => {
-      const producto = disponibles.get(item.idPro);
+      const producto = disponibles.get(item.id);
       if (!producto) return resultado;
-      const stock = Math.max(0, Math.trunc(Number(producto.existenciaPro ?? 0)));
+      const stock = Math.max(0, Math.trunc(Number((producto.existencia ?? producto.existenciaPro) ?? 0)));
       if (!stock) return resultado;
-      const precio = Number(producto.precioVentaPro);
+      const precio = Number(producto.precioVenta ?? producto.precioVentaPro);
       resultado.push({
         ...item,
         stockConocido: stock,
@@ -126,8 +127,8 @@ export class CarritoService {
     if (!valor || typeof valor !== 'object') return false;
     const item = valor as Partial<ItemCarrito>;
     return (
-      typeof item.idPro === 'number' &&
-      Number.isInteger(item.idPro) &&
+      typeof item.id === 'string' &&
+      Boolean(item.id) &&
       typeof item.nombre === 'string' &&
       typeof item.precioMostrado === 'number' &&
       Number.isFinite(item.precioMostrado) &&

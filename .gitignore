@@ -15,7 +15,8 @@ log.txt
 
 /.sourcemaps
 /.versions
-/coverage
+coverage/
+**/coverage/
 
 # Ionic
 /.ionic
@@ -24,7 +25,8 @@ log.txt
 /plugins
 
 # Compiled output
-/dist
+dist/
+**/dist/
 /tmp
 /out-tsc
 /bazel-out
@@ -90,8 +92,8 @@ Thumbs.db
 *.keystore
 
 # Terraform
-/terraform/
-**/.terraform/*
+.terraform/
+**/.terraform/
 *.tfstate
 *.tfstate.*
 crash.log
@@ -105,3 +107,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 .terraform.lock.hcl
+
+# Stitch designs
+stitch-designs/
+/stitch-designs/

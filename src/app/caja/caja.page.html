@@ -13,19 +13,19 @@
         <ion-button size="small" fill="clear" *ngIf="s.pendientes" (click)="sync.reintentar()">Sincronizar</ion-button>
       </p>
     </header>
-    <div class="filters">
-      <ion-input type="date" label="Fecha" labelPlacement="stacked" [(ngModel)]="fecha"></ion-input
-      ><ion-select label="Estado" labelPlacement="stacked" [(ngModel)]="estado"
-        ><ion-select-option value="">Todos</ion-select-option
-        ><ion-select-option value="ABIERTA">Abierta</ion-select-option
-        ><ion-select-option value="CERRADA">Cerrada</ion-select-option></ion-select
-      ><ion-button (click)="cargar()">Aplicar</ion-button>
+    <div class="filters flex flex-wrap items-end gap-3 my-4">
+      <ion-input type="date" label="Fecha" labelPlacement="stacked" [(ngModel)]="fecha" class="w-48"></ion-input>
+      <div class="w-48">
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">Estado</label>
+        <app-custom-select [(ngModel)]="estado" [options]="opcionesEstado" placeholder="Todos"></app-custom-select>
+      </div>
+      <ion-button (click)="cargar()">Aplicar</ion-button>
     </div>
     <ion-spinner *ngIf="cargando"></ion-spinner
     ><ion-card *ngFor="let c of cortes"
       ><ion-card-header
         ><ion-card-subtitle>{{c.empleado}} · {{c.nombreSuc}}</ion-card-subtitle
-        ><ion-card-title>Caja #{{c.idSesionCaja}} · {{c.estado}}</ion-card-title></ion-card-header
+        ><ion-card-title>Caja #{{c.id}} · {{c.estado}}</ion-card-title></ion-card-header
       ><ion-card-content
         ><p>{{c.fechaHoraApertura}} <span *ngIf="c.fechaHoraCierre">→ {{c.fechaHoraCierre}}</span></p>
         <p>Total vendido: <b>{{c.totalVentas|currency:'MXN'}}</b> · {{c.numeroVentas}} ventas</p>
@@ -37,3 +37,4 @@
     >
   </main></ion-content
 >
+

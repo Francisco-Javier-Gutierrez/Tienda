@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout - Tienda Doña Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#ccc4ce",
+                      "surface-container-high": "#f1e4f2",
+                      "inverse-on-surface": "#faedfb",
+                      "tertiary-fixed": "#ffdbcf",
+                      "secondary-fixed": "#ffdadc",
+                      "on-primary-container": "#cdb2e1",
+                      "surface": "#fff7fc",
+                      "on-primary-fixed": "#251237",
+                      "primary-fixed": "#f0dbff",
+                      "on-background": "#201923",
+                      "secondary-container": "#fe7488",
+                      "on-primary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "primary-fixed-dim": "#d7bcec",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#d7bcec",
+                      "surface-bright": "#fff7fc",
+                      "surface-tint": "#6b557f",
+                      "surface-container": "#f7eaf8",
+                      "surface-container-highest": "#ebdeed",
+                      "primary": "#402c53",
+                      "on-secondary-container": "#730425",
+                      "on-tertiary-fixed-variant": "#623e31",
+                      "tertiary": "#4e2d21",
+                      "on-tertiary-fixed": "#2f140a",
+                      "surface-variant": "#ebdeed",
+                      "on-primary-fixed-variant": "#533e66",
+                      "inverse-surface": "#352e38",
+                      "secondary-fixed-dim": "#ffb2b9",
+                      "tertiary-fixed-dim": "#efbbaa",
+                      "primary-container": "#58436b",
+                      "on-surface": "#201923",
+                      "surface-container-low": "#fdeffe",
+                      "on-secondary-fixed": "#400010",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#684336",
+                      "outline": "#7b757e",
+                      "background": "#fff7fc",
+                      "on-surface-variant": "#4a454d",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-dim": "#e3d6e4",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-container": "#e4b1a1",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#891933",
+                      "secondary": "#a93349"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "container-margin": "20px",
+                      "sm": "8px",
+                      "xl": "32px",
+                      "xs": "4px",
+                      "gutter": "12px",
+                      "lg": "24px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "display-lg-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label-sm": [
+                              "Be Vietnam Pro"
+                      ],
+                      "headline-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-lg": [
+                              "Plus Jakarta Sans"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Custom scrollbar to maintain premium feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #ebdeed;
+            border-radius: 10px;
+        }
+        .pastel-shadow {
+            box-shadow: 0px 4px 20px rgba(88, 67, 107, 0.08);
+        }
+        .bottom-shadow {
+            box-shadow: 0px -4px 20px rgba(88, 67, 107, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased pb-32">
+<!-- Transactional Flow Shell (No Global Nav) -->
+<main class="w-full max-w-md mx-auto min-h-screen relative flex flex-col">
+<!-- Transactional Header -->
+<header class="px-container-margin pt-xl pb-md w-full">
+<div class="flex items-center justify-between mb-lg">
+<!-- Back Button -->
+<button aria-label="Go back" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary active:scale-95 transition-transform hover:bg-surface-container-high">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<!-- Category/Steps -->
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Paso 1 de 2 · Confirmación</span>
+<!-- Spacer for perfect centering of title if needed, or visual balance -->
+<div class="w-10"></div>
+</div>
+<div class="flex flex-col gap-sm">
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-background tracking-tight">Finaliza tu reserva</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Verificaremos los precios y apartaremos los productos en el inventario</p>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="px-container-margin flex flex-col gap-lg pb-xl">
+<!-- Location Card -->
+<section class="bg-surface-container-lowest rounded-xl p-md pastel-shadow flex gap-md items-start">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex-shrink-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-label-md text-label-md text-on-surface mb-xs">Recolección en Mostrador</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-sm">Sucursal Doña Paty Centro (Av. Hidalgo #101, Toluca)</p>
+<div class="flex items-center gap-sm text-primary font-label-sm text-label-sm bg-surface-container w-fit px-sm py-xs rounded-lg">
+<span class="material-symbols-outlined" style="font-size: 14px;">schedule</span>
+<span>Lunes a Domingo · 8:00 AM a 10:00 PM</span>
+</div>
+</div>
+</section>
+<!-- Order Summary Items -->
+<section class="bg-surface-container-lowest rounded-xl p-md pastel-shadow flex flex-col">
+<h3 class="font-label-md text-label-md text-on-surface mb-md pb-xs border-b border-surface-variant">Tu Pedido (3 artículos)</h3>
+<div class="flex flex-col gap-md mt-sm">
+<!-- Item 1 -->
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-16 h-16 rounded-lg bg-surface-container-low overflow-hidden flex-shrink-0 border border-surface-variant group-hover:border-primary-fixed transition-colors">
+<img alt="Coca-Cola Original 3L" class="w-full h-full object-cover mix-blend-multiply" data-alt="A highly detailed, professional product shot of a 3-liter Coca-Cola bottle sitting on a pristine, seamless white surface. The lighting is high-key, soft, and diffused, casting a subtle pastel-toned shadow beneath the bottle that aligns perfectly with a high-end, modern light-mode grocery application aesthetic. The background is completely plain and minimalist to emphasize the crisp, refreshing qualities of the beverage packaging. The overall mood is approachable, fresh, and meticulously organized." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_Lx3vqwFjOFdJQD71eIsVxBM3C_a9jZteWNWKxCHeP_UNmHTnflSoCybrf4vw6ExKTtPy46oEoKWsWWDDwgb1oQ7dAMFkcIYyCE4UKcFa5HkynUfyAefXlmsxTzLepgZN_y5eroczZ3TjaLLAHqujh-rylub5q3ZXEKCWVmvfo8QYoW0XoMhwgVITkegQoJEv3g_XlXRG4G1ThPpo0FE2Re224r7DYssZNGBg3n5CPt2Kdt9ntxW2BtxWlh8E7tZTW6-BnPUp7vQ"/>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface line-clamp-1">Coca-Cola Original 3L</span>
+<span class="font-label-sm text-label-sm text-outline mt-xs">2 unidades</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-primary">$100.00 MXN</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-16 h-16 rounded-lg bg-surface-container-low overflow-hidden flex-shrink-0 border border-surface-variant group-hover:border-primary-fixed transition-colors">
+<img alt="Papas Sabritas Original 45g" class="w-full h-full object-cover mix-blend-multiply" data-alt="A pristine, professional studio photograph of a yellow bag of Papas Sabritas Original (45g) resting on a flawless, bright white background. The scene is illuminated by gentle, enveloping soft-box lighting, generating a very subtle, slightly mauve-tinted shadow beneath the product to convey depth and premium quality. The minimalist, clean composition perfectly suits a modern, refined grocery shopping interface with a pastel-infused, high-key light-mode aesthetic. The texture of the foil bag is crisp and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqMxzPAP3GNi0LFFyh30_OctZZ4eK-Q9vohxuyHKv_QO3FxY8z6QNZ6BCuWHV9nEoU_fymyV5lAr3S-e9zj_Xtnkprs8MJF1dBKhAPH8-So7bcz3kGensnkdSnNBxhVJRpzu-RyNBq1QF9xANNkcOF94oXWTvtYIg4YEO-4Rj-f_oxc9g-Rwa01QLmlgODBT4RzL_0c5hX5SCNW6e03ZNFf1Xo9eV2f1P-4awDTOUvvQJoNuR4ouvbLFsrnQGKagWzf3cMrDEG6t8"/>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface line-clamp-1">Papas Sabritas Original 45g</span>
+<span class="font-label-sm text-label-sm text-outline mt-xs">1 unidad</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-primary">$22.00 MXN</span>
+</div>
+</div>
+</section>
+<!-- Financial Breakdown -->
+<section class="bg-surface-container-lowest rounded-xl p-md pastel-shadow flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Productos</span>
+<span class="font-body-md text-body-md text-on-surface">$122.00</span>
+</div>
+<div class="flex justify-between items-center pb-md border-b border-surface-variant">
+<span class="font-body-md text-body-md text-on-surface-variant">Cargo por recolección</span>
+<span class="font-label-md text-label-md text-secondary">Gratis</span>
+</div>
+<div class="flex justify-between items-center pt-xs">
+<span class="font-label-md text-label-md text-on-surface">Total a Pagar</span>
+<span class="font-headline-md text-headline-md text-primary-container font-bold">$122.00 MXN</span>
+</div>
+</section>
+<!-- Guarantee Note -->
+<div class="border-2 border-primary-fixed bg-surface-container-low rounded-xl p-md flex gap-md items-start mt-sm">
+<div class="flex-shrink-0 text-primary mt-xs">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<p class="font-label-sm text-label-sm text-primary leading-relaxed">
+                    Al continuar, se generará tu folio de pedido y las instrucciones con la CLABE bancaria de la tienda para realizar tu transferencia y subir tu comprobante.
+                </p>
+</div>
+</div>
+<!-- Sticky Bottom CTA -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest bottom-shadow border-t border-surface-variant z-50">
+<!-- Safe area padding for mobile devices with home bars -->
+<div class="max-w-md mx-auto px-container-margin py-md pb-[env(safe-area-inset-bottom,20px)]">
+<button class="w-full bg-primary-container hover:bg-primary transition-colors duration-200 active:scale-[0.98] rounded-xl py-lg flex items-center justify-center gap-sm shadow-[0px_4px_16px_rgba(88,67,107,0.15)] group">
+<span class="material-symbols-outlined text-on-primary group-hover:scale-110 transition-transform">receipt_long</span>
+<span class="font-label-md text-label-md text-on-primary">Generar pedido e instrucciones de pago</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

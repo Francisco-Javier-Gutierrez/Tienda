@@ -25,11 +25,11 @@ export class CatalogosService {
     return this.http.post<Marca>(`${this.apiBaseUrl}/marca`, dto);
   }
 
-  actualizarMarca(id: number, dto: CatalogoDto): Observable<Marca> {
+  actualizarMarca(id: string | number, dto: CatalogoDto): Observable<Marca> {
     return this.http.put<Marca>(`${this.apiBaseUrl}/marca/${id}`, dto);
   }
 
-  eliminarMarca(id: number): Observable<{ message: string }> {
+  eliminarMarca(id: string | number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiBaseUrl}/marca/${id}`);
   }
 
@@ -41,11 +41,11 @@ export class CatalogosService {
     return this.http.post<Categoria>(`${this.apiBaseUrl}/categoria`, dto);
   }
 
-  actualizarCategoria(id: number, dto: CatalogoDto): Observable<Categoria> {
+  actualizarCategoria(id: string | number, dto: CatalogoDto): Observable<Categoria> {
     return this.http.put<Categoria>(`${this.apiBaseUrl}/categoria/${id}`, dto);
   }
 
-  eliminarCategoria(id: number): Observable<{ message: string }> {
+  eliminarCategoria(id: string | number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiBaseUrl}/categoria/${id}`);
   }
 }

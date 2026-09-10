@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Empleados - Admin Retail</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Hide scrollbar for clean UI but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#fff7fc",
+                      "on-secondary-container": "#730425",
+                      "secondary-fixed": "#ffdadc",
+                      "surface-dim": "#e3d6e4",
+                      "primary": "#402c53",
+                      "on-secondary-fixed-variant": "#891933",
+                      "primary-container": "#58436b",
+                      "surface-container-low": "#fdeffe",
+                      "tertiary-container": "#684336",
+                      "secondary-fixed-dim": "#ffb2b9",
+                      "surface-bright": "#fff7fc",
+                      "on-primary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2f140a",
+                      "secondary": "#a93349",
+                      "surface-container": "#f7eaf8",
+                      "on-surface-variant": "#4a454d",
+                      "on-primary-fixed-variant": "#533e66",
+                      "on-primary-fixed": "#251237",
+                      "on-tertiary-fixed-variant": "#623e31",
+                      "outline": "#7b757e",
+                      "on-secondary-fixed": "#400010",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#d7bcec",
+                      "outline-variant": "#ccc4ce",
+                      "error": "#ba1a1a",
+                      "tertiary": "#4e2d21",
+                      "tertiary-fixed": "#ffdbcf",
+                      "surface-variant": "#ebdeed",
+                      "primary-fixed": "#f0dbff",
+                      "on-primary-container": "#cdb2e1",
+                      "on-background": "#201923",
+                      "inverse-on-surface": "#faedfb",
+                      "on-tertiary-container": "#e4b1a1",
+                      "background": "#fff7fc",
+                      "surface-container-high": "#f1e4f2",
+                      "on-surface": "#201923",
+                      "tertiary-fixed-dim": "#efbbaa",
+                      "on-secondary": "#ffffff",
+                      "secondary-container": "#fe7488",
+                      "surface-tint": "#6b557f",
+                      "surface-container-highest": "#ebdeed",
+                      "primary-fixed-dim": "#d7bcec",
+                      "inverse-surface": "#352e38"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "xl": "32px",
+                      "gutter": "12px",
+                      "container-margin": "20px",
+                      "lg": "24px",
+                      "base": "4px",
+                      "sm": "8px",
+                      "md": "16px"
+              },
+              "fontFamily": {
+                      "display-lg-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-sm": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "display-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-md": [
+                              "Be Vietnam Pro"
+                      ],
+                      "body-lg": [
+                              "Be Vietnam Pro"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md h-screen w-full overflow-hidden flex flex-col md:flex-row">
+<!-- DESKTOP SIDE NAV (NavigationDrawer - Shared Component) -->
+<!-- Suppressed on mobile, visible on md+ -->
+<nav class="hidden md:flex flex-col bg-surface-container-low h-full w-72 rounded-r-xl shadow-xl z-50 flex-shrink-0">
+<!-- Header -->
+<div class="p-container-margin flex flex-col gap-sm border-b border-surface-variant/50">
+<div class="flex items-center gap-md">
+<img class="w-12 h-12 rounded-full object-cover shadow-sm" data-alt="A professional studio portrait of a corporate general manager. The person is looking confidently at the camera, wearing smart business attire. The lighting is soft and bright, casting gentle pastel shadows. The background is a clean, warm white (#FAFAF9) to match a modern, high-end retail management interface aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7tKGa4P_Xjvobp9DpRRiR1vHuyFWagW9ynIEvtdCqeNF2Gf4PBzWM7S_podBJ6S_pBOwa0hwjep0jr9WZpSqL99OUmm1kXKQ_A646xztbmpxI6LkKICTQdBWHseuFpqsHBdizT01Hbe845AG8EXyzAYjsRdPbR335yoFSH33fwk_-G0YPFb-dByw2MoouHkCOrsYvXiOJjaT4bsq1g1-5hLuc_X-9LLJO1_8I4q_93sL8DSEuiCN7hWf75gAruLBtoI5746FgxOY"/>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Gerente General</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Sucursal Central</p>
+</div>
+</div>
+<div class="flex items-center gap-xs text-primary-fixed-dim font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>
+<span>Online</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 py-md overflow-y-auto flex flex-col gap-xs">
+<!-- Inactive -->
+<a class="text-on-surface-variant hover:bg-surface-container-highest rounded-full mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Inactive -->
+<a class="text-on-surface-variant hover:bg-surface-container-highest rounded-full mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Inventario</span>
+</a>
+<!-- Inactive -->
+<a class="text-on-surface-variant hover:bg-surface-container-highest rounded-full mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Ventas</span>
+</a>
+<!-- Inactive -->
+<a class="text-on-surface-variant hover:bg-surface-container-highest rounded-full mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span>Pedidos</span>
+</a>
+<!-- ACTIVE: Empleados -->
+<a class="bg-secondary-container text-on-secondary-container rounded-full mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-in-out font-label-md text-label-md shadow-sm" href="#">
+<span class="material-symbols-outlined icon-filled">badge</span>
+<span>Empleados</span>
+</a>
+</div>
+</nav>
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 flex flex-col h-full relative overflow-hidden bg-background">
+<!-- MOBILE TOP APP BAR (TopAppBar - Shared Component) -->
+<!-- Fixed top on mobile, visible on desktop as a structural header but less dominant due to sidebar -->
+<header class="bg-surface shadow-[0px_4px_20px_rgba(88,67,107,0.08)] flex justify-between items-center px-container-margin h-16 z-40 md:bg-transparent md:shadow-none md:border-b md:border-surface-variant/30 flex-shrink-0">
+<div class="flex items-center gap-md">
+<button class="md:hidden text-primary p-xs rounded-full hover:bg-surface-container-high active:scale-95 duration-150 transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary md:hidden">Admin Retail</h1>
+<!-- Desktop breadcrumb/title alternative -->
+<h1 class="hidden md:block font-headline-md text-headline-md text-on-background">Gestión de Personal</h1>
+</div>
+<div class="flex items-center gap-sm">
+<img class="w-8 h-8 rounded-full object-cover md:hidden" data-alt="A tiny, circular profile avatar of an administrator, showing a friendly face against a soft white background. The image is small, sharp, and fits perfectly in a minimalist app header navigation bar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDc0SqzOmxd7YzCOHUx9YzKhUeg1XqIU-BJ-IVBbrXJfW7LqI_fxKgNsxUD3yPkDdFMHuNVGAvyCGhv7yWFJnP5lvbqRcl4n6bb-Gs4nXgO09-cWUU2yRUOMp2aFgtJHBR-9dPfVgkUGG222qKiwvcyuKtJpia-qb71Vr6LNvHq0bJmGWWNnmiPBkbwJsOBtzYMXreLvb0zoxsNv8ndDTTkWvriCSodEeEkEXrJxzawdwwCsi5mqyaKblgTeGbnERMFvCYoOQmGQk"/>
+<!-- Desktop Add Button -->
+<button class="hidden md:flex items-center gap-xs bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-full hover:bg-primary/90 shadow-[0px_4px_20px_rgba(88,67,107,0.15)] transition-all active:scale-95" onclick="toggleModal('employeeModal')">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Agregar Empleado
+                </button>
+</div>
+</header>
+<!-- SCROLLABLE CANVAS -->
+<div class="flex-1 overflow-y-auto p-container-margin pb-[100px] md:pb-lg md:p-lg no-scrollbar">
+<!-- Mobile Header Title (If TopAppBar brand isn't enough) -->
+<div class="md:hidden mb-lg flex justify-between items-end">
+<div>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-background leading-tight">Equipo</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Gestiona accesos y roles</p>
+</div>
+</div>
+<!-- Filters (Chip Row) -->
+<div class="flex items-center gap-sm overflow-x-auto pb-sm mb-lg no-scrollbar -mx-container-margin px-container-margin md:mx-0 md:px-0">
+<button class="bg-primary-container text-on-primary-container border border-transparent font-label-sm text-label-sm px-md py-xs rounded-full whitespace-nowrap shadow-sm">
+                    Todos
+                </button>
+<button class="bg-surface-container-lowest text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high font-label-sm text-label-sm px-md py-xs rounded-full whitespace-nowrap transition-colors">
+                    Administradores
+                </button>
+<button class="bg-surface-container-lowest text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high font-label-sm text-label-sm px-md py-xs rounded-full whitespace-nowrap transition-colors">
+                    Cajeros
+                </button>
+<div class="w-[1px] h-4 bg-outline-variant/50 mx-xs"></div>
+<button class="bg-surface-container-lowest text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high font-label-sm text-label-sm px-md py-xs rounded-full whitespace-nowrap transition-colors">
+                    Activos
+                </button>
+</div>
+<!-- Bento Grid of Employees -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-md md:gap-lg">
+<!-- Card 1: Paty (Admin) -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0px_4px_20px_rgba(88,67,107,0.08)] flex flex-col gap-md relative overflow-hidden group hover:shadow-[0px_8px_24px_rgba(88,67,107,0.12)] transition-shadow">
+<!-- Top Ribbon indicator -->
+<div class="absolute top-0 left-0 w-full h-1 bg-secondary-container"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed/50 flex items-center justify-center text-on-secondary-fixed font-display-lg-mobile text-[18px]">
+                                P
+                            </div>
+<div>
+<h3 class="font-label-md text-label-md text-on-background">Paty</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Administradora</p>
+</div>
+</div>
+<span class="bg-surface-container flex items-center gap-[2px] text-primary font-label-sm text-[10px] px-sm py-[2px] rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                            Activa
+                        </span>
+</div>
+<div class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant/80 text-[13px] mt-xs">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+                        Sucursal Central
+                    </div>
+<div class="pt-sm border-t border-surface-variant/40 flex justify-end gap-sm mt-auto">
+<button class="text-on-surface-variant hover:text-primary font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-surface-container transition-colors">
+                            Suspender
+                        </button>
+<button class="text-primary font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-primary-fixed transition-colors flex items-center gap-xs" onclick="toggleModal('employeeModal')">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                            Editar
+                        </button>
+</div>
+</div>
+<!-- Card 2: Juan (Cajero - Inactivo) -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0px_4px_20px_rgba(88,67,107,0.08)] flex flex-col gap-md relative overflow-hidden group hover:shadow-[0px_8px_24px_rgba(88,67,107,0.12)] transition-shadow opacity-75">
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-variant"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-variant/50 flex items-center justify-center text-on-surface-variant font-display-lg-mobile text-[18px]">
+                                J
+                            </div>
+<div>
+<h3 class="font-label-md text-label-md text-on-background line-through decoration-outline/30">Juan Pérez</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Cajero</p>
+</div>
+</div>
+<span class="bg-surface-variant/30 flex items-center gap-[2px] text-on-surface-variant font-label-sm text-[10px] px-sm py-[2px] rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                            Inactivo
+                        </span>
+</div>
+<div class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant/80 text-[13px] mt-xs">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+                        Sucursal Norte
+                    </div>
+<div class="pt-sm border-t border-surface-variant/40 flex justify-end gap-sm mt-auto">
+<button class="text-secondary hover:text-on-error-container font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-error-container/30 transition-colors">
+                            Activar
+                        </button>
+<button class="text-on-surface-variant hover:text-primary font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-surface-container transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                            Editar
+                        </button>
+</div>
+</div>
+<!-- Card 3: Maria (Cajera) -->
+<div class="bg-surface-container-lowest rounded-xl p-md shadow-[0px_4px_20px_rgba(88,67,107,0.08)] flex flex-col gap-md relative overflow-hidden group hover:shadow-[0px_8px_24px_rgba(88,67,107,0.12)] transition-shadow">
+<div class="absolute top-0 left-0 w-full h-1 bg-transparent"></div>
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-fixed/50 flex items-center justify-center text-primary font-display-lg-mobile text-[18px]">
+                                M
+                            </div>
+<div>
+<h3 class="font-label-md text-label-md text-on-background">Maria Garcia</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Cajera</p>
+</div>
+</div>
+<span class="bg-surface-container flex items-center gap-[2px] text-primary font-label-sm text-[10px] px-sm py-[2px] rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                            Activa
+                        </span>
+</div>
+<div class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant/80 text-[13px] mt-xs">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+                        Sucursal Sur
+                    </div>
+<div class="pt-sm border-t border-surface-variant/40 flex justify-end gap-sm mt-auto">
+<button class="text-on-surface-variant hover:text-primary font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-surface-container transition-colors">
+                            Suspender
+                        </button>
+<button class="text-primary font-label-sm text-label-sm px-sm py-xs rounded-md hover:bg-primary-fixed transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                            Editar
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- MOBILE FLOATING ACTION BUTTON -->
+<button class="md:hidden fixed bottom-[90px] right-container-margin w-14 h-14 bg-secondary-container text-on-secondary-container rounded-2xl shadow-[0px_8px_24px_rgba(88,67,107,0.2)] flex items-center justify-center z-40 active:scale-95 transition-transform border border-on-secondary-container/10" onclick="toggleModal('employeeModal')">
+<span class="material-symbols-outlined text-[28px]">person_add</span>
+</button>
+<!-- MOBILE BOTTOM NAV BAR (BottomNavBar - Shared Component) -->
+<!-- Suppressed on desktop, visible on mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface border-t border-surface-variant shadow-[0px_-4px_20px_rgba(88,67,107,0.08)] rounded-t-xl">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-90 duration-200 w-16 py-1 rounded-2xl" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Inicio</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-90 duration-200 w-16 py-1 rounded-2xl" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Stock</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-90 duration-200 w-16 py-1 rounded-2xl" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Ventas</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container active:scale-90 duration-200 w-16 py-1 rounded-2xl" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Pedidos</span>
+</a>
+<!-- ACTIVE: Staff -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-2xl px-4 py-1 active:scale-90 duration-200 w-16" href="#">
+<span class="material-symbols-outlined icon-filled">group</span>
+<span class="font-label-sm text-label-sm mt-1 text-[10px]">Staff</span>
+</a>
+</nav>
+</main>
+<!-- CREATION / EDIT MODAL OVERLAY -->
+<div class="hidden fixed inset-0 z-[60] bg-inverse-surface/40 backdrop-blur-[2px] flex items-center justify-center p-container-margin opacity-0 transition-opacity duration-300" id="employeeModal">
+<!-- Modal Card -->
+<div class="bg-surface w-full max-w-[480px] rounded-[24px] shadow-2xl flex flex-col max-h-[795px] overflow-hidden transform scale-95 transition-transform duration-300" id="modalCard">
+<!-- Modal Header -->
+<div class="px-lg py-md border-b border-surface-variant/50 flex justify-between items-center bg-surface-container-lowest">
+<h2 class="font-headline-md text-headline-md text-on-background">Nuevo Empleado</h2>
+<button class="text-on-surface-variant hover:bg-surface-container p-sm rounded-full transition-colors" onclick="toggleModal('employeeModal')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body (Scrollable) -->
+<div class="p-lg overflow-y-auto flex flex-col gap-md bg-surface">
+<!-- Field: Nombre -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant pl-xs">Nombre Completo</label>
+<input class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline/50 transition-shadow" placeholder="Ej. Ana Martinez" type="text"/>
+</div>
+<!-- Field: Correo -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant pl-xs">Correo Electrónico</label>
+<input class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline/50 transition-shadow" placeholder="correo@tienda.com" type="email"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<!-- Field: Rol -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant pl-xs">Rol</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow pr-10">
+<option>Cajero</option>
+<option>Administrador</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<!-- Field: Sucursal -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant pl-xs">Sucursal</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow pr-10">
+<option>Central</option>
+<option>Norte</option>
+<option>Sur</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<!-- Field: Password -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant pl-xs">Contraseña Temporal</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-xl px-md py-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline/50 transition-shadow" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+</div>
+<p class="font-label-sm text-[11px] text-on-surface-variant/70 pl-xs mt-1">El empleado deberá cambiarla al primer inicio de sesión.</p>
+</div>
+</div>
+<!-- Modal Footer (Actions) -->
+<div class="px-lg py-md bg-surface-container-lowest border-t border-surface-variant/50 flex justify-end gap-md rounded-b-[24px]">
+<button class="px-md py-sm rounded-full font-label-md text-label-md text-primary hover:bg-primary-fixed transition-colors" onclick="toggleModal('employeeModal')">
+                    Cancelar
+                </button>
+<button class="px-lg py-sm rounded-full font-label-md text-label-md bg-primary text-on-primary hover:bg-primary/90 shadow-[0px_4px_12px_rgba(64,44,83,0.2)] transition-all active:scale-95" onclick="toggleModal('employeeModal')">
+                    Guardar Empleado
+                </button>
+</div>
+</div>
+</div>
+<!-- Simple JS for Modal Interaction -->
+<script>
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const card = document.getElementById('modalCard');
+            
+            if (modal.classList.contains('hidden')) {
+                // Open
+                modal.classList.remove('hidden');
+                // Small delay to allow display block to apply before animating opacity
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    card.classList.remove('scale-95');
+                    card.classList.add('scale-100');
+                }, 10);
+            } else {
+                // Close
+                modal.classList.add('opacity-0');
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                // Wait for animation to finish before hiding
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+    </script>
+</body></html>

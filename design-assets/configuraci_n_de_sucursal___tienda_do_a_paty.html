@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuración de Sucursal - Tienda Doña Paty</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#ebdeed",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#2f140a",
+                    "surface-tint": "#6b557f",
+                    "primary-fixed-dim": "#d7bcec",
+                    "on-secondary-fixed-variant": "#891933",
+                    "secondary-container": "#fe7488",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#533e66",
+                    "surface-container-high": "#f1e4f2",
+                    "primary-container": "#58436b",
+                    "on-primary-container": "#cdb2e1",
+                    "inverse-primary": "#d7bcec",
+                    "primary": "#402c53",
+                    "on-tertiary-container": "#e4b1a1",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#faedfb",
+                    "surface-container": "#f7eaf8",
+                    "on-background": "#201923",
+                    "tertiary-fixed": "#ffdbcf",
+                    "surface-bright": "#fff7fc",
+                    "on-surface": "#201923",
+                    "surface-container-highest": "#ebdeed",
+                    "secondary-fixed": "#ffdadc",
+                    "tertiary-fixed-dim": "#efbbaa",
+                    "on-surface-variant": "#4a454d",
+                    "secondary": "#a93349",
+                    "outline-variant": "#ccc4ce",
+                    "surface-dim": "#e3d6e4",
+                    "secondary-fixed-dim": "#ffb2b9",
+                    "on-primary-fixed": "#251237",
+                    "error-container": "#ffdad6",
+                    "outline": "#7b757e",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#f0dbff",
+                    "on-secondary-container": "#730425",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#400010",
+                    "on-tertiary-fixed-variant": "#623e31",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#684336",
+                    "surface": "#fff7fc",
+                    "background": "#fff7fc",
+                    "tertiary": "#4e2d21",
+                    "inverse-surface": "#352e38",
+                    "surface-container-low": "#fdeffe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "container-margin": "20px",
+                    "gutter": "12px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body-lg": [
+                            "Be Vietnam Pro"
+                    ],
+                    "body-md": [
+                            "Be Vietnam Pro"
+                    ],
+                    "label-sm": [
+                            "Be Vietnam Pro"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "display-lg": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "label-md": [
+                            "Be Vietnam Pro"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg-mobile": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "48px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+<style>
+        .pastel-shadow {
+            box-shadow: 0px 4px 20px rgba(88, 67, 107, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-8 flex flex-col md:flex-row">
+<!-- Desktop Navigation Drawer (Hidden on mobile) -->
+<nav class="hidden md:flex flex-col h-screen w-64 bg-surface-container-low border-r border-surface-variant fixed left-0 top-0 py-lg shrink-0 z-40">
+<div class="px-md mb-xl">
+<h2 class="font-headline-md text-headline-md text-primary">Tienda Doña Paty</h2>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="space-y-sm">
+<li>
+<a class="flex items-center gap-sm px-md py-sm mx-sm text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-md py-sm mx-sm text-on-surface-variant hover:bg-surface-container-highest rounded-full transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-sm px-md py-sm mx-sm bg-secondary-container text-on-secondary-container rounded-full transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 relative min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 md:left-64 right-0 z-50 flex justify-between items-center px-lg py-sm bg-surface shadow-sm md:shadow-none">
+<div class="flex items-center gap-sm">
+<button class="text-primary hover:bg-surface-container-high rounded-full p-sm transition-colors active:scale-95 duration-150 md:hidden">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">Configuración de Sucursal</h1>
+</div>
+<button class="text-primary hover:bg-surface-container-high rounded-full p-sm transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- Configuration Form -->
+<div class="pt-24 px-container-margin md:px-lg max-w-4xl mx-auto space-y-xl pb-32">
+<form action="#" class="space-y-xl" method="POST">
+<!-- Información General -->
+<section class="bg-surface-container-lowest rounded-xl p-lg pastel-shadow">
+<h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-surface-variant pb-sm">Información General</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="branch-name">Nombre de la Sucursal</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="branch-name" name="branch-name" placeholder="Ej: Sucursal Centro" type="text" value="Sucursal Toluca Centro"/>
+</div>
+<div class="space-y-xs md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="branch-address">Dirección Completa</label>
+<textarea class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="branch-address" name="branch-address" placeholder="Calle, Número, Colonia, C.P." rows="3"></textarea>
+</div>
+</div>
+</section>
+<!-- Datos de Contacto -->
+<section class="bg-surface-container-lowest rounded-xl p-lg pastel-shadow">
+<h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-surface-variant pb-sm">Datos de Contacto</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="branch-phone">Teléfono</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="branch-phone" name="branch-phone" placeholder="(000) 000-0000" type="tel"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="branch-email">Correo Electrónico</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="branch-email" name="branch-email" placeholder="contacto@sucursal.com" type="email"/>
+</div>
+</div>
+</section>
+<!-- Identidad Visual -->
+<section class="bg-surface-container-lowest rounded-xl p-lg pastel-shadow">
+<h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-surface-variant pb-sm">Identidad Visual</h2>
+<div class="flex flex-col md:flex-row items-start gap-lg">
+<div class="w-32 h-32 rounded-xl border-2 border-dashed border-outline-variant bg-surface-container flex flex-col items-center justify-center shrink-0 overflow-hidden relative cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-outline mb-xs" data-icon="add_photo_alternate">add_photo_alternate</span>
+<span class="font-label-sm text-label-sm text-outline">Subir Logo</span>
+<input accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+<div class="space-y-sm">
+<p class="font-body-md text-body-md text-on-surface-variant">Sube el logotipo específico de esta sucursal (opcional). Esto se mostrará en los recibos y comunicaciones locales.</p>
+<p class="font-label-sm text-label-sm text-outline">Recomendado: PNG o JPG, 400x400px, máx 2MB.</p>
+</div>
+</div>
+</section>
+<!-- Datos Bancarios -->
+<section class="bg-surface-container-lowest rounded-xl p-lg pastel-shadow">
+<h2 class="font-headline-md text-headline-md text-primary mb-md border-b border-surface-variant pb-sm">Datos Bancarios</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg">Información para recibir pagos en línea y transferencias en esta sucursal.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="bank-name">Nombre del Banco</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="bank-name" name="bank-name" placeholder="Ej: BBVA" type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="account-holder">Titular de la Cuenta</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="account-holder" name="account-holder" placeholder="Nombre completo" type="text"/>
+</div>
+<div class="space-y-xs md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="bank-clabe">CLABE Interbancaria</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="bank-clabe" maxlength="18" name="bank-clabe" placeholder="18 dígitos" type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface" for="reference-prefix">Prefijo de Referencia</label>
+<input class="w-full bg-surface-container-low border border-surface-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-outline" id="reference-prefix" name="reference-prefix" placeholder="Ej: SUC-TOL-" type="text"/>
+<p class="font-label-sm text-label-sm text-outline mt-xs">Se añadirá a las transferencias de esta sucursal.</p>
+</div>
+</div>
+</section>
+<!-- Action Button -->
+<div class="fixed bottom-0 left-0 right-0 p-container-margin md:p-lg bg-surface md:bg-transparent md:static md:p-0 flex justify-end shadow-[0_-4px_20px_rgba(88,67,107,0.08)] md:shadow-none z-40 md:ml-64">
+<button class="w-full md:w-auto bg-primary text-on-primary font-label-md text-label-md px-xl py-md rounded-lg shadow-md hover:bg-primary-container transition-colors active:scale-95 duration-150" type="submit">
+                        Guardar Cambios
+                    </button>
+</div>
+</form>
+</div>
+</main>
+</body></html>

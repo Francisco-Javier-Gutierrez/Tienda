@@ -11,7 +11,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore"
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
+    "deploy:frontend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-frontend.ps1"
   },
   "private": true,
   "dependencies": {
@@ -59,6 +60,7 @@
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
+    "autoprefixer": "^10.5.4",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.29.1",
@@ -72,7 +74,9 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.26",
     "prettier": "^3.9.6",
+    "tailwindcss": "^3.4.19",
     "typescript": "~5.9.0"
   },
   "description": "An Ionic project"

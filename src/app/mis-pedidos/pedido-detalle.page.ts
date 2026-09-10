@@ -1,11 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { EstadoPedidoCliente, PedidoCliente } from '../models/pedido-cliente';
 import { ImagenesService } from '../services/imagenes.service';
 import { PedidosClienteService } from '../services/pedidos-cliente.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-pedido-detalle',
@@ -18,11 +19,12 @@ export class PedidoDetallePage implements OnInit {
   cargando = true;
   procesando = false;
   archivo: File | null = null;
+  comprobanteImgError = false;
   private readonly api = inject(PedidosClienteService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastController);
-  private readonly alert = inject(AlertController);
+  private readonly dialog = inject(DialogService);
   private readonly imagenes = inject(ImagenesService);
   ngOnInit(): void {
     void this.cargar();
@@ -63,7 +65,7 @@ export class PedidoDetallePage implements OnInit {
     if (!this.pedido || !this.archivo || this.procesando) return;
     this.procesando = true;
     try {
-      this.pedido = await firstValueFrom(this.api.subirComprobante(this.pedido.idPedido, this.archivo));
+      this.pedido = await firstValueFrom(this.api.subirComprobante(this.pedido.id, this.archivo));
       this.archivo = null;
       await this.feedback('Pago enviado a revisión.', 'success');
     } catch (e: unknown) {
@@ -74,21 +76,23 @@ export class PedidoDetallePage implements OnInit {
   }
   async confirmarCancelar(): Promise<void> {
     if (!this.pedido || this.procesando) return;
-    const alerta = await this.alert.create({
-      header: 'Cancelar pedido',
+    const confirmado = await this.dialog.confirm({
+      title: 'Cancelar pedido',
       message: 'Los productos reservados volverán al inventario. ¿Deseas continuar?',
-      buttons: [
-        { text: 'Conservar', role: 'cancel' },
-        { text: 'Cancelar pedido', role: 'destructive', handler: () => void this.cancelar() },
-      ],
+      type: 'danger',
+      icon: 'cancel',
+      confirmText: 'Cancelar pedido',
+      cancelText: 'Conservar',
     });
-    await alerta.present();
+    if (confirmado) {
+      void this.cancelar();
+    }
   }
   async cancelar(): Promise<void> {
     if (!this.pedido) return;
     this.procesando = true;
     try {
-      this.pedido = await firstValueFrom(this.api.cancelar(this.pedido.idPedido));
+      this.pedido = await firstValueFrom(this.api.cancelar(this.pedido.id));
       await this.feedback('Pedido cancelado. Los productos volvieron al inventario.', 'success');
     } catch (e: unknown) {
       await this.feedback(this.error(e, 'No pudimos cancelar el pedido.'), 'danger');
@@ -97,12 +101,30 @@ export class PedidoDetallePage implements OnInit {
       this.procesando = false;
     }
   }
+  esImagenComprobante(): boolean {
+    if (!this.pedido?.tieneComprobante) return false;
+    const mime = this.pedido.comprobante?.mime?.toLowerCase() || '';
+    if (mime.includes('pdf')) return false;
+    if (mime.startsWith('image/')) return true;
+    const url = (this.pedido.comprobanteUrl || this.pedido.comprobante?.nombre || '').toLowerCase();
+    if (url.includes('.pdf')) return false;
+    return true;
+  }
+
+  onComprobanteImgError(): void {
+    this.comprobanteImgError = true;
+  }
+
   async verComprobante(): Promise<void> {
+    if (this.pedido?.comprobanteUrl) {
+      window.open(this.pedido.comprobanteUrl, '_blank');
+      return;
+    }
     if (!this.pedido?.tieneComprobante) return;
     const ventana = window.open('', '_blank');
     if (ventana) ventana.opener = null;
     try {
-      const blob = await firstValueFrom(this.api.obtenerComprobante(this.pedido.idPedido));
+      const blob = await firstValueFrom(this.api.obtenerComprobante(this.pedido.id));
       if (!(blob instanceof Blob) || blob.size === 0) throw new Error('COMPROBANTE_VACIO');
       const blobUrl = URL.createObjectURL(blob);
       window.setTimeout(() => URL.revokeObjectURL(blobUrl), 5 * 60 * 1000);
@@ -136,12 +158,13 @@ export class PedidoDetallePage implements OnInit {
     }
   }
   private async cargar(): Promise<void> {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isInteger(id) || id <= 0) {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
       await this.router.navigateByUrl('/mis-pedidos');
       return;
     }
     this.cargando = true;
+    this.comprobanteImgError = false;
     try {
       this.pedido = await firstValueFrom(this.api.detalle(id));
     } catch (e: unknown) {
