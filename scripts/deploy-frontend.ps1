@@ -1,6 +1,4 @@
 # scripts/deploy-frontend.ps1
-# Script para compilar el frontend Angular y sincronizarlo a S3 + CloudFront
-
 param (
     [string]$Profile = "terra-profile",
     [string]$Region = "us-east-1"
@@ -8,59 +6,53 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "🚀 Despliegue de Frontend (S3 + CloudFront)" -ForegroundColor Cyan
-Write-Host "=========================================" -ForegroundColor Cyan
+Write-Host "========================================="
+Write-Host "Despliegue de Frontend (S3 + CloudFront)"
+Write-Host "========================================="
 
-# 1. Obtener outputs de Terraform si existen
-$TerraformDir = Join-Path $PSScriptRoot "..\terraform"
-$BucketName = ""
+$TerraformState = Join-Path $PSScriptRoot "..\terraform\terraform.tfstate"
+$BucketName = "tienda-donapaty-frontend"
 $DistributionId = ""
 
-if (Test-Path (Join-Path $TerraformDir "terraform.tfstate")) {
-    Write-Host "📦 Obteniendo configuracion desde Terraform..." -ForegroundColor Yellow
+if (Test-Path $TerraformState) {
+    Write-Host "Obteniendo configuracion desde terraform.tfstate..."
     try {
-        $BucketName = (terraform -chdir=$TerraformDir output -raw s3_bucket_name 2>$null)
-        $DistributionId = (terraform -chdir=$TerraformDir output -raw cloudfront_distribution_id 2>$null)
+        $State = Get-Content $TerraformState -Raw | ConvertFrom-Json
+        if ($State.outputs.s3_bucket_name.value) {
+            $BucketName = $State.outputs.s3_bucket_name.value
+        }
+        if ($State.outputs.cloudfront_distribution_id.value) {
+            $DistributionId = $State.outputs.cloudfront_distribution_id.value
+        }
     } catch {
-        Write-Host "No se pudieron leer los outputs de terraform automaticamente." -ForegroundColor Gray
+        Write-Host "No se pudieron leer los outputs de terraform. Usando valores por defecto."
     }
 }
 
-if (-not $BucketName) {
-    $BucketName = "tienda-donapaty-frontend"
-}
-
-Write-Host "Bucket destino: $BucketName" -ForegroundColor Green
+Write-Host "Bucket destino: $BucketName"
 if ($DistributionId) {
-    Write-Host "CloudFront ID:  $DistributionId" -ForegroundColor Green
+    Write-Host "CloudFront ID:  $DistributionId"
 }
 
-# 2. Compilar Frontend Angular
-Write-Host "`n🔨 Compilando Frontend Angular para produccion..." -ForegroundColor Yellow
+Write-Host "`nCompilando Frontend Angular para produccion..."
 npm run build
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Fallo la compilacion de Angular."
     exit 1
 }
 
-# 3. Sincronizar archivos a S3
-Write-Host "`n☁️ Sincronizando carpeta www/ con S3..." -ForegroundColor Yellow
+Write-Host "`nSincronizando carpeta www/ con S3..."
 aws s3 sync www/ "s3://$BucketName" --profile $Profile --region $Region --delete
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Fallo la sincronizacion a S3."
     exit 1
 }
-Write-Host "✅ Archivos sincronizados en S3 con exito." -ForegroundColor Green
+Write-Host "Archivos sincronizados en S3 con exito."
 
-# 4. Invalidar cache de CloudFront si existe
 if ($DistributionId) {
-    Write-Host "`n🔄 Invalidando cache de CloudFront (/*)..." -ForegroundColor Yellow
+    Write-Host "`nInvalidando cache de CloudFront (/*)..."
     aws cloudfront create-invalidation --distribution-id $DistributionId --paths "/*" --profile $Profile
-    Write-Host "✅ Invalidacion solicitada exitosamente." -ForegroundColor Green
-} else {
-    Write-Host "`n⚠️ No se detecto distribution_id de Terraform. Si ya creaste CloudFront, invalida con:" -ForegroundColor Gray
-    Write-Host "aws cloudfront create-invalidation --distribution-id <ID> --paths '/*' --profile $Profile" -ForegroundColor Gray
+    Write-Host "Invalidacion solicitada exitosamente."
 }
 
-Write-Host "`n🎉 Despliegue del Frontend completado exitosamente!" -ForegroundColor Cyan
+Write-Host "`nDespliegue del Frontend completado exitosamente!"
