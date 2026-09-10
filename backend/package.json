@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node src/server.ts",
-    "build": "rimraf dist && tsc",
+    "build": "tsc",
     "start": "node dist/server.js",
     "db:init": "node scripts/init-db-postgres.js",
     "db:sync-sequences": "node scripts/sync-sequences.js",
