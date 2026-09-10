@@ -55,6 +55,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads/productos', express.static(productosUploadDir));
 app.use('/uploads/tienda', express.static(tiendaUploadDir));
 
+// Health check
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', commit: '640ef88-v2', dbHostTruncatedFixed: true });
+});
+
 // Rutas de la API
 app.use('/auth', authRoutes);
 app.use('/', productosRoutes);
