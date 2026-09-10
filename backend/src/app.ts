@@ -17,6 +17,7 @@ import { adminConfiguracionRoutes, clienteConfiguracionRoutes } from './modules/
 import { uploadsRoutes } from './modules/uploads/uploads.routes';
 
 const app = express();
+app.set('trust proxy', 1);
 
 const clientUrls = env.CLIENT_URL
   ? env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean)
