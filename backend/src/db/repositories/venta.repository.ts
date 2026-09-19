@@ -26,6 +26,7 @@ export interface VentaEntity {
   ganancia?: number;
   margenPorcentaje?: number;
   nota?: string | null;
+  montoNota?: number | null;
   pagoCon?: number;
   cambio?: number;
   metodoPago: string;
@@ -54,6 +55,7 @@ export class VentaRepository {
     ganancia?: number;
     margenPorcentaje?: number;
     nota?: string | null;
+    montoNota?: number | null;
     pagoCon?: number;
     cambio?: number;
     metodoPago?: string;
@@ -89,6 +91,20 @@ export class VentaRepository {
       };
     });
 
+    if (data.montoNota && Number(data.montoNota) > 0) {
+      const montoExtra = Number(Number(data.montoNota).toFixed(2));
+      detalles.push({
+        idPro: 0,
+        nombrePro: data.nota ? `Extra: ${data.nota}` : 'Artículo adicional sin código',
+        cantidad: 1,
+        precioUnitario: montoExtra,
+        subtotal: montoExtra,
+        costoUnitario: 0,
+        ganancia: montoExtra,
+        margenPorcentaje: 100,
+      });
+    }
+
     const ventaItem: VentaEntity = {
       idVenta,
       uuidVenta: data.uuidVenta,
@@ -100,6 +116,7 @@ export class VentaRepository {
       ganancia: data.ganancia,
       margenPorcentaje: data.margenPorcentaje,
       nota: data.nota || null,
+      montoNota: data.montoNota ? Number(data.montoNota) : null,
       pagoCon: data.pagoCon,
       cambio: data.cambio,
       metodoPago: data.metodoPago || 'EFECTIVO',

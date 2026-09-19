@@ -48,22 +48,27 @@ export class VentasService implements IVentasService {
     const metodoPago = texto(body.metodoPago).toUpperCase();
     const strategy = this.paymentRegistry.get(metodoPago);
 
-    if (!Array.isArray(body.items) || !body.items.length) {
-      throw errorFuncional('La venta no contiene productos', 400);
+    const montoNota = Number(body.montoNota || 0);
+    const hasItems = Array.isArray(body.items) && body.items.length > 0;
+
+    if (!hasItems && montoNota <= 0) {
+      throw errorFuncional('La venta debe contener al menos un producto o un importe adicional', 400);
     }
 
     const cantidades = new Map<number, number>();
-    for (const item of body.items) {
-      const idPro = idValido(item?.idPro ?? item?.id ?? item?.productoId);
-      const cantidad = Number(item?.cantidad);
-      if (!idPro || !Number.isInteger(cantidad) || cantidad <= 0) {
-        throw errorFuncional('Los productos o cantidades no son válidos', 400);
+    if (hasItems) {
+      for (const item of body.items) {
+        const idPro = idValido(item?.idPro ?? item?.id ?? item?.productoId);
+        const cantidad = Number(item?.cantidad);
+        if (!idPro || !Number.isInteger(cantidad) || cantidad <= 0) {
+          throw errorFuncional('Los productos o cantidades no son válidos', 400);
+        }
+        cantidades.set(idPro, (cantidades.get(idPro) || 0) + cantidad);
       }
-      cantidades.set(idPro, (cantidades.get(idPro) || 0) + cantidad);
-    }
 
-    if (cantidades.size > 90) {
-      throw errorFuncional('La venta no puede contener más de 90 productos distintos por transacción.', 400);
+      if (cantidades.size > 90) {
+        throw errorFuncional('La venta no puede contener más de 90 productos distintos por transacción.', 400);
+      }
     }
 
     strategy.validarEntrada(body);
@@ -95,6 +100,10 @@ export class VentasService implements IVentasService {
       });
     }
 
+    if (montoNota > 0) {
+      totalCalculado += Number(montoNota.toFixed(2));
+    }
+
     totalCalculado = Number(totalCalculado.toFixed(2));
     costoTotalCalculado = Number(costoTotalCalculado.toFixed(2));
     const ganancia = Number((totalCalculado - costoTotalCalculado).toFixed(2));
@@ -113,6 +122,7 @@ export class VentasService implements IVentasService {
       ganancia,
       margenPorcentaje,
       nota,
+      montoNota: montoNota > 0 ? Number(montoNota.toFixed(2)) : null,
       pagoCon: pagoResult.pagoCon,
       cambio: pagoResult.cambio,
       metodoPago,

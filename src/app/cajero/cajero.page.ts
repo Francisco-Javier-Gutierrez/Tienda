@@ -66,6 +66,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   notaAdicional = '';
 
+  montoNotaAdicional: number | null = null;
+
   ticketVisible = false;
 
   private observerTicket?: IntersectionObserver;
@@ -251,7 +253,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   ========================================= */
 
   get cantidadArticulos(): number {
-    return this.carrito.reduce((total, item) => total + Number(item.cantidad), 0);
+    const articulosCarrito = this.carrito.reduce((total, item) => total + Number(item.cantidad), 0);
+    return articulosCarrito + (Number(this.montoNotaAdicional || 0) > 0 ? 1 : 0);
   }
 
   /* =========================================
@@ -259,7 +262,9 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   ========================================= */
 
   get total(): number {
-    return this.carrito.reduce((suma, item) => suma + Number(item.subtotal), 0);
+    const totalCarrito = this.carrito.reduce((suma, item) => suma + Number(item.subtotal), 0);
+    const montoExtra = Math.max(0, Number(this.montoNotaAdicional || 0));
+    return Number((totalCarrito + montoExtra).toFixed(2));
   }
 
   /* =========================================
@@ -279,9 +284,11 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   ========================================= */
 
   get puedeCobrar(): boolean {
+    const tieneProductos = this.carrito.length > 0;
+    const tieneExtra = Number(this.montoNotaAdicional || 0) > 0;
     return Boolean(
       this.caja &&
-      this.carrito.length > 0 &&
+      (tieneProductos || tieneExtra) &&
       !this.procesandoVenta &&
       (this.metodoPago !== 'EFECTIVO' || (this.montoRecibido !== null && Number(this.montoRecibido) >= this.total)),
     );
@@ -713,8 +720,14 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
      MODAL COBRO
   ========================================= */
 
+  limpiarCarrito(): void {
+    this.carrito = [];
+    this.notaAdicional = '';
+    this.montoNotaAdicional = null;
+  }
+
   abrirModalCobro(): void {
-    if (this.carrito.length > 0) {
+    if (this.carrito.length > 0 || Number(this.montoNotaAdicional || 0) > 0) {
       this.mostrarModalCobro = true;
       this.metodoPago = 'EFECTIVO';
       this.montoRecibido = null;
@@ -734,6 +747,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.procesandoVenta = true;
 
     const uuidVenta = crypto.randomUUID();
+    const extra = Math.max(0, Number(this.montoNotaAdicional || 0));
 
     const dto = {
       uuidVenta,
@@ -748,6 +762,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
       montoRecibido: this.metodoPago === 'EFECTIVO' ? Number(this.montoRecibido) : null,
 
       nota: this.notaAdicional.trim() || null,
+
+      montoNota: extra > 0 ? extra : null,
     };
 
     try {
@@ -780,6 +796,28 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
        * VENTA OFFLINE
        */
 
+      const itemsOffline = this.carrito.map((item) => ({
+        id: item.id,
+
+        nombre: item.nombre,
+
+        cantidad: item.cantidad,
+
+        precioUnitario: item.precioUnitario,
+
+        subtotal: item.subtotal,
+      }));
+
+      if (extra > 0) {
+        itemsOffline.push({
+          id: '0',
+          nombre: this.notaAdicional.trim() ? `Extra: ${this.notaAdicional.trim()}` : 'Artículo adicional sin código',
+          cantidad: 1,
+          precioUnitario: extra,
+          subtotal: extra,
+        });
+      }
+
       await this.sqlite.guardarVentaOffline({
         uuidVenta,
 
@@ -795,17 +833,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
         montoRecibido: dto.montoRecibido,
 
-        items: this.carrito.map((item) => ({
-          id: item.id,
-
-          nombre: item.nombre,
-
-          cantidad: item.cantidad,
-
-          precioUnitario: item.precioUnitario,
-
-          subtotal: item.subtotal,
-        })),
+        items: itemsOffline,
       });
 
       await this.sqlite.encolar(
@@ -828,6 +856,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.mostrarModalCobro = false;
     this.carrito = [];
     this.notaAdicional = '';
+    this.montoNotaAdicional = null;
     this.montoRecibido = null;
     this.metodoPago = 'EFECTIVO';
     this.ticketVisible = false;
@@ -1095,6 +1124,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.mostrarCorte = false;
 
     this.carrito = [];
+    this.notaAdicional = '';
+    this.montoNotaAdicional = null;
 
     this.cerrando = false;
   }
