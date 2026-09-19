@@ -3,6 +3,13 @@ import { empleadoSeguro } from '../utils/security';
 
 export const normalizarDetalleVenta = (d: any) => {
   const prodId = encodeId(d.idPro || d.productoId || d.id);
+  const cantidad = Number(d.cantidadDetVenta ?? d.cantidad ?? 0);
+  const precioUnitario = Number(d.precioUnitarioDetVenta ?? d.precioUnitario ?? 0);
+  const subtotal = Number(d.subtotalDetVenta ?? d.subtotal ?? (cantidad * precioUnitario));
+  const costoUnitario = Number(d.costoUnitario ?? d.costoPro ?? d.costo ?? 0);
+  const ganancia = Number((subtotal - (costoUnitario * cantidad)).toFixed(2));
+  const margenPorcentaje = subtotal > 0 ? Number(((ganancia / subtotal) * 100).toFixed(1)) : 0;
+
   return {
     id: prodId,
     productoId: prodId,
@@ -10,9 +17,12 @@ export const normalizarDetalleVenta = (d: any) => {
     imagen: d.producto?.imagenPro || d.imagenPro || d.imagen || null,
     codigoQR: d.producto?.codigoQR || d.codigoQR || null,
     sku: d.producto?.skuPro || d.skuPro || null,
-    cantidad: Number(d.cantidadDetVenta ?? d.cantidad ?? 0),
-    precioUnitario: Number(d.precioUnitarioDetVenta ?? d.precioUnitario ?? 0),
-    subtotal: Number(d.subtotalDetVenta ?? d.subtotal ?? 0),
+    cantidad,
+    precioUnitario,
+    subtotal,
+    costoUnitario,
+    ganancia,
+    margenPorcentaje,
   };
 };
 
@@ -24,8 +34,13 @@ export const toVentaRegistradaDto = (v: any, empleado?: any) => {
     uuid: v.uuidVenta,
     sesionCajaId: encodeId(v.idSesionCaja),
     fecha: formatearFechaVenta(v.fechaVenta),
-    hora: formatearHoraVenta(v.horaVenta),
+    hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
+    fechaIso: v.fechaVenta || null,
     total: Number(v.total ?? v.totalVenta ?? 0),
+    costoTotal: Number(v.costoTotal ?? 0),
+    ganancia: Number(v.ganancia ?? 0),
+    margenPorcentaje: Number(v.margenPorcentaje ?? 0),
+    nota: v.nota || null,
     metodoPago: v.metodoPago,
     montoRecibido: v.montoRecibido !== null && v.montoRecibido !== undefined ? Number(v.montoRecibido) : (v.pagoCon !== undefined ? Number(v.pagoCon) : null),
     cambio: Number(v.cambio || 0),
@@ -52,7 +67,12 @@ export const toVentaListDto = (v: any) => {
     sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
+    fechaIso: v.fechaVenta || null,
     total: Number(v.total ?? v.totalVenta ?? 0),
+    costoTotal: Number(v.costoTotal ?? 0),
+    ganancia: Number(v.ganancia ?? 0),
+    margenPorcentaje: Number(v.margenPorcentaje ?? 0),
+    nota: v.nota || null,
     metodoPago: v.metodoPago || 'EFECTIVO',
     estado: v.estadoVenta || 'COMPLETADA',
     origen,
@@ -78,7 +98,12 @@ export const toVentaDetalleDto = (v: any) => {
     sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
+    fechaIso: v.fechaVenta || null,
     total: Number(v.total ?? v.totalVenta ?? 0),
+    costoTotal: Number(v.costoTotal ?? 0),
+    ganancia: Number(v.ganancia ?? 0),
+    margenPorcentaje: Number(v.margenPorcentaje ?? 0),
+    nota: v.nota || null,
     metodoPago: v.metodoPago || 'EFECTIVO',
     montoRecibido: v.montoRecibido !== null && v.montoRecibido !== undefined ? Number(v.montoRecibido) : (v.pagoCon !== undefined ? Number(v.pagoCon) : null),
     cambio: Number(v.cambio || 0),

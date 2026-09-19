@@ -10,6 +10,9 @@ export interface DetalleVentaItem {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  costoUnitario?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
 }
 
 export interface VentaEntity {
@@ -19,6 +22,10 @@ export interface VentaEntity {
   idEmp: number;
   idSesionCaja: number;
   totalVenta: number;
+  costoTotal?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
+  nota?: string | null;
   pagoCon?: number;
   cambio?: number;
   metodoPago: string;
@@ -43,11 +50,15 @@ export class VentaRepository {
     idEmp: number;
     idSesionCaja: number;
     totalVenta: number;
+    costoTotal?: number;
+    ganancia?: number;
+    margenPorcentaje?: number;
+    nota?: string | null;
     pagoCon?: number;
     cambio?: number;
     metodoPago?: string;
     uuidVenta?: string;
-    items: Array<{ idPro: number; cantidad: number; precioUnitario: number; nombrePro?: string }>;
+    items: Array<{ idPro: number; cantidad: number; precioUnitario: number; costoUnitario?: number; nombrePro?: string }>;
   }): Promise<VentaEntity> {
     // Si se proporciona uuidVenta, verificar primero si ya existe (idempotencia rápida)
     if (data.uuidVenta) {
@@ -60,13 +71,23 @@ export class VentaRepository {
     const idVenta = await getNextSequence('venta', 1);
     const now = new Date().toISOString();
 
-    const detalles: DetalleVentaItem[] = data.items.map((i) => ({
-      idPro: i.idPro,
-      nombrePro: i.nombrePro || `Producto #${i.idPro}`,
-      cantidad: i.cantidad,
-      precioUnitario: i.precioUnitario,
-      subtotal: Number((i.cantidad * i.precioUnitario).toFixed(2)),
-    }));
+    const detalles: DetalleVentaItem[] = data.items.map((i) => {
+      const costoUnitario = Number(i.costoUnitario || 0);
+      const subtotal = Number((i.cantidad * i.precioUnitario).toFixed(2));
+      const subtotalCosto = Number((i.cantidad * costoUnitario).toFixed(2));
+      const ganancia = Number((subtotal - subtotalCosto).toFixed(2));
+      const margenPorcentaje = subtotal > 0 ? Number(((ganancia / subtotal) * 100).toFixed(1)) : 0;
+      return {
+        idPro: i.idPro,
+        nombrePro: i.nombrePro || `Producto #${i.idPro}`,
+        cantidad: i.cantidad,
+        precioUnitario: i.precioUnitario,
+        subtotal,
+        costoUnitario,
+        ganancia,
+        margenPorcentaje,
+      };
+    });
 
     const ventaItem: VentaEntity = {
       idVenta,
@@ -75,6 +96,10 @@ export class VentaRepository {
       idEmp: data.idEmp,
       idSesionCaja: data.idSesionCaja,
       totalVenta: data.totalVenta,
+      costoTotal: data.costoTotal,
+      ganancia: data.ganancia,
+      margenPorcentaje: data.margenPorcentaje,
+      nota: data.nota || null,
       pagoCon: data.pagoCon,
       cambio: data.cambio,
       metodoPago: data.metodoPago || 'EFECTIVO',

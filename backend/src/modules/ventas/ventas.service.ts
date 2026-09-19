@@ -74,6 +74,7 @@ export class VentasService implements IVentasService {
     }
 
     let totalCalculado = 0;
+    let costoTotalCalculado = 0;
     const itemsParaVenta = [];
     for (const [idPro, cantidad] of cantidades.entries()) {
       const prod = await this.prodRepo.getProductoById(idPro, empleado?.idSuc || 1);
@@ -82,17 +83,25 @@ export class VentasService implements IVentasService {
         throw errorFuncional(`Existencias insuficientes para "${prod.nombrePro}". Disponibles: ${prod.existenciaPro}`, 409);
       }
       const precio = Number(prod.precioVentaPro);
+      const costo = Number(prod.costoPro || 0);
       totalCalculado += Number((precio * cantidad).toFixed(2));
+      costoTotalCalculado += Number((costo * cantidad).toFixed(2));
       itemsParaVenta.push({
         idPro,
         nombrePro: prod.nombrePro,
         cantidad,
         precioUnitario: precio,
+        costoUnitario: costo,
       });
     }
 
     totalCalculado = Number(totalCalculado.toFixed(2));
+    costoTotalCalculado = Number(costoTotalCalculado.toFixed(2));
+    const ganancia = Number((totalCalculado - costoTotalCalculado).toFixed(2));
+    const margenPorcentaje = totalCalculado > 0 ? Number(((ganancia / totalCalculado) * 100).toFixed(1)) : 0;
     const pagoResult = strategy.validarYCalcular(totalCalculado, body);
+
+    const nota = body.nota ? String(body.nota).trim() : null;
 
     const venta = await this.ventaRepo.createVenta({
       uuidVenta,
@@ -100,6 +109,10 @@ export class VentasService implements IVentasService {
       idEmp: empleado?.idEmp || 1,
       idSesionCaja: caja.idSesionCaja,
       totalVenta: totalCalculado,
+      costoTotal: costoTotalCalculado,
+      ganancia,
+      margenPorcentaje,
+      nota,
       pagoCon: pagoResult.pagoCon,
       cambio: pagoResult.cambio,
       metodoPago,
@@ -121,19 +134,63 @@ export class VentasService implements IVentasService {
 
   async listarVentas(empleado: { idEmp: number; idSuc: number; cargo: string }) {
     const ventas = await this.ventaRepo.listVentas(empleado?.idSuc || 1);
+
+    const enriched = ventas.map((v: any) => {
+      let costoTotal = v.costoTotal;
+      if (costoTotal === undefined || costoTotal === null) {
+        costoTotal = (v.detalles || v.items || []).reduce((acc: number, d: any) => {
+          const c = Number(d.costoUnitario || 0);
+          return acc + c * Number(d.cantidad || 0);
+        }, 0);
+        costoTotal = Number(costoTotal.toFixed(2));
+      }
+      const totalVenta = Number(v.totalVenta ?? v.total ?? 0);
+      const ganancia = v.ganancia !== undefined ? Number(v.ganancia) : Number((totalVenta - costoTotal).toFixed(2));
+      const margenPorcentaje = v.margenPorcentaje !== undefined 
+        ? Number(v.margenPorcentaje) 
+        : (totalVenta > 0 ? Number(((ganancia / totalVenta) * 100).toFixed(1)) : 0);
+
+      return {
+        ...v,
+        costoTotal,
+        ganancia,
+        margenPorcentaje,
+      };
+    });
+
     if (empleado.cargo === 'CAJERO') {
-      return ventas.filter((v: any) => v.idEmp === empleado.idEmp).map(toVentaListDto);
+      return enriched.filter((v: any) => v.idEmp === empleado.idEmp).map(toVentaListDto);
     }
-    return ventas.map(toVentaListDto);
+    return enriched.map(toVentaListDto);
   }
 
   async detalleVenta(idVenta: number, empleado: { idEmp: number; idSuc: number; cargo: string }) {
-    const v = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
+    const v: any = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
     if (!v) return null;
     if (empleado.cargo === 'CAJERO' && v.idEmp !== empleado.idEmp) {
       return null;
     }
-    return toVentaDetalleDto(v);
+
+    let costoTotal = v.costoTotal;
+    if (costoTotal === undefined || costoTotal === null) {
+      costoTotal = (v.detalles || v.items || []).reduce((acc: number, d: any) => {
+        const c = Number(d.costoUnitario || 0);
+        return acc + c * Number(d.cantidad || 0);
+      }, 0);
+      costoTotal = Number(costoTotal.toFixed(2));
+    }
+    const totalVenta = Number(v.totalVenta ?? v.total ?? 0);
+    const ganancia = v.ganancia !== undefined ? Number(v.ganancia) : Number((totalVenta - costoTotal).toFixed(2));
+    const margenPorcentaje = v.margenPorcentaje !== undefined 
+      ? Number(v.margenPorcentaje) 
+      : (totalVenta > 0 ? Number(((ganancia / totalVenta) * 100).toFixed(1)) : 0);
+
+    return toVentaDetalleDto({
+      ...v,
+      costoTotal,
+      ganancia,
+      margenPorcentaje,
+    });
   }
 }
 

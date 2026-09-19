@@ -28,4 +28,5 @@ export const crearVentaSchema = z.object({
   }),
   montoRecibido: z.union([z.number(), z.string()]).optional().nullable(),
   items: z.array(itemVentaSchema).min(1, { message: 'La venta debe contener al menos un producto' }),
+  nota: z.string().max(500).optional().nullable(),
 });
