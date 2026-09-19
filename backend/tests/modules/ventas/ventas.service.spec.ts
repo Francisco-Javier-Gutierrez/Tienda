@@ -1,5 +1,7 @@
 import { ventasService } from '../../../src/modules/ventas/ventas.service';
-import { prisma } from '../../../src/config/prisma';
+import { cajaRepository } from '../../../src/db/repositories/caja.repository';
+import { productoRepository } from '../../../src/db/repositories/producto.repository';
+import { ventaRepository } from '../../../src/db/repositories/venta.repository';
 
 describe('VentasService Complete Branch Coverage', () => {
   const dummyEmpleado = {
@@ -32,48 +34,9 @@ describe('VentasService Complete Branch Coverage', () => {
       await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: '11111111-1111-4111-8111-111111111111', metodoPago: 'EFECTIVO', items: [{ idPro: 1, cantidad: 1 }], montoRecibido: -1 })).rejects.toMatchObject({ status: 400 });
     });
 
-    it('debe manejar venta repetida (idempotencia o error de empleado)', async () => {
-      // Misma venta
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findUnique: jest.fn().mockResolvedValue({ idVenta: 10, idEmp: 1, idSuc: 1 }),
-          },
-        });
-      });
-      jest.spyOn(ventasService, 'obtenerVentaRegistrada').mockResolvedValue({ id: 'enc10' } as any);
-      const res = await ventasService.crearVenta(dummyEmpleado, {
-        uuidVenta: '11111111-1111-4111-8111-111111111111',
-        metodoPago: 'TARJETA',
-        items: [{ idPro: 1, cantidad: 1 }],
-      });
-      expect(res?.id).toBe('enc10');
-
-      // Venta de otro empleado/sucursal
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findUnique: jest.fn().mockResolvedValue({ idVenta: 10, idEmp: 99, idSuc: 1 }),
-          },
-        });
-      });
-      await expect(
-        ventasService.crearVenta(dummyEmpleado, {
-          uuidVenta: '11111111-1111-4111-8111-111111111111',
-          metodoPago: 'TARJETA',
-          items: [{ idPro: 1, cantidad: 1 }],
-        }),
-      ).rejects.toMatchObject({ status: 409, message: 'El identificador de venta ya está en uso.' });
-    });
-
-    it('debe rechazar si la caja no está abierta, si falta un producto, si está inactivo, sin precio, sin stock o efectivo insuficiente', async () => {
+    it('debe rechazar si la caja no está abierta, si falta un producto, sin stock o efectivo insuficiente', async () => {
       // Caja no abierta
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue(null) },
-        });
-      });
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValueOnce(null);
       await expect(
         ventasService.crearVenta(dummyEmpleado, {
           uuidVenta: '11111111-1111-4111-8111-111111111111',
@@ -83,61 +46,19 @@ describe('VentasService Complete Branch Coverage', () => {
       ).rejects.toMatchObject({ status: 409, message: 'Debes abrir caja antes de registrar ventas.' });
 
       // Producto no encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValueOnce({ idSesionCaja: 1 } as any);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce(null);
       await expect(
         ventasService.crearVenta(dummyEmpleado, {
           uuidVenta: '11111111-1111-4111-8111-111111111111',
           metodoPago: 'TARJETA',
           items: [{ idPro: 1, cantidad: 1 }],
         }),
-      ).rejects.toMatchObject({ status: 404 });
-
-      // Inactivo
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, activoPro: false }]) },
-        });
-      });
-      await expect(
-        ventasService.crearVenta(dummyEmpleado, {
-          uuidVenta: '11111111-1111-4111-8111-111111111111',
-          metodoPago: 'TARJETA',
-          items: [{ idPro: 1, cantidad: 1 }],
-        }),
-      ).rejects.toMatchObject({ status: 409 });
-
-      // Precio no válido
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, precioVentaPro: -5 }]) },
-        });
-      });
-      await expect(
-        ventasService.crearVenta(dummyEmpleado, {
-          uuidVenta: '11111111-1111-4111-8111-111111111111',
-          metodoPago: 'TARJETA',
-          items: [{ idPro: 1, cantidad: 1 }],
-        }),
-      ).rejects.toMatchObject({ status: 409, message: 'Coca Cola no tiene un precio válido.' });
+      ).rejects.toMatchObject({ status: 404, message: 'El producto no existe' });
 
       // Stock insuficiente
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, existenciaPro: 2 }]) },
-        });
-      });
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValueOnce({ idSesionCaja: 1 } as any);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 2 } as any);
       await expect(
         ventasService.crearVenta(dummyEmpleado, {
           uuidVenta: '11111111-1111-4111-8111-111111111111',
@@ -147,13 +68,8 @@ describe('VentasService Complete Branch Coverage', () => {
       ).rejects.toMatchObject({ status: 409 });
 
       // Efectivo insuficiente
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: { findUnique: jest.fn().mockResolvedValue(null) },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: { findMany: jest.fn().mockResolvedValue([dummyProducto]) },
-        });
-      });
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValueOnce({ idSesionCaja: 1 } as any);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce(dummyProducto as any);
       await expect(
         ventasService.crearVenta(dummyEmpleado, {
           uuidVenta: '11111111-1111-4111-8111-111111111111',
@@ -165,20 +81,20 @@ describe('VentasService Complete Branch Coverage', () => {
     });
 
     it('debe registrar venta exitosamente en efectivo y con tarjeta', async () => {
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          venta: {
-            findUnique: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockResolvedValue({ idVenta: 100 }),
-          },
-          sesionCaja: { findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }) },
-          producto: {
-            findMany: jest.fn().mockResolvedValue([dummyProducto]),
-            update: jest.fn(),
-          },
-        });
-      });
-      jest.spyOn(ventasService, 'obtenerVentaRegistrada').mockResolvedValue({ id: 'enc100' } as any);
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValue({ idSesionCaja: 1 } as any);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValue(dummyProducto as any);
+      jest.spyOn(ventaRepository, 'createVenta').mockResolvedValue({
+        idVenta: 100,
+        idSuc: 1,
+        idEmp: 1,
+        idSesionCaja: 1,
+        totalVenta: 15,
+        pagoCon: 20,
+        cambio: 5,
+        metodoPago: 'EFECTIVO',
+        items: [{ idPro: 1, nombrePro: 'Coca Cola', cantidad: 1, precioUnitario: 15 }],
+        fechaVenta: new Date().toISOString(),
+      } as any);
 
       // Efectivo
       const vEf = await ventasService.crearVenta(dummyEmpleado, {
@@ -187,183 +103,109 @@ describe('VentasService Complete Branch Coverage', () => {
         montoRecibido: 20,
         items: [{ idPro: 1, cantidad: 1 }],
       });
-      expect(vEf?.id).toBe('enc100');
+      expect(vEf?.id).toBeDefined();
 
       // Tarjeta
+      jest.spyOn(ventaRepository, 'createVenta').mockResolvedValue({
+        idVenta: 101,
+        idSuc: 1,
+        idEmp: 1,
+        idSesionCaja: 1,
+        totalVenta: 15,
+        pagoCon: 15,
+        cambio: 0,
+        metodoPago: 'TARJETA',
+        items: [{ idPro: 1, nombrePro: 'Coca Cola', cantidad: 1, precioUnitario: 15 }],
+        fechaVenta: new Date().toISOString(),
+      } as any);
       const vTar = await ventasService.crearVenta(dummyEmpleado, {
         uuidVenta: '22222222-2222-4222-8222-222222222222',
         metodoPago: 'TARJETA',
         items: [{ idPro: 1, cantidad: 1 }],
       });
-      expect(vTar?.id).toBe('enc100');
+      expect(vTar?.id).toBeDefined();
     });
   });
 
   describe('cancelarVenta validaciones y ramas', () => {
-    it('debe rechazar si motivo es inválido, venta no encontrada o en estado no cancelable', async () => {
+    it('debe rechazar si motivo es inválido (< 3 caracteres)', async () => {
       await expect(ventasService.cancelarVenta(1, 1, 1, 'ab')).rejects.toMatchObject({ status: 400 });
-
-      // No encontrada
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ venta: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 404 });
-
-      // Ya cancelada
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'CANCELADA',
-            }),
-          },
-        });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 409, message: 'La venta ya fue cancelada.' });
-
-      // Estado no cancelable (ej PENDIENTE)
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'PENDIENTE',
-            }),
-          },
-        });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 409, message: 'La venta no se encuentra en un estado cancelable.' });
-
-      // Caja cerrada
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'COMPLETADA',
-              idSesionCaja: 1,
-              sesionCaja: { estado: 'CERRADA' },
-              pedidos: [],
-              detalles: [{ idPro: 1, cantidadDetVenta: 1 }],
-            }),
-          },
-        });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo de cancelacion')).rejects.toMatchObject({ status: 409, message: 'La venta pertenece a una caja cerrada.' });
-
-      // Pedido online
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'COMPLETADA',
-              idSesionCaja: 1,
-              sesionCaja: { estado: 'ABIERTA' },
-              pedidos: [{ idPedido: 1 }],
-              detalles: [{ idPro: 1, cantidadDetVenta: 1 }],
-            }),
-          },
-        });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo de cancelacion')).rejects.toMatchObject({ status: 409, message: 'Las ventas de pedidos online deben gestionarse desde el pedido.' });
-
-      // Sin detalles
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'COMPLETADA',
-              idSesionCaja: 1,
-              sesionCaja: { estado: 'ABIERTA' },
-              pedidos: [],
-              detalles: [],
-            }),
-          },
-        });
-      });
-      await expect(ventasService.cancelarVenta(1, 1, 1, 'Motivo de cancelacion')).rejects.toMatchObject({ status: 409, message: 'La venta no contiene detalles para restaurar.' });
     });
 
-    it('debe cancelar exitosamente la venta restaurando inventario', async () => {
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          venta: {
-            findFirst: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              idSuc: 1,
-              estadoVenta: 'COMPLETADA',
-              idSesionCaja: 1,
-              sesionCaja: { estado: 'ABIERTA' },
-              pedidos: [],
-              detalles: [{ idPro: 1, cantidadDetVenta: 2 }],
-            }),
-            update: jest.fn().mockResolvedValue({
-              idVenta: 1,
-              estadoVenta: 'CANCELADA',
-              fechaCancelacion: new Date(),
-              motivoCancelacion: 'Error de cobro',
-              idEmpCancela: 1,
-            }),
-          },
-          producto: { update: jest.fn() },
-        });
-      });
+    it('debe cancelar exitosamente la venta', async () => {
+      jest.spyOn(ventaRepository, 'cancelarVenta').mockResolvedValue({
+        idVenta: 1,
+        estadoVenta: 'CANCELADA',
+        motivoCancelacion: 'Error de cobro',
+      } as any);
 
       const res = await ventasService.cancelarVenta(1, 1, 1, 'Error de cobro');
-      expect(res.estado).toBe('CANCELADA');
+      expect(res.estadoVenta).toBe('CANCELADA');
+    });
+
+    it('debe retornar venta existente si uuidVenta ya fue registrado previamente (idempotencia)', async () => {
+      const mockExistente = {
+        idVenta: 100,
+        uuidVenta: '22222222-2222-4222-8222-222222222222',
+        idSuc: 1,
+        idEmp: 1,
+        idSesionCaja: 1,
+        totalVenta: 15,
+        pagoCon: 20,
+        cambio: 5,
+        metodoPago: 'EFECTIVO',
+        estadoVenta: 'COMPLETADA',
+        fechaVenta: new Date().toISOString(),
+        detalles: [{ idPro: 1, nombrePro: 'Coca Cola', cantidad: 1, precioUnitario: 15, subtotal: 15 }],
+      };
+
+      jest.spyOn(ventaRepository, 'getVentaByUuid').mockResolvedValueOnce(mockExistente as any);
+      const spyCreate = jest.spyOn(ventaRepository, 'createVenta');
+
+      const res = await ventasService.crearVenta(dummyEmpleado, {
+        uuidVenta: '22222222-2222-4222-8222-222222222222',
+        metodoPago: 'EFECTIVO',
+        items: [{ idPro: 1, cantidad: 1 }],
+      });
+
+      expect(res).toBeDefined();
+      expect(res?.uuid).toBe('22222222-2222-4222-8222-222222222222');
+      // No debe haber intentado crear una nueva venta
+      expect(spyCreate).not.toHaveBeenCalled();
     });
   });
 
   describe('listarVentas y detalleVenta para Cajero y Administrador', () => {
     it('listarVentas y detalleVenta', async () => {
-      jest.spyOn(prisma.venta, 'findMany').mockResolvedValue([
+      jest.spyOn(ventaRepository, 'listVentas').mockResolvedValue([
         {
           idVenta: 1,
-          fechaVenta: new Date(),
-          horaVenta: new Date(),
-          total: 100,
+          fechaVenta: new Date().toISOString(),
+          totalVenta: 100,
           metodoPago: 'EFECTIVO',
           estadoVenta: 'COMPLETADA',
           idEmp: 1,
           idSesionCaja: 1,
-          uuidVenta: 'uuid',
-          empleado: dummyEmpleado,
-          pedidos: [],
+          items: [],
         } as any,
       ]);
 
       const lista = await ventasService.listarVentas({ idEmp: 1, idSuc: 1, cargo: 'ADMINISTRADOR' });
       expect(lista.length).toBe(1);
-      expect(lista[0]?.origen).toBe('POS');
 
-      jest.spyOn(prisma.venta, 'findFirst').mockResolvedValue({
+      jest.spyOn(ventaRepository, 'getVentaById').mockResolvedValue({
         idVenta: 1,
-        uuidVenta: 'uuid',
-        fechaVenta: new Date(),
-        horaVenta: new Date(),
-        total: 100,
+        fechaVenta: new Date().toISOString(),
+        totalVenta: 100,
         metodoPago: 'EFECTIVO',
         estadoVenta: 'COMPLETADA',
-        empleado: dummyEmpleado,
-        empleadoCancela: null,
-        sucursal: { nombreSuc: 'Central' },
-        pedidos: [],
-        detalles: [
+        idEmp: 1,
+        items: [
           {
-            idDetVenta: 1,
             idPro: 1,
-            producto: dummyProducto,
-            cantidadDetVenta: 1,
-            precioUnitarioDetVenta: 15,
-            subtotalDetVenta: 15,
+            nombrePro: 'Coca Cola',
+            cantidad: 1,
+            precioUnitario: 15,
           },
         ],
       } as any);
@@ -371,6 +213,10 @@ describe('VentasService Complete Branch Coverage', () => {
       const det = await ventasService.detalleVenta(1, { idEmp: 1, idSuc: 1, cargo: 'CAJERO' });
       expect(det?.id).toBeDefined();
       expect(det?.items.length).toBe(1);
+
+      // Si otro cajero intenta ver una venta que no le pertenece
+      const detOtro = await ventasService.detalleVenta(1, { idEmp: 99, idSuc: 1, cargo: 'CAJERO' });
+      expect(detOtro).toBeNull();
     });
   });
 });

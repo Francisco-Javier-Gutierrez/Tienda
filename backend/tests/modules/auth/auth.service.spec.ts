@@ -1,5 +1,5 @@
 import { authService } from '../../../src/modules/auth/auth.service';
-import { prisma } from '../../../src/config/prisma';
+import { authRepository } from '../../../src/db/repositories/auth.repository';
 import { env } from '../../../src/config/env';
 import bcrypt from 'bcryptjs';
 import { googleClient } from '../../../src/config/google';
@@ -18,7 +18,7 @@ describe('AuthService', () => {
     });
 
     it('debe rechazar credenciales inválidas con 401', async () => {
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue(null);
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue(null);
       await expect(
         authService.loginEmpleado('noexiste@correo.com', 'password123'),
       ).rejects.toMatchObject({
@@ -29,13 +29,18 @@ describe('AuthService', () => {
 
     it('debe rechazar si la contraseña no coincide con el hash', async () => {
       const hash = await bcrypt.hash('CorrectPassword123', 10);
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 2,
+        nombreEmp: 'Cajero',
+        apellidoPatEmp: 'Tienda',
         correoEmp: 'cajero@tienda.com',
         contrasenaHash: hash,
         estadoEmp: true,
-        cargo: { nombreCargo: 'CAJERO', idSuc: 1, sucursal: { nombreSuc: 'Sucursal 1' } },
-      } as any);
+        cargoNombre: 'CAJERO',
+        cargo: 'CAJERO',
+      });
 
       await expect(
         authService.loginEmpleado('cajero@tienda.com', 'WrongPassword'),
@@ -47,13 +52,18 @@ describe('AuthService', () => {
 
     it('debe rechazar cuenta desactivada con 403', async () => {
       const hash = await bcrypt.hash('CorrectPassword123', 10);
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 2,
+        nombreEmp: 'Cajero',
+        apellidoPatEmp: 'Tienda',
         correoEmp: 'cajero@tienda.com',
         contrasenaHash: hash,
         estadoEmp: false,
-        cargo: { nombreCargo: 'CAJERO', idSuc: 1, sucursal: { nombreSuc: 'Sucursal 1' } },
-      } as any);
+        cargoNombre: 'CAJERO',
+        cargo: 'CAJERO',
+      });
 
       await expect(
         authService.loginEmpleado('cajero@tienda.com', 'CorrectPassword123'),
@@ -65,13 +75,18 @@ describe('AuthService', () => {
 
     it('debe rechazar cargo no autorizado con 403', async () => {
       const hash = await bcrypt.hash('CorrectPassword123', 10);
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 9,
+        nombreEmp: 'Limpieza',
+        apellidoPatEmp: 'Tienda',
         correoEmp: 'limpieza@tienda.com',
         contrasenaHash: hash,
         estadoEmp: true,
-        cargo: { nombreCargo: 'LIMPIEZA', idSuc: 1 },
-      } as any);
+        cargoNombre: 'LIMPIEZA',
+        cargo: 'LIMPIEZA',
+      });
 
       await expect(
         authService.loginEmpleado('limpieza@tienda.com', 'CorrectPassword123'),
@@ -83,22 +98,19 @@ describe('AuthService', () => {
 
     it('debe retornar token y datos seguros en login exitoso', async () => {
       const hash = await bcrypt.hash('CorrectPassword123', 10);
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 1,
         nombreEmp: 'Juan',
         apellidoPatEmp: 'Pérez',
         apellidoMatEmp: null,
         correoEmp: 'juan@tienda.com',
         contrasenaHash: hash,
         estadoEmp: true,
-        idCargo: 1,
-        cargo: {
-          idCargo: 1,
-          nombreCargo: 'ADMINISTRADOR',
-          idSuc: 1,
-          sucursal: { nombreSuc: 'Central' },
-        },
-      } as any);
+        cargoNombre: 'ADMINISTRADOR',
+        cargo: 'ADMINISTRADOR',
+      });
 
       const result = await authService.loginEmpleado('juan@tienda.com', 'CorrectPassword123');
       expect(result.token).toBeDefined();
@@ -135,30 +147,51 @@ describe('AuthService', () => {
         })) as any);
 
       // No encontrado
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValueOnce(null);
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce(null);
       await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403 });
 
       // Desactivado
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValueOnce({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 1,
+        nombreEmp: 'Admin',
+        apellidoPatEmp: 'Tienda',
+        correoEmp: 'emp@tienda.com',
+        contrasenaHash: 'hash',
         estadoEmp: false,
-      } as any);
+        cargoNombre: 'ADMINISTRADOR',
+      });
       await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta está desactivada' });
 
-      // Sin cargo
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValueOnce({
+      // Sin cargo autorizado
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 5,
+        nombreEmp: 'Otro',
+        apellidoPatEmp: 'Tienda',
+        correoEmp: 'emp@tienda.com',
+        contrasenaHash: 'hash',
         estadoEmp: true,
-        cargo: { nombreCargo: 'OTRO' },
-      } as any);
+        cargoNombre: 'OTRO',
+        cargo: 'OTRO',
+      });
       await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta no tiene un cargo autorizado' });
 
       // Sub mismatch
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValueOnce({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 1,
+        nombreEmp: 'Admin',
+        apellidoPatEmp: 'Tienda',
+        correoEmp: 'emp@tienda.com',
+        contrasenaHash: 'hash',
         estadoEmp: true,
+        cargoNombre: 'ADMINISTRADOR',
+        cargo: 'ADMINISTRADOR',
         googleSub: 'otro-sub',
-        cargo: { nombreCargo: 'ADMINISTRADOR' },
       } as any);
       await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Esta cuenta Google no coincide con la cuenta vinculada' });
     });
@@ -175,24 +208,32 @@ describe('AuthService', () => {
           }),
         })) as any);
 
-      jest.spyOn(prisma.empleado, 'findFirst').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue({
         idEmp: 2,
+        idSuc: 1,
+        idCargo: 1,
         nombreEmp: 'Admin',
+        apellidoPatEmp: 'Tienda',
         correoEmp: 'admin@tienda.com',
+        contrasenaHash: 'hash',
         estadoEmp: true,
         googleSub: null,
-        idCargo: 1,
-        cargo: { nombreCargo: 'ADMINISTRADOR', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
+        cargoNombre: 'ADMINISTRADOR',
+        cargo: 'ADMINISTRADOR',
       } as any);
 
-      jest.spyOn(prisma.empleado, 'update').mockResolvedValue({
+      jest.spyOn(authRepository, 'updateEmpleadoGoogleSub').mockResolvedValue({
         idEmp: 2,
+        idSuc: 1,
+        idCargo: 1,
         nombreEmp: 'Admin',
+        apellidoPatEmp: 'Tienda',
         correoEmp: 'admin@tienda.com',
+        contrasenaHash: 'hash',
         estadoEmp: true,
         googleSub: 'google-sub-999',
-        idCargo: 1,
-        cargo: { nombreCargo: 'ADMINISTRADOR', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
+        cargoNombre: 'ADMINISTRADOR',
+        cargo: 'ADMINISTRADOR',
       } as any);
 
       const result = await authService.googleAuthEmpleado('fake-id-token');
@@ -228,23 +269,23 @@ describe('AuthService', () => {
         })) as any);
 
       // Sub mismatch
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          cliente: {
-            findUnique: jest.fn().mockResolvedValue(null),
-            findFirst: jest.fn().mockResolvedValue({ idCliente: 1, googleSub: 'diferente' }),
-          },
-        });
+      jest.spyOn(authRepository, 'findClienteByGoogleSub').mockResolvedValueOnce(null);
+      jest.spyOn(authRepository, 'findClienteByEmail').mockResolvedValueOnce({
+        idCliente: 1,
+        nombreCliente: 'Cliente',
+        correoCliente: 'cli@tienda.com',
+        estadoCliente: true,
+        googleSub: 'diferente',
       });
       await expect(authService.googleAuthCliente('tok')).rejects.toMatchObject({ status: 403 });
 
       // Desactivado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          cliente: {
-            findUnique: jest.fn().mockResolvedValue({ idCliente: 1, estadoCliente: false }),
-          },
-        });
+      jest.spyOn(authRepository, 'findClienteByGoogleSub').mockResolvedValueOnce({
+        idCliente: 1,
+        nombreCliente: 'Cliente',
+        correoCliente: 'cli@tienda.com',
+        estadoCliente: false,
+        googleSub: 'sub-cli-1',
       });
       await expect(authService.googleAuthCliente('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta de cliente está desactivada' });
     });
@@ -263,25 +304,16 @@ describe('AuthService', () => {
           }),
         })) as any);
 
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          cliente: {
-            findUnique: jest.fn().mockResolvedValue(null),
-            findFirst: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockResolvedValue({
-              idCliente: 100,
-              nombreCliente: 'Ana',
-              apellidoPatCliente: 'García',
-              correoCliente: 'cliente.nuevo@gmail.com',
-              googleSub: 'google-sub-cliente-1',
-              fotoPerfil: 'https://lh3.google/photo.jpg',
-              estadoCliente: true,
-              fechaRegistro: new Date(),
-              ultimoAcceso: new Date(),
-            }),
-            update: jest.fn(),
-          },
-        });
+      jest.spyOn(authRepository, 'findClienteByGoogleSub').mockResolvedValue(null);
+      jest.spyOn(authRepository, 'findClienteByEmail').mockResolvedValue(null);
+      jest.spyOn(authRepository, 'createCliente').mockResolvedValue({
+        idCliente: 100,
+        nombreCliente: 'Ana',
+        apellidoPatCliente: 'García',
+        correoCliente: 'cliente.nuevo@gmail.com',
+        googleSub: 'google-sub-cliente-1',
+        fotoPerfil: 'https://lh3.google/photo.jpg',
+        estadoCliente: true,
       });
 
       const result = await authService.googleAuthCliente('fake-client-token');
@@ -302,25 +334,19 @@ describe('AuthService', () => {
           }),
         })) as any);
 
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          cliente: {
-            findUnique: jest.fn().mockResolvedValue({
-              idCliente: 100,
-              nombreCliente: 'Ana',
-              correoCliente: 'cliente.existente@gmail.com',
-              googleSub: 'google-sub-cliente-1',
-              estadoCliente: true,
-            }),
-            update: jest.fn().mockResolvedValue({
-              idCliente: 100,
-              nombreCliente: 'Ana',
-              correoCliente: 'cliente.existente@gmail.com',
-              googleSub: 'google-sub-cliente-1',
-              estadoCliente: true,
-            }),
-          },
-        });
+      jest.spyOn(authRepository, 'findClienteByGoogleSub').mockResolvedValue({
+        idCliente: 100,
+        nombreCliente: 'Ana',
+        correoCliente: 'cliente.existente@gmail.com',
+        googleSub: 'google-sub-cliente-1',
+        estadoCliente: true,
+      });
+      jest.spyOn(authRepository, 'updateClienteUltimoAcceso').mockResolvedValue({
+        idCliente: 100,
+        nombreCliente: 'Ana',
+        correoCliente: 'cliente.existente@gmail.com',
+        googleSub: 'google-sub-cliente-1',
+        estadoCliente: true,
       });
 
       const result = await authService.googleAuthCliente('fake-client-token');

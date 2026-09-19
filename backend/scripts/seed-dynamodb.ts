@@ -1,4 +1,4 @@
-import { PutCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, BatchWriteCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../src/db/dynamo.client';
 import { Keys } from '../src/db/dynamo.keys';
 
@@ -219,8 +219,31 @@ async function seed() {
     }
   }
 
-  // 5. Categorías
-  console.log('🏷️ Sembrando categorías...');
+  // 5. Limpieza preventiva de datos excedentes / pruebas
+  console.log('🧹 Limpiando productos, marcas y categorías excedentes...');
+  for (let i = 1; i <= 30; i++) {
+    await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: Keys.producto(1, i) })).catch(() => undefined);
+  }
+  for (let i = 5; i <= 15; i++) {
+    await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: Keys.categoria(1, i) })).catch(() => undefined);
+  }
+  for (let i = 6; i <= 20; i++) {
+    await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: Keys.marca(1, i) })).catch(() => undefined);
+  }
+  for (let i = 3; i <= 10; i++) {
+    await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: Keys.proveedor(1, i) })).catch(() => undefined);
+  }
+  const oldQrs = [
+    '7501055300075', '7501055310883', '7501055320509', '7501000111206', '7501000112340',
+    '7501000620029', '7501017004454', '7501017001019', '7501020512106', '7501020534207',
+    '7509546055176', '7501025400507', '7500435132206', '7501011131033', '7501011142015',
+  ];
+  for (const qr of oldQrs) {
+    await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: `QR#${qr}`, SK: 'CODE' } })).catch(() => undefined);
+  }
+
+  // 6. Categorías (4 originales)
+  console.log('🏷️ Sembrando categorías originales (4)...');
   const categorias = [
     { idCat: 1, nombreCat: 'Bebidas y Refrescos', descripCat: 'Refrescos carbonatados, jugos, aguas y energéticas' },
     { idCat: 2, nombreCat: 'Abarrotes y Alimentos', descripCat: 'Despensa, latería, pastas, arroz y frijol' },
@@ -242,8 +265,8 @@ async function seed() {
     );
   }
 
-  // 6. Marcas
-  console.log('🔖 Sembrando marcas...');
+  // 7. Marcas (5 originales)
+  console.log('🔖 Sembrando marcas originales (5)...');
   const marcas = [
     { idMarca: 1, nombreMarca: 'Coca-Cola', descripMarca: 'Líder en refrescos y bebidas' },
     { idMarca: 2, nombreMarca: 'Sabritas', descripMarca: 'Botanas y papas saladas' },
@@ -266,8 +289,8 @@ async function seed() {
     );
   }
 
-  // 7. Proveedores
-  console.log('🚚 Sembrando proveedores...');
+  // 8. Proveedores (2 originales)
+  console.log('🚚 Sembrando proveedores originales (2)...');
   const proveedores = [
     {
       idProv: 1,
@@ -298,8 +321,8 @@ async function seed() {
     );
   }
 
-  // 8. Productos
-  console.log('📦 Sembrando productos...');
+  // 9. Productos (5 originales exactos)
+  console.log('📦 Sembrando productos originales (5)...');
   const productos = [
     {
       idPro: 1,
@@ -416,9 +439,20 @@ async function seed() {
         },
       }),
     );
+    await docClient.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          PK: `QR#${prod.codigoQR}`,
+          SK: 'CODE',
+          idPro: prod.idPro,
+          idSuc: prod.idSuc,
+        },
+      }),
+    );
   }
 
-  // 9. Configuración de Transferencia
+  // 10. Configuración de Transferencia
   console.log('💳 Sembrando configuración de transferencia...');
   await docClient.send(
     new PutCommand({
@@ -438,7 +472,7 @@ async function seed() {
     }),
   );
 
-  // 10. Sesión de Caja
+  // 11. Sesión de Caja
   console.log('💵 Sembrando sesión de caja abierta...');
   await docClient.send(
     new PutCommand({
@@ -470,21 +504,21 @@ async function seed() {
     }),
   );
 
-  // 11. Inicializar Secuencias / Counters
+  // 12. Inicializar Secuencias / Counters
   console.log('🔢 Sembrando secuencias / contadores atómicos...');
   const counters = [
     { SK: 'sucursal', currentId: 1 },
     { SK: 'cargo', currentId: 2 },
     { SK: 'empleado', currentId: 3 },
-    { SK: 'cliente', currentId: 3 },
+    { SK: 'cliente', currentId: 10 },
     { SK: 'categoria', currentId: 4 },
     { SK: 'marca', currentId: 5 },
     { SK: 'proveedor', currentId: 2 },
     { SK: 'producto', currentId: 5 },
     { SK: 'configuracion', currentId: 1 },
     { SK: 'sesionCaja', currentId: 3 },
-    { SK: 'venta', currentId: 0 },
-    { SK: 'pedidoCliente', currentId: 0 },
+    { SK: 'venta', currentId: 4 },
+    { SK: 'pedidoCliente', currentId: 10 },
   ];
   for (const counter of counters) {
     await docClient.send(

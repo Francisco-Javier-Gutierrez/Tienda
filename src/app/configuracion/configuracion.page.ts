@@ -39,7 +39,7 @@ export class ConfiguracionPage implements OnInit {
   }
 
   actualizarSucursal(sucursal: Sucursal): void {
-    const indice = this.sucursales.findIndex((actual) => String(actual.idSuc) === String(sucursal.idSuc));
+    const indice = this.sucursales.findIndex((actual) => actual.id === sucursal.id);
     if (indice < 0) this.sucursales = [...this.sucursales, sucursal];
     else this.sucursales = this.sucursales.map((actual, posicion) => (posicion === indice ? sucursal : actual));
     this.sucursalActual = sucursal;

@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../config/prisma';
 import { clienteSeguro, verificarToken } from '../utils/security';
 import { idValido } from '../utils/formatters';
 import { authRepository } from '../db/repositories/auth.repository';
@@ -27,42 +26,8 @@ export async function autenticar(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      const empleado = await authRepository.findEmpleadoById(idEmp);
-      if (!empleado || !empleado.estadoEmp) {
-        res.status(401).json({ message: 'Sesión no válida' });
-        return;
-      }
-      req.empleado = {
-        idEmp: empleado.idEmp,
-        nombre: [empleado.nombreEmp, empleado.apellidoPatEmp, empleado.apellidoMatEmp].filter(Boolean).join(' '),
-        nombreEmp: empleado.nombreEmp,
-        apellidoPatEmp: empleado.apellidoPatEmp,
-        apellidoMatEmp: empleado.apellidoMatEmp || null,
-        correo: empleado.correoEmp,
-        telefono: empleado.telefono || null,
-        fechaIngreso: null,
-        fotoPerfil: empleado.fotoPerfil || null,
-        idCargo: empleado.idCargo || 1,
-        cargo: empleado.cargoNombre || empleado.cargo || 'ADMINISTRADOR',
-        idSuc: empleado.idSuc || 1,
-        nombreSuc: empleado.nombreSuc || 'Doña paty',
-        estadoEmp: Boolean(empleado.estadoEmp),
-      };
-      next();
-      return;
-    }
-
-    const empleado = await prisma.empleado.findUnique({
-      where: { idEmp },
-      include: {
-        cargo: {
-          include: { sucursal: true },
-        },
-      },
-    });
-
-    if (!empleado || !empleado.estadoEmp || !empleado.cargo) {
+    const empleado = await authRepository.findEmpleadoById(idEmp);
+    if (!empleado || !empleado.estadoEmp) {
       res.status(401).json({ message: 'Sesión no válida' });
       return;
     }
@@ -72,18 +37,17 @@ export async function autenticar(req: Request, res: Response, next: NextFunction
       nombre: [empleado.nombreEmp, empleado.apellidoPatEmp, empleado.apellidoMatEmp].filter(Boolean).join(' '),
       nombreEmp: empleado.nombreEmp,
       apellidoPatEmp: empleado.apellidoPatEmp,
-      apellidoMatEmp: empleado.apellidoMatEmp,
+      apellidoMatEmp: empleado.apellidoMatEmp || null,
       correo: empleado.correoEmp,
-      telefono: empleado.telefono,
-      fechaIngreso: empleado.fechaIngreso,
-      fotoPerfil: empleado.fotoPerfil,
-      idCargo: empleado.idCargo || 0,
-      cargo: empleado.cargo.nombreCargo,
-      idSuc: empleado.cargo.idSuc || 1,
-      nombreSuc: empleado.cargo.sucursal?.nombreSuc || null,
+      telefono: empleado.telefono || null,
+      fechaIngreso: null,
+      fotoPerfil: empleado.fotoPerfil || null,
+      idCargo: empleado.idCargo || 1,
+      cargo: empleado.cargoNombre || empleado.cargo || 'ADMINISTRADOR',
+      idSuc: empleado.idSuc || 1,
+      nombreSuc: empleado.nombreSuc || 'Doña paty',
       estadoEmp: Boolean(empleado.estadoEmp),
     };
-
     next();
   } catch {
     res.status(401).json({ message: 'Sesión no válida' });
@@ -113,27 +77,7 @@ export async function autenticarCliente(req: Request, res: Response, next: NextF
       return;
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      const cliente = await authRepository.findClienteById(idCliente);
-      if (!cliente || !cliente.estadoCliente) {
-        res.status(401).json({ message: 'Sesión no válida' });
-        return;
-      }
-      req.cliente = {
-        ...clienteSeguro(cliente),
-        nombreCliente: cliente.nombreCliente,
-        apellidoPatCliente: cliente.apellidoPatCliente || null,
-        apellidoMatCliente: cliente.apellidoMatCliente || null,
-        correoCliente: cliente.correoCliente,
-      };
-      next();
-      return;
-    }
-
-    const cliente = await prisma.cliente.findUnique({
-      where: { idCliente },
-    });
-
+    const cliente = await authRepository.findClienteById(idCliente);
     if (!cliente || !cliente.estadoCliente) {
       res.status(401).json({ message: 'Sesión no válida' });
       return;
@@ -142,11 +86,10 @@ export async function autenticarCliente(req: Request, res: Response, next: NextF
     req.cliente = {
       ...clienteSeguro(cliente),
       nombreCliente: cliente.nombreCliente,
-      apellidoPatCliente: cliente.apellidoPatCliente,
-      apellidoMatCliente: cliente.apellidoMatCliente,
+      apellidoPatCliente: cliente.apellidoPatCliente || null,
+      apellidoMatCliente: cliente.apellidoMatCliente || null,
       correoCliente: cliente.correoCliente,
     };
-
     next();
   } catch {
     res.status(401).json({ message: 'Sesión no válida' });
@@ -165,3 +108,73 @@ export function autorizarRoles(...roles: Array<string | null | undefined>) {
 
 export const soloAdministrador = autorizarRoles('ADMINISTRADOR');
 export const rolesPos = autorizarRoles('ADMINISTRADOR', 'CAJERO');
+
+export async function autenticarCualquiera(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const authHeader = req.headers.authorization || '';
+  const token = /^Bearer\s+(.+)$/i.exec(authHeader)?.[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Sesión no válida' });
+    return;
+  }
+
+  try {
+    const payload = verificarToken(token);
+
+    if (payload.tipo === 'CLIENTE') {
+      const idCliente = idValido(payload.sub);
+      if (!idCliente) {
+        res.status(401).json({ message: 'Sesión no válida' });
+        return;
+      }
+
+      const cliente = await authRepository.findClienteById(idCliente);
+      if (!cliente || !cliente.estadoCliente) {
+        res.status(401).json({ message: 'Sesión no válida' });
+        return;
+      }
+
+      req.cliente = {
+        ...clienteSeguro(cliente),
+        nombreCliente: cliente.nombreCliente,
+        apellidoPatCliente: cliente.apellidoPatCliente || null,
+        apellidoMatCliente: cliente.apellidoMatCliente || null,
+        correoCliente: cliente.correoCliente,
+      };
+      next();
+      return;
+    }
+
+    const idEmp = idValido(payload.sub);
+    if (!idEmp) {
+      res.status(401).json({ message: 'Sesión no válida' });
+      return;
+    }
+
+    const empleado = await authRepository.findEmpleadoById(idEmp);
+    if (!empleado || !empleado.estadoEmp) {
+      res.status(401).json({ message: 'Sesión no válida' });
+      return;
+    }
+
+    req.empleado = {
+      idEmp: empleado.idEmp,
+      nombre: [empleado.nombreEmp, empleado.apellidoPatEmp, empleado.apellidoMatEmp].filter(Boolean).join(' '),
+      nombreEmp: empleado.nombreEmp,
+      apellidoPatEmp: empleado.apellidoPatEmp,
+      apellidoMatEmp: empleado.apellidoMatEmp || null,
+      correo: empleado.correoEmp,
+      telefono: empleado.telefono || null,
+      fechaIngreso: null,
+      fotoPerfil: empleado.fotoPerfil || null,
+      idCargo: empleado.idCargo || 1,
+      cargo: empleado.cargoNombre || empleado.cargo || 'ADMINISTRADOR',
+      idSuc: empleado.idSuc || 1,
+      nombreSuc: empleado.nombreSuc || 'Doña paty',
+      estadoEmp: Boolean(empleado.estadoEmp),
+    };
+    next();
+  } catch {
+    res.status(401).json({ message: 'Sesión no válida' });
+  }
+}

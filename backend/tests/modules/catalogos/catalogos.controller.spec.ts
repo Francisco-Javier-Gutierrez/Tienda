@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { catalogosController } from '../../../src/modules/catalogos/catalogos.controller';
 import { catalogosService } from '../../../src/modules/catalogos/catalogos.service';
-import { prisma } from '../../../src/config/prisma';
+import { sucursalRepository } from '../../../src/db/repositories/sucursal.repository';
 
 describe('CatalogosController', () => {
   let mockReq: Partial<Request>;
@@ -149,7 +149,7 @@ describe('CatalogosController', () => {
       jest.spyOn(catalogosService, 'obtenerSucursal')
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: null } as any)
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/logo.png' } as any);
-      jest.spyOn(prisma.sucursal, 'update').mockResolvedValue({ idSuc: 1 } as any);
+      jest.spyOn(sucursalRepository, 'updateLogo').mockResolvedValue({ idSuc: 1 } as any);
 
       await catalogosController.subirLogoLocal(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();

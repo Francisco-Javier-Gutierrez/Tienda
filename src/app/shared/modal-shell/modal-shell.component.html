@@ -4,11 +4,13 @@
   [initialBreakpoint]="initialBreakpoint"
   [breakpoints]="breakpoints"
   [class]="computedClass"
+  [focusTrap]="focusTrap"
   (didDismiss)="onDismiss()"
+  (ionModalDidPresent)="onDidPresent()"
 >
   <ng-template>
     <!-- Header -->
-    <ion-header *ngIf="showHeader" class="ion-no-border border-b border-surface-variant bg-surface-container-lowest">
+    <ion-header *ngIf="showHeader" class="ion-no-border border-b border-surface-variant bg-surface-container-lowest shrink-0">
       <ion-toolbar class="[--background:theme('colors.surface-container-lowest')] px-2">
         <!-- Start Close Button -->
         <ion-buttons slot="start" *ngIf="showCloseButton && closeButtonPosition === 'start'">
@@ -49,13 +51,13 @@
       </ion-toolbar>
     </ion-header>
 
-    <!-- Body: Direct child of ng-template, single wildcard ng-content -->
-    <ion-content class="bg-surface [--background:theme('colors.surface')] custom-scrollbar">
+    <!-- Body: Clean scrollable container with flex-1 and min-h-0 -->
+    <div class="flex-1 overflow-y-auto bg-surface custom-scrollbar min-h-0 relative">
       <ng-content></ng-content>
-    </ion-content>
+    </div>
 
     <!-- Footer -->
-    <ion-footer *ngIf="showFooter" class="ion-no-border bg-surface-container-lowest border-t border-surface-variant">
+    <ion-footer *ngIf="showFooter" class="ion-no-border bg-surface-container-lowest border-t border-surface-variant shrink-0">
       <ng-content select="[footer]"></ng-content>
     </ion-footer>
   </ng-template>

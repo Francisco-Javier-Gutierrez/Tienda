@@ -49,14 +49,15 @@ export class PedidoDetallePage implements OnInit {
   seleccionarArchivo(event: Event): void {
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0] || null;
-    if (
-      !archivo ||
-      !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(archivo.type) ||
-      archivo.size > 5 * 1024 * 1024
-    ) {
+    const ext = archivo?.name.split('.').pop()?.toLowerCase() || '';
+    const esTipoValido =
+      archivo &&
+      (['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(archivo.type) ||
+        ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext));
+    if (!archivo || !esTipoValido || archivo.size > 10 * 1024 * 1024) {
       this.archivo = null;
       input.value = '';
-      void this.feedback('Selecciona una imagen JPG, PNG, WEBP o un PDF de máximo 5 MB.', 'warning');
+      void this.feedback('Selecciona una imagen JPG, PNG, WEBP o un PDF de máximo 10 MB.', 'warning');
       return;
     }
     this.archivo = archivo;
@@ -68,6 +69,7 @@ export class PedidoDetallePage implements OnInit {
       this.pedido = await firstValueFrom(this.api.subirComprobante(this.pedido.id, this.archivo));
       this.archivo = null;
       await this.feedback('Pago enviado a revisión.', 'success');
+      await this.cargar();
     } catch (e: unknown) {
       await this.feedback(this.error(e, 'No pudimos subir el comprobante.'), 'danger');
     } finally {
@@ -167,6 +169,20 @@ export class PedidoDetallePage implements OnInit {
     this.comprobanteImgError = false;
     try {
       this.pedido = await firstValueFrom(this.api.detalle(id));
+      if (
+        this.pedido &&
+        !this.pedido.configuracionTransferencia &&
+        (this.pedido.estado === 'PENDIENTE_PAGO' || this.pedido.estado === 'RECHAZADO')
+      ) {
+        try {
+          const resp = await firstValueFrom(this.api.obtenerConfiguracionTransferencia());
+          if (resp?.configuracion) {
+            this.pedido.configuracionTransferencia = resp.configuracion;
+          }
+        } catch {
+          // Si falla la configuracion global, no bloqueamos la pantalla
+        }
+      }
     } catch (e: unknown) {
       await this.feedback(this.error(e, 'No pudimos cargar el pedido.'), 'danger');
       await this.router.navigateByUrl('/mis-pedidos');

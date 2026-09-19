@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 
 export interface CatalogoItem {
   id?: string | number | null;
@@ -18,6 +18,9 @@ export interface CatalogoFormData {
   standalone: false,
 })
 export class CatalogoModalComponent implements OnChanges {
+  @ViewChild('nombreInput') nombreInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('descInput') descInput?: ElementRef<HTMLTextAreaElement>;
+
   @Input() isOpen = false;
   @Input() tipo = 'categoría';
   @Input() item: CatalogoItem | null = null;
@@ -35,6 +38,26 @@ export class CatalogoModalComponent implements OnChanges {
       this.nombre = this.item?.nombre || '';
       this.descripcion = this.item?.descripcion || '';
       this.errorNombre = '';
+    }
+  }
+
+  onModalPresented(): void {
+    setTimeout(() => {
+      this.enfocarInput();
+    }, 60);
+  }
+
+  enfocarInput(): void {
+    const input = this.nombreInput?.nativeElement;
+    if (input) {
+      input.focus();
+    }
+  }
+
+  enfocarTextarea(): void {
+    const textarea = this.descInput?.nativeElement;
+    if (textarea) {
+      textarea.focus();
     }
   }
 

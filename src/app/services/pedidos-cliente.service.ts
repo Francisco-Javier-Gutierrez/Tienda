@@ -30,11 +30,25 @@ export class PedidosClienteService {
     return this.http.post<PedidoCliente>(`${this.url}/pedidos/${idPedido}/cancelar`, {});
   }
 
+  private resolverMimeType(archivo: File): string {
+    let mime = (archivo.type || '').toLowerCase();
+    if (!mime || mime === 'application/octet-stream') {
+      const ext = archivo.name.split('.').pop()?.toLowerCase();
+      if (ext === 'jpg' || ext === 'jpeg') mime = 'image/jpeg';
+      else if (ext === 'png') mime = 'image/png';
+      else if (ext === 'webp') mime = 'image/webp';
+      else if (ext === 'pdf') mime = 'application/pdf';
+    }
+    return mime || 'application/octet-stream';
+  }
+
   subirComprobante(idPedido: string | number, archivo: File): Observable<PedidoCliente> {
-    const mimeType = archivo.type || 'application/octet-stream';
+    const mimeType = this.resolverMimeType(archivo);
+    const extension = '.' + (archivo.name.split('.').pop() || 'jpg').toLowerCase();
     return this.http
       .post<{ uploadUrl: string; key: string }>(`${this.url}/pedidos/${idPedido}/presign-comprobante`, {
         mimeType,
+        extension,
         filename: archivo.name,
       })
       .pipe(

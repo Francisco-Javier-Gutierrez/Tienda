@@ -1,5 +1,5 @@
 export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
-export type EstadoVenta = 'COMPLETADA' | 'CANCELADA';
+export type EstadoVenta = 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE' | 'PENDIENTE_PAGO' | 'EN_REVISION';
 
 export interface ProductoPos {
   id: string;
@@ -60,17 +60,19 @@ export interface VentaDetalle {
   logoSuc?: string | null;
   origen: 'ONLINE' | 'POS';
   cajero: { id: string; nombre: string | null } | string | null;
-  items: Array<{
-    idDetalle?: string;
-    productoId?: string;
-    id?: string;
-    nombre: string;
-    codigoQR?: string | null;
-    sku?: string | null;
-    cantidad: number;
-    precioUnitario: number;
-    subtotal: number;
-  }>;
+  items: DetalleVentaItem[];
+}
+
+export interface DetalleVentaItem {
+  id: string;
+  productoId: string;
+  nombre: string;
+  imagen?: string | null;
+  codigoQR?: string | null;
+  sku?: string | null;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
 }
 
 export interface VentaRegistrada {
@@ -85,18 +87,17 @@ export interface VentaRegistrada {
   cambio: number;
   estado: EstadoVenta;
   cajero: { id: string; nombre: string | null };
-  items: Array<{
-    id: string;
-    nombre: string;
-    cantidad: number;
-    precioUnitario: number;
-    subtotal: number;
-  }>;
+  items: DetalleVentaItem[];
+}
+
+export interface CrearVentaItem {
+  id: string;
+  cantidad: number;
 }
 
 export interface CrearVentaDto {
   uuidVenta: string;
-  items: Array<{ id: string; cantidad: number }>;
+  items: CrearVentaItem[];
   metodoPago: MetodoPago;
   montoRecibido: number | null;
 }

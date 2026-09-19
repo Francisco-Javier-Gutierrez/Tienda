@@ -5,6 +5,8 @@ import { SqliteService } from './services/sqlite.service';
 import { AuthService } from './services/auth.service';
 import { SyncService } from './services/sync.service';
 import { ClienteAuthService } from './services/cliente-auth.service';
+import { LiveUpdateService } from './services/live-update.service';
+import { PushNotificationService } from './services/push-notification.service';
 
 @Component({
   selector: 'app-root',
@@ -17,8 +19,12 @@ export class AppComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly clienteAuthService = inject(ClienteAuthService);
   private readonly syncService = inject(SyncService);
+  private readonly liveUpdateService = inject(LiveUpdateService);
+  private readonly pushService = inject(PushNotificationService);
 
   async ngOnInit(): Promise<void> {
+    void this.liveUpdateService.init();
+
     if (Capacitor.isNativePlatform()) {
       try {
         await StatusBar.setStyle({ style: Style.Light });
@@ -29,6 +35,7 @@ export class AppComponent implements OnInit {
     }
 
     await Promise.all([this.authService.restaurarSesion(), this.clienteAuthService.restaurarSesion()]);
+    void this.pushService.inicializar();
     void this.syncService.reintentar();
     try {
       await this.sqliteService.initDB();

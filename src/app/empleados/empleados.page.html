@@ -345,11 +345,11 @@
       <!-- Fecha de Ingreso -->
       <div>
         <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1.5 ml-1">Fecha de ingreso</label>
-        <input
-          type="date"
+        <app-custom-datepicker
           [(ngModel)]="form.fechaIngreso"
-          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline-variant/70"
-        />
+          placeholder="Selecciona fecha de ingreso"
+          title="Fecha de ingreso"
+        ></app-custom-datepicker>
       </div>
 
       <!-- Foto de Perfil -->

@@ -150,9 +150,18 @@
               <!-- Estado & Chevron -->
               <div class="flex items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                      [ngClass]="venta.estado === 'CANCELADA' ? 'bg-error-container text-on-error-container border border-error/20' : 'bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary/20'">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="venta.estado === 'CANCELADA' ? 'bg-error' : 'bg-tertiary'"></span>
-                  <span>{{ venta.estado === 'CANCELADA' ? 'Cancelada' : 'Completada' }}</span>
+                      [ngClass]="{
+                        'bg-error-container text-on-error-container border border-error/20': venta.estado === 'CANCELADA',
+                        'bg-amber-100 text-amber-800 border border-amber-300/60': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
+                        'bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary/20': venta.estado === 'COMPLETADA' || (!venta.estado)
+                      }">
+                  <span class="w-1.5 h-1.5 rounded-full"
+                        [ngClass]="{
+                          'bg-error': venta.estado === 'CANCELADA',
+                          'bg-amber-600': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
+                          'bg-tertiary': venta.estado === 'COMPLETADA' || (!venta.estado)
+                        }"></span>
+                  <span>{{ venta.estado === 'CANCELADA' ? 'Cancelada' : (venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' ? 'Pendiente' : (venta.estado === 'EN_REVISION' ? 'En revisión' : 'Completada')) }}</span>
                 </span>
                 
                 <span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all text-[18px]">

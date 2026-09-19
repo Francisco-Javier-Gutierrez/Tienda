@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Request, Response } from 'express';
 import { catalogosService } from './catalogos.service';
 import { idValido, texto } from '../../utils/formatters';
-import { prisma } from '../../config/prisma';
+import { sucursalRepository } from '../../db/repositories/sucursal.repository';
 import { tiendaUploadDir } from '../../middlewares/upload.middleware';
 import { eliminarUploadControlado } from '../productos/productos.service';
 import { extensionesImagen } from '../../config/s3';
@@ -124,7 +124,7 @@ export class CatalogosController {
         return;
       }
       const rutaPublica = `/uploads/tienda/${req.file.filename}`;
-      await prisma.sucursal.update({ where: { idSuc }, data: { logoSuc: rutaPublica } });
+      await sucursalRepository.updateLogo(idSuc, rutaPublica);
       const sucursal = await catalogosService.obtenerSucursal(idSuc);
       eliminarUploadControlado(anterior.logo, tiendaUploadDir, '/uploads/tienda/');
       res.json(sucursal);

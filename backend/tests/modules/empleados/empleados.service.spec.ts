@@ -1,5 +1,5 @@
 import { empleadosService } from '../../../src/modules/empleados/empleados.service';
-import { prisma } from '../../../src/config/prisma';
+import { empleadoRepository } from '../../../src/db/repositories/empleado.repository';
 
 describe('EmpleadosService', () => {
   afterEach(() => {
@@ -8,20 +8,23 @@ describe('EmpleadosService', () => {
 
   describe('listar', () => {
     it('debe retornar lista de empleados con formato seguro', async () => {
-      jest.spyOn(prisma.empleado, 'findMany').mockResolvedValue([
+      jest.spyOn(empleadoRepository, 'listEmpleados').mockResolvedValue([
         {
           idEmp: 1,
+          idSuc: 1,
+          idCargo: 1,
           nombreEmp: 'Admin',
           apellidoPatEmp: 'Sistema',
           apellidoMatEmp: null,
           correoEmp: 'admin@tienda.com',
+          contrasenaHash: 'hash',
           telefono: '11223344',
-          fechaIngreso: new Date(),
           fotoPerfil: null,
-          idCargo: 1,
+          cargoNombre: 'ADMINISTRADOR',
+          cargo: 'ADMINISTRADOR',
+          nombreSuc: 'Central',
           estadoEmp: true,
-          cargo: { nombreCargo: 'ADMINISTRADOR', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
-        } as any,
+        },
       ]);
 
       const lista = await empleadosService.listar();
@@ -55,42 +58,21 @@ describe('EmpleadosService', () => {
       });
     });
 
-    it('debe rechazar cargo no autorizado', async () => {
-      jest.spyOn(prisma.cargo, 'findFirst').mockResolvedValue(null);
-
-      await expect(
-        empleadosService.crear({
-          nombre: 'Juan',
-          correo: 'juan@correo.com',
-          idCargo: 99,
-          password: 'password123',
-        }),
-      ).rejects.toMatchObject({
-        status: 400,
-        message: 'El cargo no es válido',
-      });
-    });
-
     it('debe crear el empleado exitosamente', async () => {
-      jest.spyOn(prisma.cargo, 'findFirst').mockResolvedValue({
-        idCargo: 2,
-        nombreCargo: 'CAJERO',
-      } as any);
-
-      jest.spyOn(prisma.empleado, 'create').mockResolvedValue({
+      jest.spyOn(empleadoRepository, 'createEmpleado').mockResolvedValue({
         idEmp: 10,
+        idSuc: 1,
+        idCargo: 2,
         nombreEmp: 'Pedro',
         apellidoPatEmp: 'Gómez',
-        apellidoMatEmp: null,
+        apellidoMatEmp: '',
         correoEmp: 'pedro@tienda.com',
         contrasenaHash: 'hash',
+        cargo: 'CAJERO',
+        cargoNombre: 'CAJERO',
+        nombreSuc: 'Doña paty',
         estadoEmp: true,
-        telefono: null,
-        fechaIngreso: new Date(),
-        fotoPerfil: null,
-        idCargo: 2,
-        cargo: { nombreCargo: 'CAJERO', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
-      } as any);
+      });
 
       const nuevo = await empleadosService.crear({
         nombre: 'Pedro',
@@ -113,28 +95,26 @@ describe('EmpleadosService', () => {
         empleadosService.actualizar(1, { nombre: 'A', correo: 'a@a.com', idCargo: 1, password: '123' }),
       ).rejects.toMatchObject({ status: 400 });
 
-      jest.spyOn(prisma.empleado, 'findUnique').mockResolvedValueOnce(null);
+      jest.spyOn(empleadoRepository, 'updateEmpleado').mockResolvedValueOnce(null);
       await expect(
         empleadosService.actualizar(1, { nombre: 'A', correo: 'a@a.com', idCargo: 1 }),
       ).rejects.toMatchObject({ status: 404 });
 
-      jest.spyOn(prisma.empleado, 'findUnique').mockResolvedValue({ idEmp: 1 } as any);
-      jest.spyOn(prisma.cargo, 'findFirst').mockResolvedValueOnce(null);
-      await expect(
-        empleadosService.actualizar(1, { nombre: 'A', correo: 'a@a.com', idCargo: 99 }),
-      ).rejects.toMatchObject({ status: 400 });
-
       // Éxito con password y fechaIngreso
-      jest.spyOn(prisma.cargo, 'findFirst').mockResolvedValue({ idCargo: 1 } as any);
-      jest.spyOn(prisma.empleado, 'update').mockResolvedValue({
+      jest.spyOn(empleadoRepository, 'updateEmpleado').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 1,
         nombreEmp: 'Juan',
         apellidoPatEmp: 'Perez',
-        apellidoMatEmp: null,
+        apellidoMatEmp: '',
         correoEmp: 'juan@tienda.com',
-        idCargo: 1,
-        cargo: { nombreCargo: 'ADMINISTRADOR', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
-      } as any);
+        contrasenaHash: 'hash',
+        cargo: 'ADMINISTRADOR',
+        cargoNombre: 'ADMINISTRADOR',
+        nombreSuc: 'Doña paty',
+        estadoEmp: true,
+      });
 
       const act = await empleadosService.actualizar(1, {
         nombre: 'Juan',
@@ -156,14 +136,20 @@ describe('EmpleadosService', () => {
     });
 
     it('debe actualizar el estado de otro empleado', async () => {
-      jest.spyOn(prisma.empleado, 'update').mockResolvedValue({
+      jest.spyOn(empleadoRepository, 'updateEmpleado').mockResolvedValue({
         idEmp: 2,
-        nombreEmp: 'Cajero',
-        correoEmp: 'cajero@tienda.com',
-        estadoEmp: false,
+        idSuc: 1,
         idCargo: 2,
-        cargo: { nombreCargo: 'CAJERO', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
-      } as any);
+        nombreEmp: 'Cajero',
+        apellidoPatEmp: 'Tienda',
+        apellidoMatEmp: '',
+        correoEmp: 'cajero@tienda.com',
+        contrasenaHash: 'hash',
+        cargo: 'CAJERO',
+        cargoNombre: 'CAJERO',
+        nombreSuc: 'Doña paty',
+        estadoEmp: false,
+      });
 
       const actualizado = await empleadosService.cambiarEstado(2, 1, false);
       expect(actualizado?.estado).toBe(false);

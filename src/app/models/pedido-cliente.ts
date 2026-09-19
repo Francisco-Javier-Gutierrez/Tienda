@@ -26,9 +26,8 @@ export interface ConfiguracionTransferenciaDto {
 }
 
 export interface DetallePedidoCliente {
-  id?: string;
-  productoId?: string;
-  idPro?: string | number;
+  id: string;
+  productoId: string;
   nombre: string;
   imagen: string | null;
   presentacion: string | null;
@@ -39,7 +38,6 @@ export interface DetallePedidoCliente {
 
 export interface PedidoClienteResumen {
   id: string;
-  idPedido?: string | number;
   folio: string;
   uuidPedido: string;
   fechaPedido: string;
@@ -49,8 +47,7 @@ export interface PedidoClienteResumen {
   tieneComprobante: boolean;
   fechaComprobante: string | null;
   motivoRechazo: string | null;
-  idVenta?: string | number | null;
-  ventaId?: string | number | null;
+  ventaId?: string | null;
   fechaRevision: string | null;
 }
 
@@ -68,14 +65,18 @@ export interface PedidoCliente extends PedidoClienteResumen {
   comprobante?: ComprobantePedidoInfo | null;
 }
 
+export interface CrearPedidoItem {
+  id: string;
+  cantidad: number;
+}
+
 export interface CrearPedidoRequest {
   uuidPedido: string;
-  items: Array<{ id?: string; productoId?: string; idPro?: string | number; cantidad: number }>;
+  items: CrearPedidoItem[];
 }
 
 export interface ClientePedidoAdmin {
   id: string;
-  idCliente?: string | number;
   nombre: string;
   correo: string;
   foto: string | null;
@@ -90,7 +91,6 @@ export interface ComprobantePedidoAdmin {
 
 export interface PedidoAdminResumen {
   id: string;
-  idPedido?: string | number;
   folio: string;
   uuidPedido: string;
   fechaPedido: string;
@@ -102,8 +102,8 @@ export interface PedidoAdminResumen {
   comprobanteUrl?: string | null;
   fechaRevision: string | null;
   motivoRechazo: string | null;
-  idVenta?: string | number | null;
-  ventaId?: string | number | null;
+  idVenta?: string | null;
+  ventaId?: string | null;
   cliente: ClientePedidoAdmin;
 }
 
@@ -112,3 +112,4 @@ export interface PedidoAdminDetalle extends PedidoAdminResumen {
   configuracionTransferencia: ConfiguracionTransferencia | null;
   items: DetallePedidoCliente[];
 }
+

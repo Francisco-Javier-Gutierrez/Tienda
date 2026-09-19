@@ -1,8 +1,16 @@
 import request from 'supertest';
 import { app } from '../src/app';
-import { prisma } from '../src/config/prisma';
 import { emitirSesionCliente, emitirSesionEmpleado } from '../src/utils/security';
 import { pedidosService } from '../src/modules/pedidos/pedidos.service';
+import { authRepository } from '../src/db/repositories/auth.repository';
+import { sucursalRepository } from '../src/db/repositories/sucursal.repository';
+import { catalogoRepository } from '../src/db/repositories/catalogo.repository';
+import { productoRepository } from '../src/db/repositories/producto.repository';
+import { cajaRepository } from '../src/db/repositories/caja.repository';
+import { ventaRepository } from '../src/db/repositories/venta.repository';
+import { empleadoRepository } from '../src/db/repositories/empleado.repository';
+import { configuracionRepository } from '../src/db/repositories/configuracion.repository';
+import { pedidoRepository } from '../src/db/repositories/pedido.repository';
 
 describe('App End-to-End Integration Tests', () => {
   const tokenAdmin = emitirSesionEmpleado({ idEmp: 1 });
@@ -10,24 +18,30 @@ describe('App End-to-End Integration Tests', () => {
   const tokenCliente = emitirSesionCliente({ idCliente: 10 });
 
   beforeEach(() => {
-    jest.spyOn(prisma.empleado, 'findUnique').mockImplementation(((args: any) => {
-      if (args?.where?.idEmp === 1) {
+    jest.spyOn(authRepository, 'findEmpleadoById').mockImplementation(((idEmp: any) => {
+      if (Number(idEmp) === 1) {
         return Promise.resolve({
           idEmp: 1,
           idCargo: 1,
           estadoEmp: true,
-          cargo: { nombreCargo: 'ADMINISTRADOR', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
+          cargoNombre: 'ADMINISTRADOR',
+          cargo: 'ADMINISTRADOR',
+          idSuc: 1,
+          nombreSuc: 'Central',
         });
       }
       return Promise.resolve({
         idEmp: 2,
         idCargo: 2,
         estadoEmp: true,
-        cargo: { nombreCargo: 'CAJERO', idSuc: 1, sucursal: { nombreSuc: 'Central' } },
+        cargoNombre: 'CAJERO',
+        cargo: 'CAJERO',
+        idSuc: 1,
+        nombreSuc: 'Central',
       });
     }) as any);
 
-    jest.spyOn(prisma.cliente, 'findUnique').mockResolvedValue({
+    jest.spyOn(authRepository, 'findClienteById').mockResolvedValue({
       idCliente: 10,
       estadoCliente: true,
     } as any);
@@ -39,7 +53,7 @@ describe('App End-to-End Integration Tests', () => {
 
   describe('Rutas Públicas', () => {
     it('GET /public/tienda debe responder 200 con lista de tiendas', async () => {
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([
+      jest.spyOn(sucursalRepository, 'getPublic').mockResolvedValue([
         {
           idSuc: 1,
           nombreSuc: 'Sucursal Matriz',
@@ -51,11 +65,11 @@ describe('App End-to-End Integration Tests', () => {
       const res = await request(app).get('/public/tienda');
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body[0].nombreSuc).toBe('Sucursal Matriz');
+      expect(res.body[0].nombre).toBe('Sucursal Matriz');
     });
 
     it('GET /public/productos debe responder 200 con catálogo público activo', async () => {
-      jest.spyOn(prisma.producto, 'findMany').mockResolvedValue([
+      jest.spyOn(productoRepository, 'listProductos').mockResolvedValue([
         {
           idPro: 1,
           nombrePro: 'Jugo de Naranja',
@@ -65,8 +79,8 @@ describe('App End-to-End Integration Tests', () => {
           presentacionPro: 'Botella',
           tipoPro: 'Bebida',
           imagenPro: null,
-          marca: { nombreMarca: 'Del Valle' },
-          categoria: { nombreCat: 'Bebidas' },
+          nombreMarca: 'Del Valle',
+          nombreCat: 'Bebidas',
         } as any,
       ]);
 
@@ -79,48 +93,47 @@ describe('App End-to-End Integration Tests', () => {
 
   describe('Rutas de Rutas y Middleware', () => {
     it('Catalogos, Productos POS, Caja, Ventas y Empleados routers', async () => {
-      jest.spyOn(prisma.marca, 'findMany').mockResolvedValue([]);
+      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([]);
       const rMarcas = await request(app).get('/marca').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rMarcas.status).toBe(200);
 
-      jest.spyOn(prisma.categoria, 'findMany').mockResolvedValue([]);
+      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([]);
       const rCat = await request(app).get('/categoria').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rCat.status).toBe(200);
 
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([]);
+      jest.spyOn(sucursalRepository, 'getById').mockResolvedValue(null);
       const rSuc = await request(app).get('/sucursal').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rSuc.status).toBe(200);
 
-      jest.spyOn(prisma.cargo, 'findMany').mockResolvedValue([]);
+      jest.spyOn(catalogoRepository, 'listCargos').mockResolvedValue([]);
       const rCargos = await request(app).get('/cargos').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rCargos.status).toBe(200);
 
-      jest.spyOn(prisma.producto, 'findMany').mockResolvedValue([]);
+      jest.spyOn(productoRepository, 'listProductos').mockResolvedValue([]);
       const rPos = await request(app).get('/pos/productos').set('Authorization', `Bearer ${tokenCajero}`);
       expect(rPos.status).toBe(200);
 
-      jest.spyOn(prisma.sesionCaja, 'findFirst').mockResolvedValue(null);
+      jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValue(null);
       const rCaja = await request(app).get('/caja/actual').set('Authorization', `Bearer ${tokenCajero}`);
       expect(rCaja.status).toBe(200);
 
-      jest.spyOn(prisma.venta, 'findMany').mockResolvedValue([]);
+      jest.spyOn(ventaRepository, 'listVentas').mockResolvedValue([]);
       const rVentas = await request(app).get('/ventas').set('Authorization', `Bearer ${tokenCajero}`);
       expect(rVentas.status).toBe(200);
 
-      jest.spyOn(prisma.empleado, 'findMany').mockResolvedValue([]);
+      jest.spyOn(empleadoRepository, 'listEmpleados').mockResolvedValue([]);
       const rEmp = await request(app).get('/empleados').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rEmp.status).toBe(200);
     });
 
     it('Configuracion y Pedidos routers', async () => {
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue(null);
       const rConfAdmin = await request(app)
         .get('/configuracion/transferencia')
         .set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rConfAdmin.status).toBe(200);
 
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([{ idSuc: 1 }] as any);
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({
         idConfiguracion: 1,
         idSuc: 1,
         banco: 'BBVA',
@@ -133,7 +146,7 @@ describe('App End-to-End Integration Tests', () => {
         .set('Authorization', `Bearer ${tokenCliente}`);
       expect(rConfCli.status).toBe(200);
 
-      jest.spyOn(prisma.pedidoCliente, 'findMany').mockResolvedValue([]);
+      jest.spyOn(pedidoRepository, 'listPedidosCliente').mockResolvedValue([]);
       const rPedCli = await request(app).get('/cliente/pedidos').set('Authorization', `Bearer ${tokenCliente}`);
       expect(rPedCli.status).toBe(200);
 
@@ -145,6 +158,7 @@ describe('App End-to-End Integration Tests', () => {
       const rPedCliCanc = await request(app).post('/cliente/pedidos/1/cancelar').set('Authorization', `Bearer ${tokenCliente}`);
       expect(rPedCliCanc.status).toBe(200);
 
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValue([]);
       const rPedAdmin = await request(app).get('/admin/pedidos').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rPedAdmin.status).toBe(200);
 

@@ -1,4 +1,3 @@
-import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { googleClient } from '../../config/google';
 import {
@@ -9,11 +8,11 @@ import {
   clienteSeguro,
 } from '../../utils/security';
 import { texto, errorFuncional } from '../../utils/formatters';
-import { authRepository } from '../../db/repositories/auth.repository';
-import { sucursalRepository } from '../../db/repositories/sucursal.repository';
-
+import { authRepository, AuthRepository } from '../../db/repositories/auth.repository';
 
 export class AuthService {
+  constructor(private authRepo: AuthRepository = authRepository) {}
+
   async loginEmpleado(correoInput: string, passwordInput: string) {
     const correo = texto(correoInput).toLowerCase();
     const password = typeof passwordInput === 'string' ? passwordInput : '';
@@ -22,56 +21,23 @@ export class AuthService {
       throw errorFuncional('Correo y contraseña son obligatorios', 400);
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      const empleado = await authRepository.findEmpleadoByEmail(correo);
-      if (!empleado?.contrasenaHash || !(await comparePassword(password, empleado.contrasenaHash))) {
-        throw errorFuncional('Correo o contraseña incorrectos', 401);
-      }
-      if (!empleado.estadoEmp) {
-        throw errorFuncional('Tu cuenta está desactivada', 403);
-      }
-      const cargoNombre = empleado.cargoNombre || 'ADMINISTRADOR';
-      if (!['ADMINISTRADOR', 'CAJERO'].includes(cargoNombre)) {
-        throw errorFuncional('Tu cuenta no tiene un cargo autorizado', 403);
-      }
-      const empSeguro = empleadoSeguro({
-        ...empleado,
-        cargo: cargoNombre,
-        idSuc: empleado.idSuc || 1,
-        nombreSuc: 'Doña paty',
-      });
-      return { token: emitirSesionEmpleado(empSeguro), empleado: empSeguro };
-    }
-
-    const empleado = await prisma.empleado.findFirst({
-
-      where: { correoEmp: { equals: correo, mode: 'insensitive' } },
-      include: {
-        cargo: {
-          include: { sucursal: true },
-        },
-      },
-    });
-
+    const empleado = await this.authRepo.findEmpleadoByEmail(correo);
     if (!empleado?.contrasenaHash || !(await comparePassword(password, empleado.contrasenaHash))) {
       throw errorFuncional('Correo o contraseña incorrectos', 401);
     }
-
     if (!empleado.estadoEmp) {
       throw errorFuncional('Tu cuenta está desactivada', 403);
     }
-
-    if (!empleado.cargo?.nombreCargo || !['ADMINISTRADOR', 'CAJERO'].includes(empleado.cargo.nombreCargo)) {
+    const cargoNombre = empleado.cargoNombre || empleado.cargo || 'ADMINISTRADOR';
+    if (!['ADMINISTRADOR', 'CAJERO'].includes(cargoNombre)) {
       throw errorFuncional('Tu cuenta no tiene un cargo autorizado', 403);
     }
-
     const empSeguro = empleadoSeguro({
       ...empleado,
-      cargo: empleado.cargo.nombreCargo,
-      idSuc: empleado.cargo.idSuc,
-      nombreSuc: empleado.cargo.sucursal?.nombreSuc,
+      cargo: cargoNombre,
+      idSuc: empleado.idSuc || 1,
+      nombreSuc: empleado.nombreSuc || 'Doña paty',
     });
-
     return { token: emitirSesionEmpleado(empSeguro), empleado: empSeguro };
   }
 
@@ -93,14 +59,7 @@ export class AuthService {
       throw errorFuncional('No fue posible verificar la cuenta de Google', 401);
     }
 
-    let empleado = await prisma.empleado.findFirst({
-      where: { correoEmp: { equals: perfil.email.toLowerCase(), mode: 'insensitive' } },
-      include: {
-        cargo: {
-          include: { sucursal: true },
-        },
-      },
-    });
+    let empleado = await this.authRepo.findEmpleadoByEmail(perfil.email.toLowerCase());
 
     if (!empleado) {
       throw errorFuncional('Esta cuenta no está autorizada para acceder', 403);
@@ -110,31 +69,28 @@ export class AuthService {
       throw errorFuncional('Tu cuenta está desactivada', 403);
     }
 
-    if (!empleado.cargo?.nombreCargo || !['ADMINISTRADOR', 'CAJERO'].includes(empleado.cargo.nombreCargo)) {
+    const cargoNombre = empleado.cargoNombre || empleado.cargo || 'ADMINISTRADOR';
+    if (!['ADMINISTRADOR', 'CAJERO'].includes(cargoNombre)) {
       throw errorFuncional('Tu cuenta no tiene un cargo autorizado', 403);
     }
 
-    if (empleado.googleSub && empleado.googleSub !== perfil.sub) {
+    const empAny = empleado as any;
+    if (empAny.googleSub && empAny.googleSub !== perfil.sub) {
       throw errorFuncional('Esta cuenta Google no coincide con la cuenta vinculada', 403);
     }
 
-    if (!empleado.googleSub) {
-      empleado = await prisma.empleado.update({
-        where: { idEmp: empleado.idEmp },
-        data: { googleSub: perfil.sub },
-        include: {
-          cargo: {
-            include: { sucursal: true },
-          },
-        },
-      });
+    if (!empAny.googleSub) {
+      const actualizado = await this.authRepo.updateEmpleadoGoogleSub(empleado.idEmp, perfil.sub);
+      if (actualizado) {
+        empleado = actualizado;
+      }
     }
 
     const empSeguro = empleadoSeguro({
       ...empleado,
-      cargo: empleado.cargo?.nombreCargo,
-      idSuc: empleado.cargo?.idSuc,
-      nombreSuc: empleado.cargo?.sucursal?.nombreSuc,
+      cargo: cargoNombre,
+      idSuc: empleado.idSuc || 1,
+      nombreSuc: empleado.nombreSuc || 'Doña paty',
     });
 
     return { token: emitirSesionEmpleado(empSeguro), empleado: empSeguro };
@@ -148,72 +104,31 @@ export class AuthService {
     const apellidoPat = texto(perfil.family_name).slice(0, 100) || null;
     const fotoPerfil = texto(perfil.picture) || null;
 
-    if (process.env.DYNAMODB_TABLE) {
-      let cliente = await authRepository.findClienteByGoogleSub(googleSub);
-      if (!cliente) {
-        cliente = await authRepository.findClienteByEmail(correo);
-        if (cliente && cliente.googleSub && cliente.googleSub !== googleSub) {
-          throw errorFuncional('Esta cuenta Google no coincide con la cuenta de cliente vinculada', 403);
-        }
+    let cliente = await this.authRepo.findClienteByGoogleSub(googleSub);
+    if (!cliente) {
+      cliente = await this.authRepo.findClienteByEmail(correo);
+      if (cliente && cliente.googleSub && cliente.googleSub !== googleSub) {
+        throw errorFuncional('Esta cuenta Google no coincide con la cuenta de cliente vinculada', 403);
       }
-      if (cliente && !cliente.estadoCliente) {
-        throw errorFuncional('Tu cuenta de cliente está desactivada', 403);
-      }
-      if (!cliente) {
-        cliente = await authRepository.createCliente({
-          nombreCliente: nombre,
-          apellidoPatCliente: apellidoPat || undefined,
-          correoCliente: correo,
-          googleSub,
-          fotoPerfil: fotoPerfil || undefined,
-        });
-      }
-      return cliente;
     }
-
-    return await prisma.$transaction(async (tx: any) => {
-
-      let cliente = await tx.cliente.findUnique({
-        where: { googleSub },
+    if (cliente && !cliente.estadoCliente) {
+      throw errorFuncional('Tu cuenta de cliente está desactivada', 403);
+    }
+    if (!cliente) {
+      cliente = await this.authRepo.createCliente({
+        nombreCliente: nombre,
+        apellidoPatCliente: apellidoPat || undefined,
+        correoCliente: correo,
+        googleSub,
+        fotoPerfil: fotoPerfil || undefined,
       });
-
-      if (!cliente) {
-        cliente = await tx.cliente.findFirst({
-          where: { correoCliente: { equals: correo, mode: 'insensitive' } },
-        });
-        if (cliente && cliente.googleSub !== googleSub) {
-          throw errorFuncional('Esta cuenta Google no coincide con la cuenta de cliente vinculada', 403);
-        }
+    } else {
+      const actualizado = await this.authRepo.updateClienteUltimoAcceso(cliente.idCliente, fotoPerfil || cliente.fotoPerfil);
+      if (actualizado) {
+        cliente = actualizado;
       }
-
-      if (cliente && !cliente.estadoCliente) {
-        throw errorFuncional('Tu cuenta de cliente está desactivada', 403);
-      }
-
-      if (!cliente) {
-        cliente = await tx.cliente.create({
-          data: {
-            nombreCliente: nombre,
-            apellidoPatCliente: apellidoPat,
-            correoCliente: correo,
-            googleSub,
-            fotoPerfil,
-            estadoCliente: true,
-            ultimoAcceso: new Date(),
-          },
-        });
-      } else {
-        cliente = await tx.cliente.update({
-          where: { idCliente: cliente.idCliente },
-          data: {
-            ultimoAcceso: new Date(),
-            fotoPerfil: fotoPerfil || cliente.fotoPerfil,
-          },
-        });
-      }
-
-      return cliente;
-    });
+    }
+    return cliente;
   }
 
   async googleAuthCliente(idToken: string) {
@@ -240,4 +155,3 @@ export class AuthService {
 }
 
 export const authService = new AuthService();
-

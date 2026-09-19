@@ -5,17 +5,25 @@ import { environment } from '../../environments/environment';
 import { Categoria } from '../models/categoria';
 import { Marca } from '../models/marca';
 
-export interface CatalogoDto {
-  nombre: string;
-  descripcion: string;
-}
+import { CatalogoDto, CategoriaCatalogService, MarcaCatalogService } from './catalogos.interface';
+export { CatalogoDto };
+
+/**
+ * =========================================================================
+ * Interface Segregation Principle (ISP) - Catalogos Service
+ * =========================================================================
+ * Implementa las interfaces segregadas MarcaCatalogService y CategoriaCatalogService.
+ * Los consumidores pueden inyectar o tipar este servicio según la funcionalidad
+ * específica que consumen sin acoplarse al resto del catálogo.
+ */
+import { API_BASE_URL } from './tokens';
 
 @Injectable({
   providedIn: 'root',
 })
-export class CatalogosService {
+export class CatalogosService implements MarcaCatalogService, CategoriaCatalogService {
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = environment.API_BASE_URL;
+  private readonly apiBaseUrl = inject(API_BASE_URL);
 
   getMarcas(): Observable<Marca[]> {
     return this.http.get<Marca[]>(`${this.apiBaseUrl}/marca`);

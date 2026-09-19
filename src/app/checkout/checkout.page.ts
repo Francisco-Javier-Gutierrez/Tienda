@@ -12,10 +12,8 @@ import { PedidosClienteService } from '../services/pedidos-cliente.service';
 
 interface ProductoPublicoStock {
   id: string;
-  existencia?: number | null;
-  precioVenta?: number;
-  existenciaPro?: number | null;
-  precioVentaPro?: number;
+  existencia: number;
+  precioVenta: number;
 }
 
 @Component({
@@ -76,7 +74,10 @@ export class CheckoutPage implements OnInit {
       const pedido = await firstValueFrom(
         this.pedidos.crearPedido({
           uuidPedido: this.uuidIntento(),
-          items: this.carrito.items.map((item) => ({ id: item.id, cantidad: item.cantidad })),
+          items: this.carrito.items.map((item) => ({
+            id: item.id,
+            cantidad: item.cantidad,
+          })),
         }),
       );
       this.pedido = pedido;
@@ -109,14 +110,15 @@ export class CheckoutPage implements OnInit {
   seleccionarArchivo(event: Event): void {
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0] || null;
-    if (
-      !archivo ||
-      !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(archivo.type) ||
-      archivo.size > 5 * 1024 * 1024
-    ) {
+    const ext = archivo?.name.split('.').pop()?.toLowerCase() || '';
+    const esTipoValido =
+      archivo &&
+      (['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(archivo.type) ||
+        ['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext));
+    if (!archivo || !esTipoValido || archivo.size > 10 * 1024 * 1024) {
       this.archivo = null;
       input.value = '';
-      void this.feedback('Selecciona una imagen JPG, PNG, WEBP o un PDF de máximo 5 MB.', 'warning');
+      void this.feedback('Selecciona una imagen JPG, PNG, WEBP o un PDF de máximo 10 MB.', 'warning');
       return;
     }
     this.archivo = archivo;

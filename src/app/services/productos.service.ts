@@ -1,32 +1,31 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap } from 'rxjs';
+import { catchError, Observable, switchMap } from 'rxjs';
 import { CrearProductoDto, Producto, ProductoResponse } from '../models/productos';
 import { environment } from '../../environments/environment';
 import { ImagenesService } from './imagenes.service';
 
-export interface ProductoPublico {
-  id: string;
-  nombre: string;
-  precioVenta: number;
-  existencia: number;
-  codigoQR: string | null;
-  sku: string | null;
-  imagen: string | null;
-  tamano: string | null;
-  presentacion: string | null;
-  marca: string | null;
-  categoria: string | null;
-  encontrado?: boolean;
-  fuente?: string;
-  imagenUrl?: string;
-}
+import {
+  ProductoPublico,
+  ProductosOperations,
+} from './productos.interface';
+export { ProductoPublico };
+
+/**
+ * =========================================================================
+ * Interface Segregation Principle (ISP) - Productos Service
+ * =========================================================================
+ * Implementa la interfaz compuesta ProductosOperations que agrupa contratos
+ * segregados (ProductoReader, ProductoWriter, ProductoMediaHandler, ProductoExternalLookup).
+ */
+import { API_BASE_URL } from './tokens';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ProductosService {
-  private readonly apiUrl = `${environment.API_BASE_URL}/productos`;
+export class ProductosService implements ProductosOperations {
+  private readonly apiBaseUrl = inject(API_BASE_URL);
+  private readonly apiUrl = `${this.apiBaseUrl}/productos`;
   private readonly http = inject(HttpClient);
   private readonly imagenes = inject(ImagenesService);
 
@@ -76,6 +75,11 @@ export class ProductosService {
               ),
             ),
         ),
+        catchError(() => {
+          const formData = new FormData();
+          formData.append('imagen', imagen, nombreArchivo || 'producto.jpg');
+          return this.http.post<ProductoResponse>(`${this.apiUrl}/${idPro}/imagen`, formData);
+        }),
       );
   }
 

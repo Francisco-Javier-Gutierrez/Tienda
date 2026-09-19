@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'www',
 
   server: {
-    androidScheme: 'http',
+    androidScheme: 'https',
     cleartext: true
   },
 
@@ -15,6 +15,10 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true
   },
   plugins: {
+    CapacitorUpdater: {
+      autoUpdate: false,
+      resetWhenUpdate: false
+    },
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#fff7fc'

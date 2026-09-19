@@ -6,17 +6,12 @@ export class ImagenesService {
   readonly AVATAR_GENERICO = 'assets/img/default-avatar.svg';
   private readonly fallidas = new Set<string>();
 
+  private readonly S3_BASE_URL = 'https://tienda-donapaty-uploads.s3.us-east-1.amazonaws.com';
+
   constructor() {
     try {
-      const guardadas = sessionStorage.getItem('tienda_img_fallidas');
-      if (guardadas) {
-        const parsed = JSON.parse(guardadas);
-        if (Array.isArray(parsed)) {
-          parsed.forEach((url) => {
-            if (typeof url === 'string') this.fallidas.add(url);
-          });
-        }
-      }
+      // Limpiar URLs fallidas guardadas anteriormente para permitir recarga de imágenes ahora activas
+      sessionStorage.removeItem('tienda_img_fallidas');
     } catch {
       // Ignorar errores en entornos sin sessionStorage
     }
@@ -27,6 +22,9 @@ export class ImagenesService {
     const url = ruta.trim();
     if (!url || this.esFallida(url)) return null;
     if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('tienda/') || url.startsWith('productos/') || url.startsWith('comprobantes/')) {
+      return `${this.S3_BASE_URL}/${url}`;
+    }
     return url.startsWith('/') ? `${environment.API_BASE_URL}${url}` : url;
   }
 

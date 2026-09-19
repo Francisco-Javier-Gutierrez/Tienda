@@ -1,0 +1,39 @@
+﻿{
+  "project_info": {
+    "project_number": "1021600656444",
+    "project_id": "donapaty",
+    "storage_bucket": "donapaty.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1021600656444:android:cab441348fc8b9c3336739",
+        "android_client_info": {
+          "package_name": "com.donapaty.tienda"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1021600656444-237n4efb7sifec7rnj80rk2ndro66t6d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASkc_-pIxSKJKvkmkH1-2hwEhdvsOtpIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1021600656444-237n4efb7sifec7rnj80rk2ndro66t6d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

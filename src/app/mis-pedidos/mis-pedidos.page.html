@@ -66,9 +66,21 @@
               <span class="font-heading font-bold text-xl text-primary">{{ pedido.total | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
             </div>
             
-            <button [routerLink]="[pedido.id]" class="w-full bg-surface-container hover:bg-primary-container hover:text-on-primary-container text-primary font-sans font-semibold text-sm py-3 rounded-xl transition-colors active:scale-95 flex items-center justify-center gap-2 border border-primary/10">
-              Ver Detalle del Pedido
-              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            <button
+              [routerLink]="[pedido.id]"
+              class="w-full font-sans font-semibold text-sm py-3 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+              [ngClass]="{
+                'bg-primary hover:bg-primary-container text-on-primary shadow-sm': pedido.estado === 'PENDIENTE_PAGO',
+                'bg-error-container hover:bg-error text-on-error-container hover:text-on-error shadow-sm': pedido.estado === 'RECHAZADO',
+                'bg-surface-container hover:bg-primary-container hover:text-on-primary-container text-primary border border-primary/10': pedido.estado !== 'PENDIENTE_PAGO' && pedido.estado !== 'RECHAZADO'
+              }"
+            >
+              <span class="material-symbols-outlined text-[18px]" *ngIf="pedido.estado === 'PENDIENTE_PAGO'">cloud_upload</span>
+              <span class="material-symbols-outlined text-[18px]" *ngIf="pedido.estado === 'RECHAZADO'">refresh</span>
+              <span *ngIf="pedido.estado === 'PENDIENTE_PAGO'">Pagar / Adjuntar comprobante</span>
+              <span *ngIf="pedido.estado === 'RECHAZADO'">Subir nuevo comprobante</span>
+              <span *ngIf="pedido.estado !== 'PENDIENTE_PAGO' && pedido.estado !== 'RECHAZADO'">Ver Detalle del Pedido</span>
+              <span class="material-symbols-outlined text-[18px]" *ngIf="pedido.estado !== 'PENDIENTE_PAGO' && pedido.estado !== 'RECHAZADO'">arrow_forward</span>
             </button>
           </div>
         </article>

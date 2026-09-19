@@ -41,8 +41,32 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+Write-Host "`nGenerando paquete de actualizacion en vivo (OTA) para la app movil..."
+$Version = (Get-Date -Format "yyyyMMdd.HHmm")
+$WwwDir = (Resolve-Path (Join-Path $PSScriptRoot "..\www")).Path
+$UpdatesDir = Join-Path $WwwDir "updates"
+if (-not (Test-Path $UpdatesDir)) {
+    New-Item -ItemType Directory -Path $UpdatesDir -Force | Out-Null
+}
+
+$ZipPath = Join-Path $UpdatesDir "bundle-$Version.zip"
+$ItemsToZip = Get-ChildItem -Path $WwwDir | Where-Object { $_.Name -ne "updates" }
+Compress-Archive -Path $ItemsToZip.FullName -DestinationPath $ZipPath -Force
+
+$CloudFrontUrl = "https://d1a6rub2w65qdc.cloudfront.net"
+$Manifest = [ordered]@{
+    version   = $Version
+    url       = "$CloudFrontUrl/updates/bundle-$Version.zip"
+    mandatory = $false
+    updatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+}
+$ManifestJson = $Manifest | ConvertTo-Json
+$ManifestPath = Join-Path $UpdatesDir "version.json"
+[System.IO.File]::WriteAllText($ManifestPath, $ManifestJson, [System.Text.Encoding]::UTF8)
+Write-Host "Paquete OTA v$Version generado exitosamente."
+
 Write-Host "`nSincronizando carpeta www/ con S3..."
-aws s3 sync www/ "s3://$BucketName" --profile $Profile --region $Region --delete
+aws s3 sync www/ "s3://$BucketName" --profile $Profile --region $Region --delete --exclude "downloads/*"
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Fallo la sincronizacion a S3."
     exit 1

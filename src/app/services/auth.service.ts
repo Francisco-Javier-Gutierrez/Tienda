@@ -7,6 +7,7 @@ import { AuthSession, EmpleadoSesion, Rol } from '../models/auth';
 import { AuthSessionStore } from './auth-session.service';
 import { GoogleIdentityService } from './google-identity.service';
 import { SqliteService } from './sqlite.service';
+import { PushNotificationService } from './push-notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -15,6 +16,7 @@ export class AuthService {
   private readonly store = inject(AuthSessionStore);
   private readonly google = inject(GoogleIdentityService);
   private readonly sqlite = inject(SqliteService);
+  private readonly pushService = inject(PushNotificationService);
   readonly sesion$ = this.store.sesion$;
 
   get sesion(): AuthSession | null {
@@ -77,6 +79,7 @@ export class AuthService {
 
   guardarSesion(sesion: AuthSession, password?: string): void {
     this.store.guardar(sesion);
+    void this.pushService.sincronizarTokenConBackend();
     if (this.sqlite.disponible && sesion.empleado) {
       void this.sqlite.guardarUsuarioOffline(sesion.empleado, password);
     }
@@ -103,6 +106,7 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    await this.pushService.desregistrarToken();
     this.store.limpiar();
     await this.google.logout();
     await this.router.navigateByUrl('/login', { replaceUrl: true });

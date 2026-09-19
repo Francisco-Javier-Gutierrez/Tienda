@@ -14,7 +14,10 @@
       </p>
     </header>
     <div class="filters flex flex-wrap items-end gap-3 my-4">
-      <ion-input type="date" label="Fecha" labelPlacement="stacked" [(ngModel)]="fecha" class="w-48"></ion-input>
+      <div class="w-52">
+        <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">Fecha</label>
+        <app-custom-datepicker [(ngModel)]="fecha" placeholder="Todas las fechas" title="Filtrar por fecha"></app-custom-datepicker>
+      </div>
       <div class="w-48">
         <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">Estado</label>
         <app-custom-select [(ngModel)]="estado" [options]="opcionesEstado" placeholder="Todos"></app-custom-select>

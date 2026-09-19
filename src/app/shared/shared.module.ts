@@ -6,6 +6,7 @@ import { IonicModule } from '@ionic/angular';
 import { AdminShellComponent } from './admin-shell/admin-shell.component';
 import { CatalogoModalComponent } from './catalogo-modal/catalogo-modal.component';
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
+import { CustomDatepickerComponent } from './custom-datepicker/custom-datepicker.component';
 import { CustomSelectComponent } from './custom-select/custom-select.component';
 import { ModalShellComponent } from './modal-shell/modal-shell.component';
 import { ProductCardComponent } from './product-card/product-card.component';
@@ -14,6 +15,7 @@ import { ProductCardComponent } from './product-card/product-card.component';
   declarations: [
     AdminShellComponent,
     ConfirmDialogComponent,
+    CustomDatepickerComponent,
     CustomSelectComponent,
     ModalShellComponent,
     CatalogoModalComponent,
@@ -23,6 +25,7 @@ import { ProductCardComponent } from './product-card/product-card.component';
   exports: [
     AdminShellComponent,
     ConfirmDialogComponent,
+    CustomDatepickerComponent,
     CustomSelectComponent,
     ModalShellComponent,
     CatalogoModalComponent,

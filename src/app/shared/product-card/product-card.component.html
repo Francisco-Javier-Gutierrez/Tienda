@@ -112,7 +112,7 @@
       <!-- Price & Admin Cost Info -->
       <div>
         <p class="font-heading font-bold text-base md:text-xl text-primary leading-none">
-          {{ (producto?.precioVenta || producto?.precio || 0) | currency:'MXN' }}
+          {{ (producto?.precioVenta || 0) | currency:'MXN' }}
         </p>
 
         <!-- Admin extra: Costo and profit margin -->

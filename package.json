@@ -12,7 +12,8 @@
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"backend/**/*.{js,ts}\" --ignore-path .prettierignore",
-    "deploy:frontend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-frontend.ps1"
+    "deploy:frontend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-frontend.ps1",
+    "deploy:apk": "powershell -ExecutionPolicy Bypass -File scripts/deploy-apk.ps1"
   },
   "private": true,
   "dependencies": {
@@ -34,10 +35,15 @@
     "@capacitor/haptics": "8.0.2",
     "@capacitor/keyboard": "8.0.2",
     "@capacitor/network": "^8.0.1",
+    "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/share": "^8.0.1",
     "@capacitor/status-bar": "8.0.2",
     "@capgo/capacitor-social-login": "^8.4.5",
+    "@capgo/capacitor-updater": "^8.51.15",
     "@ionic/angular": "^8.0.0",
+    "@ionic/pwa-elements": "^3.4.0",
+    "@undecaf/barcode-detector-polyfill": "^0.9.23",
+    "firebase": "^12.19.0",
     "ionicons": "^7.0.0",
     "jeep-sqlite": "^2.8.0",
     "jspdf": "^4.2.1",

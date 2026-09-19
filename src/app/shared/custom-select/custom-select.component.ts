@@ -8,6 +8,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  ViewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -77,11 +78,16 @@ export class CustomSelectComponent implements ControlValueAccessor, OnChanges {
     if (isDisabled) this.isOpen = false;
   }
 
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
   toggleDropdown(): void {
     if (this.disabled) return;
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.searchQuery = '';
+      setTimeout(() => {
+        this.searchInput?.nativeElement?.focus();
+      }, 120);
     } else {
       this.onTouched();
     }

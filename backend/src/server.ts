@@ -1,15 +1,8 @@
 import { app } from './app';
 import { env } from './config/env';
-import { prisma } from './config/prisma';
+import { TABLE_NAME } from './db/dynamo.client';
 
-prisma
-  .$connect()
-  .then(() => {
-    console.log('Conectado a PostgreSQL mediante Prisma Client');
-  })
-  .catch((error: any) => {
-    console.error('No se pudo conectar a PostgreSQL mediante Prisma:', error?.message || error);
-  });
+console.log(`Backend inicializado con DynamoDB (Tabla: ${TABLE_NAME})`);
 
 const port = env.PORT;
 app.listen(port, '0.0.0.0', () => {

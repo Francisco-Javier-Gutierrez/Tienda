@@ -43,7 +43,7 @@ function crearUploadImagen(directorio: string) {
       filename: (_req, file, callback) =>
         callback(null, `${crypto.randomUUID()}${extensionesImagen.get(file.mimetype) || ''}`),
     }),
-    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
     fileFilter: (_req, file, callback) => {
       if (!extensionesImagen.has(file.mimetype)) {
         return callback(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'imagen'));
@@ -71,7 +71,7 @@ export const uploadComprobante = multer({
     filename: (_req, file, callback) =>
       callback(null, `${crypto.randomUUID()}${extensionesComprobante.get(file.mimetype) || ''}`),
   }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, callback) => {
     if (!extensionesComprobante.has(file.mimetype)) {
       return callback(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'comprobante'));

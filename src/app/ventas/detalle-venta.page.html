@@ -63,9 +63,13 @@
 
         <div class="flex flex-col sm:items-end gap-2 shrink-0">
           <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
-                [ngClass]="v.estado === 'CANCELADA' ? 'bg-error-container text-on-error-container' : 'bg-tertiary-fixed text-tertiary'">
-            <span class="material-symbols-outlined text-[16px]">{{ v.estado === 'CANCELADA' ? 'cancel' : 'check_circle' }}</span>
-            <span>{{ v.estado === 'CANCELADA' ? 'Cancelada' : 'Completada' }}</span>
+                [ngClass]="{
+                  'bg-error-container text-on-error-container': v.estado === 'CANCELADA',
+                  'bg-amber-100 text-amber-800 border border-amber-300/60': v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' || v.estado === 'EN_REVISION',
+                  'bg-tertiary-fixed text-tertiary': v.estado === 'COMPLETADA' || (!v.estado)
+                }">
+            <span class="material-symbols-outlined text-[16px]">{{ v.estado === 'CANCELADA' ? 'cancel' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' || v.estado === 'EN_REVISION' ? 'pending' : 'check_circle') }}</span>
+            <span>{{ v.estado === 'CANCELADA' ? 'Cancelada' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' ? 'Pendiente' : (v.estado === 'EN_REVISION' ? 'En revisión' : 'Completada')) }}</span>
           </span>
           <div class="text-left sm:text-right">
             <span class="font-sans text-[11px] text-on-surface-variant block">Total de la venta</span>

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
-import { ToastController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
@@ -14,6 +14,7 @@ import { SqliteService } from '../services/sqlite.service';
 import { ScanFeedbackService } from '../services/scan-feedback.service';
 import { SyncService } from '../services/sync.service';
 import { DialogService } from '../services/dialog.service';
+import { CatalogoFormData, CatalogoItem } from '../shared/catalogo-modal/catalogo-modal.component';
 
 type ModoProducto = 'crear' | 'editar';
 
@@ -91,6 +92,11 @@ export class ProductosPage implements OnInit {
   nombreFotoPendiente = '';
   previewFotoPendiente: string | null = null;
 
+  mostrarModalCatalogoRapido = false;
+  tipoCatalogoRapido: 'categoría' | 'marca' = 'categoría';
+  itemEditandoRapido: CatalogoItem | null = null;
+  guardandoCatalogoRapido = false;
+
   private readonly formatosComerciales = [
     BarcodeFormat.Ean13,
     BarcodeFormat.Ean8,
@@ -106,6 +112,7 @@ export class ProductosPage implements OnInit {
   private readonly catalogosApi = inject(CatalogosService);
   private readonly sqlite = inject(SqliteService);
   private readonly toastController = inject(ToastController);
+  private readonly alertController = inject(AlertController);
   private readonly dialog = inject(DialogService);
   private readonly scanFeedback = inject(ScanFeedbackService);
   readonly sync = inject(SyncService);
@@ -124,8 +131,16 @@ export class ProductosPage implements OnInit {
         [producto.nombre, producto.codigoQR, producto.sku].some((valor) =>
           (valor || '').toLowerCase().includes(termino),
         );
-      const coincideCategoria = !this.filtroCategoria || Number(producto.categoria?.id) === this.filtroCategoria;
-      const coincideMarca = !this.filtroMarca || Number(producto.marca?.id) === this.filtroMarca;
+      const coincideCategoria =
+        !this.filtroCategoria ||
+        this.filtroCategoria === 0 ||
+        String(producto.categoria?.id) === String(this.filtroCategoria) ||
+        String(producto.idCat) === String(this.filtroCategoria);
+      const coincideMarca =
+        !this.filtroMarca ||
+        this.filtroMarca === 0 ||
+        String(producto.marca?.id) === String(this.filtroMarca) ||
+        String(producto.idMarca) === String(this.filtroMarca);
       const coincideStock = this.filtroStock === 'todos' || this.estadoStock(producto) === this.filtroStock;
       return coincideTexto && coincideCategoria && coincideMarca && coincideStock;
     });
@@ -243,73 +258,66 @@ export class ProductosPage implements OnInit {
     });
   }
 
-  async crearNuevaCategoriaRapida(sugerencia?: string): Promise<void> {
-    const nombre = await this.dialog.prompt({
-      title: 'Nueva categoría',
-      message: 'Ingresa el nombre de la categoría para agregarla al catálogo.',
-      placeholder: 'Ej. Bebidas, Botanas, Lácteos...',
-      initialValue: (sugerencia || '').trim(),
-      confirmText: 'Crear categoría',
-      cancelText: 'Cancelar',
-      minLength: 2,
-      maxLength: 60,
-      isTextarea: false,
-    });
-
-    if (!nombre || !nombre.trim()) return;
-
-    const nombreLimpio = nombre.trim();
-    try {
-      const nueva = await firstValueFrom(
-        this.catalogosApi.crearCategoria({
-          nombre: nombreLimpio,
-          descripcion: '',
-        }),
-      );
-      this.categorias = this.reemplazarPorId(this.categorias, nueva, 'id');
-      if (this.sqlite.disponible) {
-        void this.sqlite.sincronizarCategorias(this.categorias);
-      }
-      this.formProducto.idCat = String(nueva.id);
-      delete this.erroresProducto.idCat;
-      await this.mostrarFeedback(`Categoría "${nueva.nombre}" creada y seleccionada.`, 'success');
-    } catch (error: unknown) {
-      await this.mostrarFeedback(this.mensajeErrorHttp(error, 'No pudimos crear la categoría.'), 'danger');
-    }
+  crearNuevaCategoriaRapida(sugerencia?: string): void {
+    this.tipoCatalogoRapido = 'categoría';
+    this.itemEditandoRapido = sugerencia ? { nombre: sugerencia.trim() } : null;
+    this.mostrarModalCatalogoRapido = true;
   }
 
-  async crearNuevaMarcaRapida(sugerencia?: string): Promise<void> {
-    const nombre = await this.dialog.prompt({
-      title: 'Nueva marca',
-      message: 'Ingresa el nombre de la marca para agregarla al catálogo.',
-      placeholder: 'Ej. Coca-Cola, Bimbo, Sabritas...',
-      initialValue: (sugerencia || '').trim(),
-      confirmText: 'Crear marca',
-      cancelText: 'Cancelar',
-      minLength: 2,
-      maxLength: 60,
-      isTextarea: false,
-    });
+  crearNuevaMarcaRapida(sugerencia?: string): void {
+    this.tipoCatalogoRapido = 'marca';
+    this.itemEditandoRapido = sugerencia ? { nombre: sugerencia.trim() } : null;
+    this.mostrarModalCatalogoRapido = true;
+  }
 
-    if (!nombre || !nombre.trim()) return;
+  cancelarModalCatalogoRapido(): void {
+    this.mostrarModalCatalogoRapido = false;
+    this.itemEditandoRapido = null;
+  }
 
-    const nombreLimpio = nombre.trim();
+  async guardarCatalogoRapido(datos: CatalogoFormData): Promise<void> {
+    if (this.guardandoCatalogoRapido) return;
+    this.guardandoCatalogoRapido = true;
+
     try {
-      const nueva = await firstValueFrom(
-        this.catalogosApi.crearMarca({
-          nombre: nombreLimpio,
-          descripcion: '',
-        }),
-      );
-      this.marcas = this.reemplazarPorId(this.marcas, nueva, 'id');
-      if (this.sqlite.disponible) {
-        void this.sqlite.sincronizarMarcas(this.marcas);
+      if (this.tipoCatalogoRapido === 'categoría') {
+        const nueva = await firstValueFrom(
+          this.catalogosApi.crearCategoria({
+            nombre: datos.nombre,
+            descripcion: datos.descripcion,
+          }),
+        );
+        this.categorias = this.reemplazarPorId(this.categorias, nueva, 'id');
+        if (this.sqlite.disponible) {
+          void this.sqlite.sincronizarCategorias(this.categorias);
+        }
+        this.formProducto.idCat = String(nueva.id);
+        delete this.erroresProducto.idCat;
+        await this.mostrarFeedback(`Categoría "${nueva.nombre}" creada y seleccionada.`, 'success');
+      } else {
+        const nueva = await firstValueFrom(
+          this.catalogosApi.crearMarca({
+            nombre: datos.nombre,
+            descripcion: datos.descripcion,
+          }),
+        );
+        this.marcas = this.reemplazarPorId(this.marcas, nueva, 'id');
+        if (this.sqlite.disponible) {
+          void this.sqlite.sincronizarMarcas(this.marcas);
+        }
+        this.formProducto.idMarca = String(nueva.id);
+        delete this.erroresProducto.idMarca;
+        await this.mostrarFeedback(`Marca "${nueva.nombre}" creada y seleccionada.`, 'success');
       }
-      this.formProducto.idMarca = String(nueva.id);
-      delete this.erroresProducto.idMarca;
-      await this.mostrarFeedback(`Marca "${nueva.nombre}" creada y seleccionada.`, 'success');
+      this.mostrarModalCatalogoRapido = false;
+      this.itemEditandoRapido = null;
     } catch (error: unknown) {
-      await this.mostrarFeedback(this.mensajeErrorHttp(error, 'No pudimos crear la marca.'), 'danger');
+      await this.mostrarFeedback(
+        this.mensajeErrorHttp(error, `No pudimos crear la ${this.tipoCatalogoRapido}.`),
+        'danger',
+      );
+    } finally {
+      this.guardandoCatalogoRapido = false;
     }
   }
 
@@ -361,8 +369,8 @@ export class ProductosPage implements OnInit {
       codigoQR: producto.codigoQR || '',
       sku: producto.sku || '',
       imagen: producto.imagen || '',
-      idMarca: producto.marca?.id ?? null,
-      idCat: producto.categoria?.id ?? null,
+      idMarca: producto.marca?.id ? String(producto.marca.id) : (producto.idMarca ? String(producto.idMarca) : null),
+      idCat: producto.categoria?.id ? String(producto.categoria.id) : (producto.idCat ? String(producto.idCat) : null),
     };
     this.reiniciarFotoPendiente();
     this.erroresProducto = {};
@@ -545,6 +553,14 @@ export class ProductosPage implements OnInit {
     this.leyendoCodigo = true;
     await this.scanFeedback.preparar();
     try {
+      if (!Capacitor.isNativePlatform()) {
+        const soporte = await BarcodeScanner.isSupported().catch(() => ({ supported: false }));
+        if (!soporte.supported) {
+          this.leyendoCodigo = false;
+          await this.tomarFotoParaCodigo();
+          return;
+        }
+      }
       const soporte = await BarcodeScanner.isSupported();
       if (!soporte.supported) {
         this.mensajeBusqueda = 'La cámara no está disponible. Puedes escribir el código manualmente.';
@@ -596,7 +612,7 @@ export class ProductosPage implements OnInit {
     this.leyendoCodigo = true;
     await this.scanFeedback.preparar();
     try {
-      if (origen === CameraSource.Camera) {
+      if (origen === CameraSource.Camera && Capacitor.isNativePlatform()) {
         const permisos = await Camera.checkPermissions();
         const estado =
           permisos.camera === 'granted' ? permisos : await Camera.requestPermissions({ permissions: ['camera'] });
@@ -604,7 +620,7 @@ export class ProductosPage implements OnInit {
           this.mensajeBusqueda = 'Necesitas permitir acceso a la cámara. Puedes escribir el código manualmente.';
           return;
         }
-      } else if (origen === CameraSource.Photos) {
+      } else if (origen === CameraSource.Photos && Capacitor.isNativePlatform()) {
         try {
           const permisos = await Camera.checkPermissions();
           if (permisos.photos !== 'granted') {
@@ -620,13 +636,34 @@ export class ProductosPage implements OnInit {
       }
       const foto = await this.obtenerFoto(origen);
       // En dispositivos nativos (Android/iOS), readBarcodesFromImage requiere una URI de archivo local válida
-      // (por ejemplo file:///data/user/0/... o content://...).
-      // foto.webPath es una URL HTTP de WebView (http://localhost/_capacitor_file_/...) que ContentResolver en Android NO puede abrir.
-      // Por eso priorizamos foto.path y nos aseguramos de que tenga el esquema file:// si es una ruta absoluta.
       let ruta = foto.path || foto.webPath;
       if (!ruta) throw new Error('No se obtuvo una imagen');
       if (ruta.startsWith('/') && !ruta.startsWith('file://') && !ruta.startsWith('content://')) {
         ruta = `file://${ruta}`;
+      }
+
+      if (!Capacitor.isNativePlatform()) {
+        if (typeof (window as any).BarcodeDetector !== 'undefined') {
+          try {
+            const img = new Image();
+            img.src = foto.webPath || ruta;
+            await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+            const detector = new (window as any).BarcodeDetector();
+            const detectados = await detector.detect(img);
+            if (detectados.length > 0) {
+              const codigo = detectados[0].rawValue?.trim();
+              if (codigo) {
+                await this.scanFeedback.feedbackLecturaCorrecta();
+                await this.procesarCodigo(codigo);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('BarcodeDetector web:', e);
+          }
+        }
+        this.mensajeBusqueda = 'Foto tomada. Puedes escribir o confirmar el código en el campo de texto.';
+        return;
       }
 
       const resultado = await BarcodeScanner.readBarcodesFromImage({
@@ -774,13 +811,13 @@ export class ProductosPage implements OnInit {
       allowEditing: false,
       saveToGallery: false,
       correctOrientation: true,
-      webUseInput: true,
+      webUseInput: false,
     });
   }
 
   private async prepararFotoProducto(origen: CameraSource): Promise<void> {
     try {
-      if (origen === CameraSource.Camera) {
+      if (origen === CameraSource.Camera && Capacitor.isNativePlatform()) {
         const permisos = await Camera.checkPermissions();
         const estado =
           permisos.camera === 'granted' ? permisos : await Camera.requestPermissions({ permissions: ['camera'] });
@@ -799,8 +836,8 @@ export class ProductosPage implements OnInit {
         await this.mostrarFeedback('Selecciona una imagen JPEG, PNG o WEBP.', 'warning');
         return;
       }
-      if (blob.size > 5 * 1024 * 1024) {
-        await this.mostrarFeedback('La imagen no puede superar 5 MB.', 'warning');
+      if (blob.size > 10 * 1024 * 1024) {
+        await this.mostrarFeedback('La imagen no puede superar 10 MB.', 'warning');
         return;
       }
       const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
@@ -809,10 +846,37 @@ export class ProductosPage implements OnInit {
       this.previewFotoPendiente = preview;
     } catch (error: unknown) {
       if (!this.esCancelacionCamara(error)) {
-        console.error('No se pudo preparar la foto del producto', error);
-        await this.mostrarFeedback('No pudimos preparar la fotografía seleccionada.', 'danger');
+        console.warn('Fallo Camera.getPhoto en producto, abriendo input web fallback:', error);
+        this.abrirInputWebFotoProducto(origen);
       }
     }
+  }
+
+  private abrirInputWebFotoProducto(origen: CameraSource): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    if (origen === CameraSource.Camera) {
+      input.capture = 'environment';
+    }
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!tiposPermitidos.includes(file.type)) {
+        await this.mostrarFeedback('Selecciona una imagen JPEG, PNG o WEBP.', 'warning');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        await this.mostrarFeedback('La imagen no puede superar 10 MB.', 'warning');
+        return;
+      }
+      const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      this.fotoProductoPendiente = file;
+      this.nombreFotoPendiente = `producto.${extension}`;
+      this.previewFotoPendiente = URL.createObjectURL(file);
+    };
+    input.click();
   }
 
   private reiniciarFotoPendiente(): void {

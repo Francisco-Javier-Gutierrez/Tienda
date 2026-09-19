@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, switchMap } from 'rxjs';
+import { catchError, Observable, switchMap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Sucursal, SucursalDto } from '../models/sucursal';
 import { ImagenesService } from './imagenes.service';
@@ -45,6 +45,11 @@ export class SucursalService {
               ),
             ),
         ),
+        catchError(() => {
+          const formData = new FormData();
+          formData.append('logo', imagen, nombre || 'logo.jpg');
+          return this.http.post<Sucursal>(`${this.apiUrl}/${idSuc}/logo`, formData);
+        }),
       );
   }
 

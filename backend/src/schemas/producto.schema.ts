@@ -16,6 +16,8 @@ export const baseProductoSchema = z.object({
   tamano: z.string().trim().max(100).optional().nullable(),
   presentacion: z.string().trim().max(100).optional().nullable(),
   tipo: z.string().trim().max(100).optional().nullable(),
+  imagen: z.string().trim().optional().nullable(),
+  activo: z.boolean().optional(),
   idMarca: z.union([z.string(), z.number()], { message: 'La marca es obligatoria' }),
   idCat: z.union([z.string(), z.number()], { message: 'La categoría es obligatoria' }),
 });

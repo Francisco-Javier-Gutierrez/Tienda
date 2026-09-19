@@ -26,22 +26,22 @@ describe('Error Handling Middlewares', () => {
   });
 
   describe('errorServidor', () => {
-    it('debe manejar restricciones de clave foránea con 409', () => {
-      errorServidor(mockRes as Response, { code: '23503' });
+    it('debe manejar TransactionCanceledException de DynamoDB con 409', () => {
+      errorServidor(mockRes as Response, { name: 'TransactionCanceledException', message: 'Transaction cancelled' });
       expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining('No se puede eliminar'),
+          message: expect.stringContaining('Conflicto de concurrencia'),
         }),
       );
     });
 
-    it('debe manejar errores P2025 de Prisma con 404', () => {
-      errorServidor(mockRes as Response, { code: 'P2025' });
-      expect(mockRes.status).toHaveBeenCalledWith(404);
+    it('debe manejar ConditionalCheckFailedException de DynamoDB con 409', () => {
+      errorServidor(mockRes as Response, { name: 'ConditionalCheckFailedException' });
+      expect(mockRes.status).toHaveBeenCalledWith(409);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining('no fue encontrado'),
+          message: expect.stringContaining('Conflicto de concurrencia'),
         }),
       );
     });

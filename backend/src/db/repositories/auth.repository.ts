@@ -178,6 +178,39 @@ export class AuthRepository {
       throw error;
     }
   }
+
+  async updateEmpleadoGoogleSub(idEmp: number, googleSub: string): Promise<EmpleadoEntity | null> {
+    const res = await docClient.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: Keys.empleado(idEmp),
+        UpdateExpression: 'SET googleSub = :sub',
+        ExpressionAttributeValues: {
+          ':sub': googleSub,
+        },
+        ReturnValues: 'ALL_NEW',
+      }),
+    );
+    return (res.Attributes as EmpleadoEntity) || null;
+  }
+
+  async updateClienteUltimoAcceso(idCliente: number, fotoPerfil?: string | null): Promise<ClienteEntity | null> {
+    const updateExpr = fotoPerfil ? 'SET ultimoAcceso = :now, fotoPerfil = :foto' : 'SET ultimoAcceso = :now';
+    const exprAttrValues: any = { ':now': new Date().toISOString() };
+    if (fotoPerfil) {
+      exprAttrValues[':foto'] = fotoPerfil;
+    }
+    const res = await docClient.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: Keys.cliente(idCliente),
+        UpdateExpression: updateExpr,
+        ExpressionAttributeValues: exprAttrValues,
+        ReturnValues: 'ALL_NEW',
+      }),
+    );
+    return (res.Attributes as ClienteEntity) || null;
+  }
 }
 
 export const authRepository = new AuthRepository();

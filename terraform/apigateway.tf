@@ -4,10 +4,11 @@ resource "aws_apigatewayv2_api" "http_api" {
 
   cors_configuration {
     allow_credentials = true
-    allow_headers     = ["Content-Type", "Authorization", "X-Requested-With"]
+    allow_headers     = ["*"]
     allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
     allow_origins = [
       "https://${aws_cloudfront_distribution.frontend.domain_name}",
+      "https://localhost",
       "http://localhost",
       "http://localhost:8100",
       "http://localhost:8101",

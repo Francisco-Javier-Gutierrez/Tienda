@@ -1,11 +1,25 @@
 import { z } from 'zod';
 
-export const itemPedidoSchema = z.object({
-  idPro: z.union([z.string(), z.number()], {
-    message: 'El identificador del producto es requerido',
-  }),
-  cantidad: z.number().int({ message: 'La cantidad debe ser un entero' }).positive({ message: 'La cantidad debe ser mayor a cero' }),
-});
+export const itemPedidoSchema = z.preprocess(
+  (data: any) => {
+    if (data && typeof data === 'object') {
+      const idPro = data.idPro ?? data.id ?? data.productoId;
+      return {
+        ...data,
+        idPro,
+      };
+    }
+    return data;
+  },
+  z.object({
+    idPro: z.union([z.string(), z.number()], {
+      message: 'El identificador del producto es requerido',
+    }),
+    id: z.union([z.string(), z.number()]).optional(),
+    productoId: z.union([z.string(), z.number()]).optional(),
+    cantidad: z.number().int({ message: 'La cantidad debe ser un entero' }).positive({ message: 'La cantidad debe ser mayor a cero' }),
+  })
+);
 
 export const crearPedidoSchema = z.object({
   uuidPedido: z.string().min(10, { message: 'El identificador uuidPedido no es válido' }),

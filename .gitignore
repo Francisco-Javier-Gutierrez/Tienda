@@ -73,6 +73,9 @@ testem.log
 .env
 .env.*
 !.env.example
+*credentials*.json
+fcm-*.json
+
 
 # Comprobantes privados de clientes
 /backend/uploads/comprobantes/*
@@ -112,3 +115,6 @@ terraform/*.zip
 # Stitch designs
 stitch-designs/
 /stitch-designs/
+
+# APK builds
+*.apk

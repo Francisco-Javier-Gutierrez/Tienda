@@ -1,10 +1,26 @@
 import { formatearFechaVenta, formatearHoraVenta, encodeId } from '../utils/formatters';
 import { empleadoSeguro } from '../utils/security';
 
+export const normalizarDetalleVenta = (d: any) => {
+  const prodId = encodeId(d.idPro || d.productoId || d.id);
+  return {
+    id: prodId,
+    productoId: prodId,
+    nombre: d.producto?.nombrePro || d.nombrePro || d.nombre || 'Producto',
+    imagen: d.producto?.imagenPro || d.imagenPro || d.imagen || null,
+    codigoQR: d.producto?.codigoQR || d.codigoQR || null,
+    sku: d.producto?.skuPro || d.skuPro || null,
+    cantidad: Number(d.cantidadDetVenta ?? d.cantidad ?? 0),
+    precioUnitario: Number(d.precioUnitarioDetVenta ?? d.precioUnitario ?? 0),
+    subtotal: Number(d.subtotalDetVenta ?? d.subtotal ?? 0),
+  };
+};
+
 export const toVentaRegistradaDto = (v: any, empleado?: any) => {
   if (!v) return null;
+  const ventaId = encodeId(v.idVenta);
   return {
-    id: encodeId(v.idVenta),
+    id: ventaId,
     uuid: v.uuidVenta,
     sesionCajaId: encodeId(v.idSesionCaja),
     fecha: formatearFechaVenta(v.fechaVenta),
@@ -18,27 +34,22 @@ export const toVentaRegistradaDto = (v: any, empleado?: any) => {
       id: encodeId(Number(v.idEmp)), 
       nombre: empleado ? empleadoSeguro(empleado).nombre : (v.empleado ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ') : null)
     },
-    items: v.detalles?.map((d: any) => ({
-      id: encodeId(d.idPro),
-      nombre: d.nombrePro || d.producto?.nombrePro || 'Producto',
-      cantidad: d.cantidadDetVenta ?? d.cantidad,
-      precioUnitario: Number(d.precioUnitarioDetVenta ?? d.precioUnitario),
-      subtotal: Number(d.subtotalDetVenta ?? d.subtotal),
-    })) || [],
+    items: (v.detalles || v.items)?.map(normalizarDetalleVenta) || [],
   };
 };
 
 export const toVentaListDto = (v: any) => {
   if (!v) return null;
+  const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || null);
-  const origen = v.pedidos && v.pedidos.length > 0 ? 'ONLINE' : 'POS';
+    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
 
+  const ventaId = encodeId(v.idVenta);
   return {
-    id: encodeId(v.idVenta),
+    id: ventaId,
     uuid: v.uuidVenta || `venta-${v.idVenta}`,
-    sesionCajaId: encodeId(v.idSesionCaja),
+    sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
     total: Number(v.total ?? v.totalVenta ?? 0),
@@ -52,18 +63,19 @@ export const toVentaListDto = (v: any) => {
 export const toVentaDetalleDto = (v: any) => {
   if (!v) return null;
   
+  const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || null);
+    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
   const canceladorStr = v.empleadoCancela
     ? [v.empleadoCancela.nombreEmp, v.empleadoCancela.apellidoPatEmp, v.empleadoCancela.apellidoMatEmp].filter(Boolean).join(' ')
     : null;
-  const origen = v.pedidos && v.pedidos.length > 0 ? 'ONLINE' : 'POS';
 
+  const ventaId = encodeId(v.idVenta);
   return {
-    id: encodeId(v.idVenta),
+    id: ventaId,
     uuid: v.uuidVenta || `venta-${v.idVenta}`,
-    sesionCajaId: encodeId(v.idSesionCaja),
+    sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
     total: Number(v.total ?? v.totalVenta ?? 0),
@@ -77,15 +89,6 @@ export const toVentaDetalleDto = (v: any) => {
     sucursal: v.sucursal?.nombreSuc || v.nombreSuc || 'Doña paty',
     origen,
     cajero: { id: encodeId(Number(v.idEmp)), nombre: cajeroStr },
-    items: v.detalles?.map((d: any) => ({
-      idDetalle: encodeId(d.idDetVenta || d.idPro),
-      productoId: encodeId(d.idPro),
-      nombre: d.producto?.nombrePro || d.nombrePro || 'Producto',
-      codigoQR: d.producto?.codigoQR || d.codigoQR || null,
-      sku: d.producto?.skuPro || d.skuPro || null,
-      cantidad: d.cantidadDetVenta ?? d.cantidad,
-      precioUnitario: Number(d.precioUnitarioDetVenta ?? d.precioUnitario),
-      subtotal: Number(d.subtotalDetVenta ?? d.subtotal),
-    })) || [],
+    items: (v.detalles || v.items)?.map(normalizarDetalleVenta) || [],
   };
 };

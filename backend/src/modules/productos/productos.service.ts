@@ -1,13 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { prisma, DbClient } from '../../config/prisma';
 import { env } from '../../config/env';
-import { eliminarObjetoS3, esUrlS3, generarPresignedUpload } from '../../config/s3';
 import { productosUploadDir } from '../../middlewares/upload.middleware';
 import { idValido, texto, textoNullable, errorFuncional } from '../../utils/formatters';
 import { toProductoDto, toProductoListDto } from '../../dtos/producto.dto';
-import { productoRepository } from '../../db/repositories/producto.repository';
-
+import { productoRepository, IProductoRepository } from '../../db/repositories/producto.repository';
+import { catalogoRepository } from '../../db/repositories/catalogo.repository';
+import { pedidoRepository } from '../../db/repositories/pedido.repository';
+import { storageService, IStorageService } from '../../services/storage.service';
+import { CompositeProductLookupProvider, defaultProductLookupProvider } from './product-lookup.provider';
 
 export function validarProducto(producto: any): string | null {
   if (!texto(producto.nombre)) return 'El nombre del producto es obligatorio';
@@ -44,160 +45,121 @@ export function eliminarUploadControlado(
   directorio = productosUploadDir,
   prefijo = '/uploads/productos/',
 ): void {
-  if (!rutaPublica) return;
-  if (esUrlS3(rutaPublica)) {
-    void eliminarObjetoS3(rutaPublica);
-    return;
-  }
-  if (!rutaPublica.startsWith(prefijo)) return;
-  const nombre = path.basename(rutaPublica);
-  const ruta = path.join(directorio, nombre);
-  if (path.dirname(ruta) === directorio) fs.unlink(ruta, () => undefined);
+  void storageService.eliminarArchivo(rutaPublica, directorio, prefijo);
 }
 
-export class ProductosService {
-  async obtenerProducto(idPro: number, client: DbClient = prisma) {
-    if (process.env.DYNAMODB_TABLE) {
-      const p = await productoRepository.getProductoById(idPro);
-      if (!p) return null;
-      return toProductoDto(p);
-    }
-    const p = await client.producto.findUnique({
-      where: { idPro },
-      include: {
-        marca: true,
-        categoria: true,
-      },
-    });
+/**
+ * =========================================================================
+ * Interface Segregation Principle (ISP) - Catálogo de Productos
+ * =========================================================================
+ * - IProductoPublicService: Operaciones públicas para tienda/ecommerce
+ * - IProductoAdminService: Operaciones de administración y gestión de inventario
+ * - IProductoPosService: Operaciones de búsqueda por código y caja
+ */
+export interface IProductoPublicService {
+  listarPublico(): Promise<any>;
+  consultarExterno(codigo: string): Promise<any>;
+}
+
+export interface IProductoAdminService {
+  listarAdmin(): Promise<any>;
+  crear(body: any): Promise<any>;
+  actualizar(idPro: number, body: any): Promise<any>;
+  eliminar(idPro: number): Promise<any>;
+}
+
+export interface IProductoPosService {
+  listarPos(): Promise<any>;
+  buscarPorQR(codigoQR: string): Promise<any>;
+  obtenerProducto(idPro: number): Promise<any>;
+}
+
+export interface IProductosService
+  extends IProductoPublicService,
+    IProductoAdminService,
+    IProductoPosService {}
+
+export class ProductosService implements IProductosService {
+  constructor(
+    private lookupProvider: CompositeProductLookupProvider = defaultProductLookupProvider,
+    private repo: IProductoRepository = productoRepository,
+    private storage: IStorageService = storageService,
+  ) {}
+
+  async obtenerProducto(idPro: number) {
+    const p = await this.repo.getProductoById(idPro);
     if (!p) return null;
-    return toProductoDto(p);
+    let nombreMarca: string | null = null;
+    let nombreCat: string | null = null;
+    if (p.idMarca) {
+      const m = await catalogoRepository.getMarcaById(p.idMarca);
+      nombreMarca = m?.nombreMarca || null;
+    }
+    if (p.idCat) {
+      const c = await catalogoRepository.getCategoriaById(p.idCat);
+      nombreCat = c?.nombreCat || null;
+    }
+    return toProductoDto({ ...p, nombreMarca, nombreCat });
   }
 
   async validarCatalogosProducto(producto: any): Promise<string | null> {
-    if (process.env.DYNAMODB_TABLE) return null;
-    const [marca, categoria] = await Promise.all([
-      producto.idMarca ? prisma.marca.findUnique({ where: { idMarca: idValido(producto.idMarca)! } }) : null,
-      producto.idCat ? prisma.categoria.findUnique({ where: { idCat: idValido(producto.idCat)! } }) : null,
-    ]);
-    if (producto.idMarca && !marca) return 'La marca seleccionada no existe';
-    if (producto.idCat && !categoria) return 'La categoría seleccionada no existe';
     return null;
   }
 
   async codigoEnUso(codigoQR: string | null | undefined, idPro = 0): Promise<boolean> {
     const codigo = texto(codigoQR);
     if (!codigo) return false;
-    if (process.env.DYNAMODB_TABLE) {
-      const existente = await productoRepository.findByCodigoQR(codigo);
-      return Boolean(existente && existente.idPro !== Number(idPro));
-    }
-    const existente = await prisma.producto.findFirst({
-      where: {
-        codigoQR: codigo,
-        NOT: { idPro: Number(idPro) },
-      },
-      select: { idPro: true },
-    });
-    return Boolean(existente);
+    const existente = await this.repo.findByCodigoQR(codigo);
+    return Boolean(existente && existente.idPro !== Number(idPro));
   }
 
   async listarAdmin() {
-    if (process.env.DYNAMODB_TABLE) {
-      const prods = await productoRepository.listProductos(1);
-      return prods.map((p) => toProductoListDto(p));
-    }
-    const productos = await prisma.producto.findMany({
-      orderBy: { nombrePro: 'asc' },
-      include: {
-        marca: true,
-        categoria: true,
-      },
-    });
-    return productos.map((p) => toProductoListDto(p));
+    const [prods, marcas, cats] = await Promise.all([
+      this.repo.listProductos(1),
+      catalogoRepository.listMarcas(),
+      catalogoRepository.listCategorias(),
+    ]);
+    const marcasMap = new Map(marcas.map((m) => [m.idMarca, m.nombreMarca]));
+    const catsMap = new Map(cats.map((c) => [c.idCat, c.nombreCat]));
+    return prods.map((p: any) =>
+      toProductoListDto({
+        ...p,
+        nombreMarca: p.idMarca ? marcasMap.get(p.idMarca) : null,
+        nombreCat: p.idCat ? catsMap.get(p.idCat) : null,
+      }),
+    );
   }
 
   async listarPos() {
-    if (process.env.DYNAMODB_TABLE) {
-      const prods = await productoRepository.listProductos(1, { soloActivos: true });
-      return prods.map((p) => toProductoListDto(p));
-    }
-    const productos = await prisma.producto.findMany({
-      where: { activoPro: true },
-      orderBy: [{ nombrePro: 'asc' }, { idPro: 'asc' }],
-      include: {
-        marca: true,
-        categoria: true,
-      },
-    });
-    return productos.map((p) => toProductoListDto(p));
+    const [prods, marcas, cats] = await Promise.all([
+      this.repo.listProductos(1, { soloActivos: true }),
+      catalogoRepository.listMarcas(),
+      catalogoRepository.listCategorias(),
+    ]);
+    const marcasMap = new Map(marcas.map((m) => [m.idMarca, m.nombreMarca]));
+    const catsMap = new Map(cats.map((c) => [c.idCat, c.nombreCat]));
+    return prods.map((p: any) =>
+      toProductoListDto({
+        ...p,
+        nombreMarca: p.idMarca ? marcasMap.get(p.idMarca) : null,
+        nombreCat: p.idCat ? catsMap.get(p.idCat) : null,
+      }),
+    );
   }
 
   async listarPublico() {
-    if (process.env.DYNAMODB_TABLE) {
-      const prods = await productoRepository.listProductos(1, { soloActivos: true });
-      return prods.map((p) => toProductoListDto(p));
-    }
-    const productos = await prisma.producto.findMany({
-      where: { activoPro: true },
-      orderBy: { nombrePro: 'asc' },
-      include: {
-        marca: true,
-        categoria: true,
-      },
-    });
-    return productos.map((p) => toProductoListDto(p));
+    const prods = await this.repo.listProductos(1, { soloActivos: true });
+    return prods.map((p: any) => toProductoListDto(p));
   }
 
   async buscarPorQR(codigoQR: string) {
-    if (process.env.DYNAMODB_TABLE) {
-      const p = await productoRepository.findByCodigoQR(codigoQR);
-      if (!p) return null;
-      return toProductoDto(p);
-    }
-    const p = await prisma.producto.findUnique({
-      where: { codigoQR },
-      include: {
-        marca: true,
-        categoria: true,
-      },
-    });
+    const p = await this.repo.findByCodigoQR(codigoQR);
     if (!p) return null;
     return toProductoDto(p);
   }
 
-
   async consultarExterno(codigo: string) {
-    const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(codigo)}.json`, {
-      headers: {
-        'User-Agent': env.OPEN_FOOD_FACTS_USER_AGENT,
-      },
-      signal: AbortSignal.timeout(8000),
-    });
-
-    if (response.status === 404) {
-      return { encontrado: false, fuente: 'Open Food Facts', codigoQR: codigo };
-    }
-    if (!response.ok) {
-      throw errorFuncional('El proveedor de información no está disponible', 502);
-    }
-
-    const data: any = await response.json();
-    const producto = data.product;
-    if (!producto) {
-      return { encontrado: false, fuente: 'Open Food Facts', codigoQR: codigo };
-    }
-
-    return {
-      encontrado: true,
-      fuente: 'Open Food Facts',
-      codigoQR: codigo,
-      nombre: texto(producto.product_name),
-      marca: texto(producto.brands).split(',')[0],
-      categoria: texto(producto.categories).split(',')[0],
-      tamano: texto(producto.quantity),
-      presentacion: texto(producto.quantity),
-      imagenUrl: texto(producto.image_front_url),
-    };
+    return this.lookupProvider.consultar(codigo);
   }
 
   async crear(body: any) {
@@ -215,45 +177,23 @@ export class ProductosService {
       throw errorFuncional('El código de barras ya pertenece a otro producto', 409);
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      const nuevo = await productoRepository.createProducto({
-        idSuc: 1,
-        nombrePro: texto(body.nombre),
-        precioVentaPro: Number(body.precio !== undefined ? body.precio : body.precioVenta),
-        costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
-        existenciaPro: Number(body.existencia),
-        stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
-        tamanoPro: textoNullable(body.tamano),
-        presentacionPro: textoNullable(body.presentacion),
-        tipoPro: textoNullable(body.tipo),
-        codigoQR: textoNullable(body.codigoQR),
-        skuPro: textoNullable(body.sku),
-        imagenPro: textoNullable(body.imagen),
-        idMarca: body.idMarca ? Number(idValido(body.idMarca)) : null,
-        idCat: body.idCat ? Number(idValido(body.idCat)) : null,
-        activoPro: true,
-      });
-      return await this.obtenerProducto(nuevo.idPro);
-    }
-
-    const nuevo = await prisma.producto.create({
-      data: {
-        nombrePro: texto(body.nombre),
-        precioVentaPro: Number(body.precio),
-        costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
-        existenciaPro: Number(body.existencia),
-        stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
-        tamanoPro: textoNullable(body.tamano),
-        presentacionPro: textoNullable(body.presentacion),
-        tipoPro: textoNullable(body.tipo),
-        codigoQR: textoNullable(body.codigoQR),
-        skuPro: textoNullable(body.sku),
-        imagenPro: textoNullable(body.imagen),
-        idMarca: body.idMarca ? idValido(body.idMarca) : null,
-        idCat: body.idCat ? idValido(body.idCat) : null,
-      },
+    const nuevo = await this.repo.createProducto({
+      idSuc: 1,
+      nombrePro: texto(body.nombre),
+      precioVentaPro: Number(body.precio !== undefined ? body.precio : body.precioVenta),
+      costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
+      existenciaPro: Number(body.existencia),
+      stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
+      tamanoPro: textoNullable(body.tamano),
+      presentacionPro: textoNullable(body.presentacion),
+      tipoPro: textoNullable(body.tipo),
+      codigoQR: textoNullable(body.codigoQR),
+      skuPro: textoNullable(body.sku),
+      imagenPro: textoNullable(body.imagen),
+      idMarca: body.idMarca ? Number(idValido(body.idMarca)) : null,
+      idCat: body.idCat ? Number(idValido(body.idCat)) : null,
+      activoPro: true,
     });
-
     return await this.obtenerProducto(nuevo.idPro);
   }
 
@@ -263,7 +203,8 @@ export class ProductosService {
       throw errorFuncional(errorValidacion, 400);
     }
 
-    if (!(await this.obtenerProducto(idPro))) {
+    const productoExistente = await this.obtenerProducto(idPro);
+    if (!productoExistente) {
       throw errorFuncional('Producto no encontrado', 404);
     }
 
@@ -276,46 +217,48 @@ export class ProductosService {
       throw errorFuncional('El código de barras ya pertenece a otro producto', 409);
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      await productoRepository.updateProducto(idPro, {
-        nombrePro: texto(body.nombre),
-        precioVentaPro: Number(body.precio),
-        costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
-        existenciaPro: Number(body.existencia),
-        stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
-        tamanoPro: textoNullable(body.tamano),
-        presentacionPro: textoNullable(body.presentacion),
-        tipoPro: textoNullable(body.tipo),
-        codigoQR: textoNullable(body.codigoQR),
-        skuPro: textoNullable(body.sku),
-        imagenPro: textoNullable(body.imagen),
-        idMarca: body.idMarca ? Number(idValido(body.idMarca)) : null,
-        idCat: body.idCat ? Number(idValido(body.idCat)) : null,
-      });
-      return await this.obtenerProducto(idPro);
+    // Preserve existing image if body.imagen is undefined (not sent)
+    const imagenPro = body.imagen !== undefined ? textoNullable(body.imagen) : (productoExistente.imagen || null);
+    const idMarca = body.idMarca !== undefined
+      ? (body.idMarca ? Number(idValido(body.idMarca)) : null)
+      : (productoExistente.idMarca ? Number(idValido(productoExistente.idMarca)) : null);
+    const idCat = body.idCat !== undefined
+      ? (body.idCat ? Number(idValido(body.idCat)) : null)
+      : (productoExistente.idCat ? Number(idValido(productoExistente.idCat)) : null);
+
+    await this.repo.updateProducto(idPro, {
+      nombrePro: texto(body.nombre),
+      precioVentaPro: Number(body.precio),
+      costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
+      existenciaPro: Number(body.existencia),
+      stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
+      tamanoPro: textoNullable(body.tamano),
+      presentacionPro: textoNullable(body.presentacion),
+      tipoPro: textoNullable(body.tipo),
+      codigoQR: textoNullable(body.codigoQR),
+      skuPro: textoNullable(body.sku),
+      imagenPro,
+      idMarca,
+      idCat,
+    });
+    return await this.obtenerProducto(idPro);
+  }
+
+  async actualizarImagenLocal(idPro: number, filename: string, filePath?: string) {
+    const productoExistente = await this.obtenerProducto(idPro);
+    if (!productoExistente) {
+      if (filePath) fs.unlink(filePath, () => undefined);
+      throw errorFuncional('Producto no encontrado', 404);
     }
 
-    await prisma.producto.update({
-
-      where: { idPro },
-      data: {
-        nombrePro: texto(body.nombre),
-        precioVentaPro: Number(body.precio),
-        costoPro: body.costo !== null && body.costo !== undefined && body.costo !== '' ? Number(body.costo) : 0,
-        existenciaPro: Number(body.existencia),
-        stockMinimoPro: body.stockMinimo ? Number(body.stockMinimo) : 1,
-        tamanoPro: textoNullable(body.tamano),
-        presentacionPro: textoNullable(body.presentacion),
-        tipoPro: textoNullable(body.tipo),
-        codigoQR: textoNullable(body.codigoQR),
-        skuPro: textoNullable(body.sku),
-        imagenPro: textoNullable(body.imagen),
-        idMarca: body.idMarca ? idValido(body.idMarca) : null,
-        idCat: body.idCat ? idValido(body.idCat) : null,
-      },
-    });
-
-    return await this.obtenerProducto(idPro);
+    const rutaPublica = `/uploads/productos/${filename}`;
+    try {
+      await this.repo.updateProducto(idPro, { imagenPro: rutaPublica });
+      return await this.obtenerProducto(idPro);
+    } catch (error) {
+      if (filePath) fs.unlink(filePath, () => undefined);
+      throw error;
+    }
   }
 
   async presignImagen(idPro: number, mimeType: string, extension?: string) {
@@ -323,7 +266,7 @@ export class ProductosService {
     if (!producto) {
       throw errorFuncional('Producto no encontrado', 404);
     }
-    return await generarPresignedUpload({
+    return await this.storage.generarPresignedUpload({
       folder: 'productos',
       mimeType,
       extensionOriginal: extension,
@@ -341,17 +284,10 @@ export class ProductosService {
       ? keyOUrl
       : `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${keyOUrl}`;
 
-    if (process.env.DYNAMODB_TABLE) {
-      await productoRepository.updateProducto(idPro, { imagenPro: rutaFinal });
-    } else {
-      await prisma.producto.update({
-        where: { idPro },
-        data: { imagenPro: rutaFinal },
-      });
-    }
+    await this.repo.updateProducto(idPro, { imagenPro: rutaFinal });
 
     if (anterior.imagen && anterior.imagen !== rutaFinal) {
-      eliminarUploadControlado(anterior.imagen, productosUploadDir, '/uploads/productos/');
+      void this.storage.eliminarArchivo(anterior.imagen, productosUploadDir, '/uploads/productos/');
     }
 
     return await this.obtenerProducto(idPro);
@@ -363,42 +299,12 @@ export class ProductosService {
       throw errorFuncional('Producto no encontrado', 404);
     }
 
-    if (process.env.DYNAMODB_TABLE) {
-      if (producto.imagen) {
-        eliminarUploadControlado(producto.imagen, productosUploadDir, '/uploads/productos/');
-      }
-      await productoRepository.deleteProducto(idPro);
-      return { message: 'Producto eliminado correctamente' };
-    }
-
-    const [ventas, compras, pedidos] = await Promise.all([
-      prisma.detVenta.count({ where: { idPro } }),
-      prisma.detCompra.count({ where: { idPro } }),
-      prisma.detallePedidoCliente.count({ where: { idPro } }),
-    ]);
-
-    if (ventas > 0 || compras > 0 || pedidos > 0) {
-      const error: any = new Error(
-        'No se puede eliminar el producto porque tiene ventas, compras o pedidos relacionados',
-      );
-      error.status = 409;
-      throw error;
-    }
-
     if (producto.imagen) {
-      eliminarUploadControlado(producto.imagen, productosUploadDir, '/uploads/productos/');
+      void this.storage.eliminarArchivo(producto.imagen, productosUploadDir, '/uploads/productos/');
     }
-
-    await prisma.producto.delete({ where: { idPro } });
+    await this.repo.deleteProducto(idPro);
     return { message: 'Producto eliminado correctamente' };
   }
-
 }
 
 export const productosService = new ProductosService();
-
-
-
-
-
-

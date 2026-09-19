@@ -21,10 +21,12 @@ export class ModalShellComponent {
   @Input() breakpoints?: number[];
   @Input() backdropDismiss = true;
   @Input() useIonContent = true;
+  @Input() focusTrap = true;
   @Input() customClass = '';
 
   @Output() closed = new EventEmitter<void>();
   @Output() didDismiss = new EventEmitter<void>();
+  @Output() didPresent = new EventEmitter<void>();
 
   get computedClass(): string {
     const sizeClass = `modal-shell-${this.size}`;
@@ -38,5 +40,9 @@ export class ModalShellComponent {
   onDismiss(): void {
     this.didDismiss.emit();
     this.closed.emit();
+  }
+
+  onDidPresent(): void {
+    this.didPresent.emit();
   }
 }

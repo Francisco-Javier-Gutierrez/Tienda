@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
 import { IonSearchbar, ToastController } from '@ionic/angular';
@@ -144,8 +145,13 @@ export class CajeroPage implements OnInit {
     void this.iniciar();
   }
 
+  ionViewWillEnter(): void {
+    void this.iniciar();
+  }
+
   private async iniciar(): Promise<void> {
     this.cargando = true;
+    this.ultimaCaja = null;
 
     try {
       const respuesta = await firstValueFrom(this.cajas.actual());
@@ -154,10 +160,14 @@ export class CajeroPage implements OnInit {
 
       /*
        * Si la caja existe en servidor,
-       * guardamos/actualizamos la copia local.
+       * guardamos/actualizamos la copia local de forma segura.
        */
       if (this.caja && this.sqlite.disponible) {
-        await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        } catch (err) {
+          console.warn('[Cajero] No se pudo guardar caja local en SQLite:', err);
+        }
       }
     } catch {
       /*
@@ -265,16 +275,42 @@ export class CajeroPage implements OnInit {
 
     try {
       this.caja = await firstValueFrom(this.cajas.abrir(uuidSesionCaja, Number(this.fondoInicial)));
+      if (this.caja) {
+        this.caja.uuidSesionCaja = this.caja.uuidSesionCaja || uuidSesionCaja;
+      }
 
-      if (this.sqlite.disponible) {
-        await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+      if (this.caja && this.sqlite.disponible) {
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        } catch (err) {
+          console.warn('[Cajero] Advertencia guardando caja local en SQLite:', err);
+        }
       }
     } catch (error) {
+      /*
+       * Si el servidor reporta que ya existe una caja abierta (409),
+       * recuperamos la sesión abierta automáticamente sin bloquear al usuario.
+       */
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        try {
+          const resp = await firstValueFrom(this.cajas.actual());
+          if (resp.caja) {
+            this.caja = resp.caja;
+            this.caja.uuidSesionCaja = this.caja.uuidSesionCaja || uuidSesionCaja;
+            await Promise.all([this.cargarProductos(), this.cargarMovimientos()]);
+            this.enfocar();
+            this.abriendo = false;
+            return;
+          }
+        } catch {
+          // Continúa al manejo estándar de error
+        }
+      }
+
       /*
        * Si NO es un error de conexión,
        * mostramos el error del backend.
        */
-
       if (!(error instanceof HttpErrorResponse && error.status === 0 && this.sqlite.disponible && empleado)) {
         await this.error(error, 'No fue posible abrir la caja.');
 
@@ -331,7 +367,13 @@ export class CajeroPage implements OnInit {
         nombreSuc: empleado.nombreSuc || '',
       };
 
-      if (this.caja) { await this.sqlite.guardarCajaLocal(this.caja, 'PENDIENTE'); }
+      if (this.caja) {
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'PENDIENTE');
+        } catch (err) {
+          console.warn('[Cajero] Advertencia guardando apertura offline en SQLite:', err);
+        }
+      }
 
       await this.sqlite.encolar(
         'APERTURA',
@@ -364,15 +406,12 @@ export class CajeroPage implements OnInit {
     this.cargandoProductos = true;
     try {
       const productos = await firstValueFrom(this.ventas.productos());
-
-      this.productos = productos.map((producto) => ({
-        ...producto,
-        precioVentaPro: Number(producto.precioVenta),
-        existenciaPro: Number(producto.existencia) || 0,
-      }));
+      this.productos = productos;
 
       if (this.sqlite.disponible) {
-        await this.sqlite.sincronizarCatalogo(this.productos);
+        void this.sqlite.sincronizarCatalogo(this.productos).catch((err) => {
+          console.warn('[Cajero] Advertencia sincronizando catálogo local:', err);
+        });
       }
     } catch {
       if (this.sqlite.disponible) {
@@ -534,6 +573,44 @@ export class CajeroPage implements OnInit {
     await this.scanFeedback.preparar();
 
     try {
+      if (!Capacitor.isNativePlatform()) {
+        const soporte = await BarcodeScanner.isSupported().catch(() => ({ supported: false }));
+        if (!soporte.supported) {
+          try {
+            const foto = await Camera.getPhoto({
+              source: CameraSource.Camera,
+              resultType: CameraResultType.Uri,
+              quality: 85,
+              webUseInput: false,
+            });
+            const preview = foto.webPath || foto.path;
+            if (preview && typeof (window as any).BarcodeDetector !== 'undefined') {
+              const img = new Image();
+              img.src = preview;
+              await new Promise((res, rej) => {
+                img.onload = res;
+                img.onerror = rej;
+              });
+              const detector = new (window as any).BarcodeDetector();
+              const detectados = await detector.detect(img);
+              if (detectados.length > 0 && detectados[0].rawValue) {
+                await this.scanFeedback.feedbackLecturaCorrecta();
+                this.busqueda = detectados[0].rawValue.trim();
+                this.agregarDesdeEntrada();
+                return;
+              }
+            }
+            await this.feedback('Cámara utilizada. Escribe el código en la barra de búsqueda si no se autodetectó.', 'warning');
+            return;
+          } catch (camError: unknown) {
+            const mensaje = camError instanceof Error ? camError.message.toLowerCase() : '';
+            if (mensaje.includes('cancel')) return;
+            await this.feedback('Cámara no disponible en este navegador. Puedes escribir el código.', 'warning');
+            return;
+          }
+        }
+      }
+
       const soporte = await BarcodeScanner.isSupported();
 
       if (!soporte.supported) {
@@ -625,8 +702,6 @@ export class CajeroPage implements OnInit {
 
       items: this.carrito.map((item) => ({
         id: item.id,
-        idPro: item.id,
-
         cantidad: item.cantidad,
       })),
 

@@ -232,19 +232,31 @@
             <!-- Pago por Transferencia: Instrucciones y Carga de Comprobante -->
             <section
               class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-5"
-              *ngIf="actual.estado === 'PENDIENTE_PAGO' && actual.configuracionTransferencia as banco"
+              *ngIf="actual.estado === 'PENDIENTE_PAGO' || actual.estado === 'RECHAZADO'"
             >
               <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
                 <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
                   <span class="material-symbols-outlined text-lg">account_balance</span>
                 </div>
                 <div>
-                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Pago bancario</span>
-                  <h2 class="font-heading font-bold text-base text-on-surface">Realiza tu transferencia</h2>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">
+                    {{ actual.estado === 'RECHAZADO' ? 'Reenvío de comprobante' : 'Pago bancario' }}
+                  </span>
+                  <h2 class="font-heading font-bold text-base text-on-surface">
+                    {{ actual.estado === 'RECHAZADO' ? 'Adjunta un nuevo comprobante' : 'Realiza tu transferencia' }}
+                  </h2>
                 </div>
               </div>
 
-              <div class="bg-surface-container/60 rounded-2xl p-4 border border-surface-variant/30 space-y-3">
+              <!-- Alerta informativa si el estado es RECHAZADO -->
+              <div *ngIf="actual.estado === 'RECHAZADO'" class="bg-error-container/20 border border-error-container/40 rounded-2xl p-4 flex items-start gap-3">
+                <span class="material-symbols-outlined text-error text-xl shrink-0 mt-0.5">info</span>
+                <p class="font-sans text-xs text-on-surface-variant leading-relaxed">
+                  Tu comprobante anterior fue rechazado<span *ngIf="actual.motivoRechazo">: <strong class="text-error">{{ actual.motivoRechazo }}</strong></span>. Adjunta un nuevo ticket o comprobante de pago abajo para enviarlo nuevamente a revisión.
+                </p>
+              </div>
+
+              <div class="bg-surface-container/60 rounded-2xl p-4 border border-surface-variant/30 space-y-3" *ngIf="actual.configuracionTransferencia as banco">
                 <p class="font-sans text-xs text-on-surface-variant">
                   Transfiere el total exacto e ingresa tu folio <strong class="text-primary font-mono font-bold">#{{ actual.folio }}</strong> en el concepto o motivo del pago.
                 </p>

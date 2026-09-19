@@ -1,32 +1,18 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
 import { AuthSession } from '../models/auth';
+import { BaseSessionStore } from './session/base-session-store';
+import { SessionStorageDriver } from './storage/session-storage.driver';
 
+/**
+ * =========================================================================
+ * Liskov Substitution Principle (LSP) - Auth Session Store
+ * =========================================================================
+ * Subtipo de BaseSessionStore para empleados/administradores.
+ * Puede ser sustituido por cualquier BaseSessionStore sin alterar el sistema.
+ */
 @Injectable({ providedIn: 'root' })
-export class AuthSessionStore {
-  private readonly clave = 'tienda.auth.session';
-  private readonly subject = new BehaviorSubject<AuthSession | null>(this.leer());
-  readonly sesion$ = this.subject.asObservable();
-  get sesion(): AuthSession | null {
-    return this.subject.value;
-  }
-  get token(): string | null {
-    return this.sesion?.token || null;
-  }
-  guardar(sesion: AuthSession): void {
-    sessionStorage.setItem(this.clave, JSON.stringify(sesion));
-    this.subject.next(sesion);
-  }
-  limpiar(): void {
-    sessionStorage.removeItem(this.clave);
-    this.subject.next(null);
-  }
-  private leer(): AuthSession | null {
-    try {
-      const v = sessionStorage.getItem(this.clave);
-      return v ? (JSON.parse(v) as AuthSession) : null;
-    } catch {
-      return null;
-    }
+export class AuthSessionStore extends BaseSessionStore<AuthSession> {
+  constructor() {
+    super('tienda.auth.session', inject(SessionStorageDriver));
   }
 }

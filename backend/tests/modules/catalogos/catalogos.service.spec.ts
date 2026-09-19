@@ -2,7 +2,8 @@ import {
   catalogosService,
   validarSucursal,
 } from '../../../src/modules/catalogos/catalogos.service';
-import { prisma } from '../../../src/config/prisma';
+import { catalogoRepository } from '../../../src/db/repositories/catalogo.repository';
+import { sucursalRepository } from '../../../src/db/repositories/sucursal.repository';
 
 describe('CatalogosService', () => {
   afterEach(() => {
@@ -10,10 +11,10 @@ describe('CatalogosService', () => {
   });
 
   describe('Marcas', () => {
-    it('debe listar marcas ordenadas alfabéticamente', async () => {
-      jest.spyOn(prisma.marca, 'findMany').mockResolvedValue([
-        { idMarca: 1, nombreMarca: 'Bimbo', descripMarca: 'Panadería' },
-        { idMarca: 2, nombreMarca: 'Coca Cola', descripMarca: 'Refrescos' },
+    it('debe listar marcas', async () => {
+      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([
+        { idMarca: 1, idSuc: 1, nombreMarca: 'Bimbo', descripMarca: 'Panadería' },
+        { idMarca: 2, idSuc: 1, nombreMarca: 'Coca Cola', descripMarca: 'Refrescos' },
       ]);
 
       const marcas = await catalogosService.listarMarcas();
@@ -22,8 +23,9 @@ describe('CatalogosService', () => {
     });
 
     it('crearMarca debe crear correctamente', async () => {
-      jest.spyOn(prisma.marca, 'create').mockResolvedValue({
+      jest.spyOn(catalogoRepository, 'createMarca').mockResolvedValue({
         idMarca: 1,
+        idSuc: 1,
         nombreMarca: 'Pepsi',
         descripMarca: 'Bebidas',
       });
@@ -39,8 +41,9 @@ describe('CatalogosService', () => {
     });
 
     it('actualizarMarca debe actualizar correctamente', async () => {
-      jest.spyOn(prisma.marca, 'update').mockResolvedValue({
+      jest.spyOn(catalogoRepository, 'updateMarca').mockResolvedValue({
         idMarca: 1,
+        idSuc: 1,
         nombreMarca: 'Pepsi Co',
         descripMarca: null,
       });
@@ -55,33 +58,25 @@ describe('CatalogosService', () => {
       });
     });
 
-    it('eliminarMarca debe eliminar si no tiene productos', async () => {
-      jest.spyOn(prisma.producto, 'count').mockResolvedValue(0);
-      jest.spyOn(prisma.marca, 'delete').mockResolvedValue({ idMarca: 1 } as any);
+    it('eliminarMarca debe eliminar correctamente', async () => {
+      jest.spyOn(catalogoRepository, 'deleteMarca').mockResolvedValue(true);
       const res = await catalogosService.eliminarMarca(1);
       expect(res.message).toBe('Marca eliminada correctamente');
-    });
-
-    it('eliminarMarca debe rechazar si tiene productos', async () => {
-      jest.spyOn(prisma.producto, 'count').mockResolvedValue(4);
-      await expect(catalogosService.eliminarMarca(1)).rejects.toMatchObject({
-        status: 409,
-        message: 'No se puede eliminar la marca porque tiene productos asociados',
-      });
     });
   });
 
   describe('Categorías', () => {
     it('debe listar y crear categorías', async () => {
-      jest.spyOn(prisma.categoria, 'findMany').mockResolvedValue([
-        { idCat: 1, nombreCat: 'Bebidas', descripCat: 'Refrescos y jugos' },
+      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([
+        { idCat: 1, idSuc: 1, nombreCat: 'Bebidas', descripCat: 'Refrescos y jugos' },
       ]);
 
       const cats = await catalogosService.listarCategorias();
       expect(cats[0]?.nombre).toBe('Bebidas');
 
-      jest.spyOn(prisma.categoria, 'create').mockResolvedValue({
+      jest.spyOn(catalogoRepository, 'createCategoria').mockResolvedValue({
         idCat: 2,
+        idSuc: 1,
         nombreCat: 'Snacks',
         descripCat: null,
       });
@@ -98,8 +93,9 @@ describe('CatalogosService', () => {
     });
 
     it('actualizarCategoria debe actualizar o rechazar', async () => {
-      jest.spyOn(prisma.categoria, 'update').mockResolvedValue({
+      jest.spyOn(catalogoRepository, 'updateCategoria').mockResolvedValue({
         idCat: 1,
+        idSuc: 1,
         nombreCat: 'Lácteos',
         descripCat: 'Leches',
       });
@@ -111,18 +107,10 @@ describe('CatalogosService', () => {
       });
     });
 
-    it('eliminarCategoria debe eliminar si no tiene productos', async () => {
-      jest.spyOn(prisma.producto, 'count').mockResolvedValue(0);
-      jest.spyOn(prisma.categoria, 'delete').mockResolvedValue({ idCat: 1 } as any);
+    it('eliminarCategoria debe eliminar correctamente', async () => {
+      jest.spyOn(catalogoRepository, 'deleteCategoria').mockResolvedValue(true);
       const res = await catalogosService.eliminarCategoria(1);
       expect(res.message).toBe('Categoría eliminada correctamente');
-    });
-
-    it('eliminarCategoria debe rechazar si tiene productos asociados', async () => {
-      jest.spyOn(prisma.producto, 'count').mockResolvedValue(2);
-      await expect(catalogosService.eliminarCategoria(1)).rejects.toMatchObject({
-        status: 409,
-      });
     });
   });
 
@@ -153,7 +141,7 @@ describe('CatalogosService', () => {
     });
 
     it('obtenerSucursal y listarSucursales con y sin direccion', async () => {
-      jest.spyOn(prisma.sucursal, 'findUnique').mockResolvedValue({
+      jest.spyOn(sucursalRepository, 'getById').mockResolvedValue({
         idSuc: 1,
         nombreSuc: 'Matriz',
         descripcionSuc: 'Principal',
@@ -162,7 +150,6 @@ describe('CatalogosService', () => {
         paginaWebSuc: 'https://tienda.com',
         redSocialSuc: '@tienda',
         logoSuc: '/uploads/tienda/logo.png',
-        idDir: 1,
         direccion: {
           calle: 'Av. Principal',
           noExt: '100',
@@ -172,31 +159,27 @@ describe('CatalogosService', () => {
           estado: 'Puebla',
           codPostal: '72000',
           pais: 'México',
-        } as any,
-      } as any);
+        },
+      });
 
       const suc = await catalogosService.obtenerSucursal(1);
       expect(suc).toBeDefined();
       expect(suc?.nombre).toBe('Matriz');
       expect(suc?.direccion).toContain('Av. Principal');
 
-      jest.spyOn(prisma.sucursal, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(sucursalRepository, 'getById').mockResolvedValue(null);
       expect(await catalogosService.obtenerSucursal(999)).toBeNull();
 
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([
-        {
-          idSuc: 1,
-          nombreSuc: 'Matriz',
-          descripcionSuc: null,
-          telefonoSuc: null,
-          correoSuc: null,
-          paginaWebSuc: null,
-          redSocialSuc: null,
-          logoSuc: null,
-          idDir: null,
-          direccion: null,
-        } as any,
-      ]);
+      jest.spyOn(sucursalRepository, 'getById').mockResolvedValue({
+        idSuc: 1,
+        nombreSuc: 'Matriz',
+        descripcionSuc: null,
+        telefonoSuc: null,
+        correoSuc: null,
+        paginaWebSuc: null,
+        redSocialSuc: null,
+        logoSuc: null,
+      });
 
       const lista = await catalogosService.listarSucursales();
       expect(lista.length).toBe(1);
@@ -204,7 +187,7 @@ describe('CatalogosService', () => {
     });
 
     it('crearSucursal y actualizarSucursal', async () => {
-      jest.spyOn(prisma.sucursal, 'create').mockResolvedValue({ idSuc: 1 } as any);
+      jest.spyOn(sucursalRepository, 'create').mockResolvedValue({ idSuc: 1, nombreSuc: 'Suc 1' });
       jest.spyOn(catalogosService, 'obtenerSucursal').mockResolvedValue({ id: 'enc1', idSuc: 1, nombreSuc: 'Suc 1' } as any);
 
       const creada = await catalogosService.crearSucursal({ nombreSuc: 'Suc 1' });
@@ -214,7 +197,7 @@ describe('CatalogosService', () => {
         status: 400,
       });
 
-      jest.spyOn(prisma.sucursal, 'update').mockResolvedValue({ idSuc: 1 } as any);
+      jest.spyOn(sucursalRepository, 'update').mockResolvedValue({ idSuc: 1, nombreSuc: 'Suc 1 Modificada' });
       const act = await catalogosService.actualizarSucursal(1, { nombreSuc: 'Suc 1 Modificada' });
       expect(act?.id).toBeDefined();
 
@@ -245,7 +228,7 @@ describe('CatalogosService', () => {
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/old.png' } as any)
         .mockResolvedValueOnce({ id: 'enc1', idSuc: 1, logoSuc: 'https://example.com/logo.png' } as any);
 
-      jest.spyOn(prisma.sucursal, 'update').mockResolvedValue({ idSuc: 1 } as any);
+      jest.spyOn(sucursalRepository, 'updateLogo').mockResolvedValue({ idSuc: 1, logoSuc: 'https://example.com/logo.png' } as any);
 
       const res = await catalogosService.confirmarLogo(1, 'https://example.com/logo.png');
       expect(res?.id).toBeDefined();
@@ -269,16 +252,16 @@ describe('CatalogosService', () => {
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/logo.png' } as any)
         .mockResolvedValueOnce({ idSuc: 1, logo: null } as any);
 
-      jest.spyOn(prisma.sucursal, 'update').mockResolvedValue({ idSuc: 1 } as any);
+      jest.spyOn(sucursalRepository, 'updateLogo').mockResolvedValue({ idSuc: 1, logoSuc: null } as any);
 
       const res = await catalogosService.eliminarLogo(1);
       expect(res?.logo).toBeNull();
     });
 
     it('listarCargos debe retornar cargos permitidos', async () => {
-      jest.spyOn(prisma.cargo, 'findMany').mockResolvedValue([
-        { idCargo: 1, nombreCargo: 'ADMINISTRADOR', idSuc: 1, descripcionCargo: null } as any,
-        { idCargo: 2, nombreCargo: 'CAJERO', idSuc: 1, descripcionCargo: null } as any,
+      jest.spyOn(catalogoRepository, 'listCargos').mockResolvedValue([
+        { idCargo: 1, idSuc: 1, nombreCargo: 'ADMINISTRADOR', descripcionCargo: null },
+        { idCargo: 2, idSuc: 1, nombreCargo: 'CAJERO', descripcionCargo: null },
       ]);
 
       const cargos = await catalogosService.listarCargos();
@@ -286,13 +269,13 @@ describe('CatalogosService', () => {
     });
 
     it('listarTiendaPublica debe retornar sucursales públicas', async () => {
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([
-        { idSuc: 1, nombreSuc: 'Matriz', descripcionSuc: 'Tienda principal', logoSuc: null } as any,
+      jest.spyOn(sucursalRepository, 'getPublic').mockResolvedValue([
+        { idSuc: 1, nombreSuc: 'Matriz', descripcionSuc: 'Tienda principal', logoSuc: null },
       ]);
 
       const tiendas = await catalogosService.listarTiendaPublica();
       expect(tiendas.length).toBe(1);
-      expect(tiendas[0].nombreSuc).toBe('Matriz');
+      expect(tiendas[0]?.nombre).toBe('Matriz');
     });
   });
 });

@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
 import { ItemCarrito, ProductoParaCarrito } from '../models/carrito';
+import { CartStorageService } from './cart-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class CarritoService {
-  private readonly clave = 'tienda.cliente.carrito';
-  private readonly subject = new BehaviorSubject<ItemCarrito[]>(this.leer());
+  private readonly storage = inject(CartStorageService);
+  private readonly subject = new BehaviorSubject<ItemCarrito[]>(this.storage.leer());
   readonly items$ = this.subject.asObservable();
   readonly cantidadTotal$ = this.items$.pipe(map((items) => items.reduce((total, item) => total + item.cantidad, 0)));
   readonly totalMostrado$ = this.items$.pipe(
@@ -86,15 +87,15 @@ export class CarritoService {
   }
 
   actualizarDisponibilidad(
-    productos: Array<{ id: string; existencia?: number | null; precioVenta?: number; existenciaPro?: number | null; precioVentaPro?: number }>,
+    productos: Array<{ id: string; existencia?: number | null; precioVenta?: number }>,
   ): void {
     const disponibles = new Map(productos.map((producto) => [String(producto.id), producto]));
     const actualizados = this.items.reduce<ItemCarrito[]>((resultado, item) => {
       const producto = disponibles.get(item.id);
       if (!producto) return resultado;
-      const stock = Math.max(0, Math.trunc(Number((producto.existencia ?? producto.existenciaPro) ?? 0)));
+      const stock = Math.max(0, Math.trunc(Number(producto.existencia ?? 0)));
       if (!stock) return resultado;
-      const precio = Number(producto.precioVenta ?? producto.precioVentaPro);
+      const precio = Number(producto.precioVenta ?? item.precioMostrado);
       resultado.push({
         ...item,
         stockConocido: stock,
@@ -107,39 +108,7 @@ export class CarritoService {
   }
 
   private actualizar(items: ItemCarrito[]): void {
-    localStorage.setItem(this.clave, JSON.stringify(items));
+    this.storage.guardar(items);
     this.subject.next(items);
-  }
-
-  private leer(): ItemCarrito[] {
-    try {
-      const guardado = JSON.parse(localStorage.getItem(this.clave) || '[]') as unknown;
-      if (!Array.isArray(guardado)) return [];
-      return guardado
-        .filter(this.esItemValido)
-        .map((item) => ({ ...item, cantidad: Math.min(item.cantidad, item.stockConocido) }));
-    } catch {
-      return [];
-    }
-  }
-
-  private esItemValido(valor: unknown): valor is ItemCarrito {
-    if (!valor || typeof valor !== 'object') return false;
-    const item = valor as Partial<ItemCarrito>;
-    return (
-      typeof item.id === 'string' &&
-      Boolean(item.id) &&
-      typeof item.nombre === 'string' &&
-      typeof item.precioMostrado === 'number' &&
-      Number.isFinite(item.precioMostrado) &&
-      item.precioMostrado >= 0 &&
-      typeof item.cantidad === 'number' &&
-      Number.isInteger(item.cantidad) &&
-      item.cantidad > 0 &&
-      typeof item.stockConocido === 'number' &&
-      Number.isInteger(item.stockConocido) &&
-      item.stockConocido > 0 &&
-      item.cantidad <= item.stockConocido
-    );
   }
 }

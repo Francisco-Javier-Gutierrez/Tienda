@@ -77,6 +77,53 @@
           </div>
         </div>
 
+        <!-- Sección Notificaciones Push -->
+        <div class="p-6 md:p-8 border-t border-surface-variant/30 flex flex-col gap-4 bg-surface-container-low">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-[20px]">notifications_active</span>
+              </div>
+              <div>
+                <h3 class="font-heading font-semibold text-base text-on-surface">Notificaciones Push</h3>
+                <p class="font-sans text-xs text-on-surface-variant">
+                  {{ pushService.tokenActual ? 'Dispositivo vinculado a alertas en tiempo real.' : 'Notificaciones pendientes de sincronización en este dispositivo.' }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                *ngIf="pushService.tokenActual"
+                type="button"
+                class="w-full sm:w-auto px-4 py-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-on-primary font-sans font-medium text-xs transition-colors flex items-center justify-center gap-1.5"
+                [disabled]="probandoNotificacion || sincronizandoNotificaciones"
+                (click)="probarNotificacion()"
+              >
+                <span class="material-symbols-outlined text-[16px]" [class.animate-spin]="probandoNotificacion">send</span>
+                {{ probandoNotificacion ? 'Enviando...' : 'Probar Notificación' }}
+              </button>
+              <button
+                type="button"
+                class="w-full sm:w-auto px-4 py-2 rounded-full bg-primary text-on-primary font-sans font-medium text-xs hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+                [disabled]="sincronizandoNotificaciones"
+                (click)="reactivarNotificaciones()"
+              >
+                <span class="material-symbols-outlined text-[16px]" [class.animate-spin]="sincronizandoNotificaciones">sync</span>
+                {{ sincronizandoNotificaciones ? 'Sincronizando...' : 'Sincronizar' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje de ayuda si hay error en la sincronización o permisos -->
+          <div *ngIf="pushService.ultimoError && !pushService.tokenActual" class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-on-surface flex items-start gap-2.5">
+            <span class="material-symbols-outlined text-amber-600 text-[18px] mt-0.5 flex-shrink-0">info</span>
+            <div class="flex flex-col gap-1">
+              <span class="font-semibold text-amber-900">Atención con las notificaciones:</span>
+              <span class="text-on-surface-variant">{{ pushService.ultimoError }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Acciones / Cerrar sesión -->
         <div class="p-6 md:p-8 bg-error-container border-t border-error/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p class="font-sans text-xs text-secondary/80 max-w-xs text-center sm:text-left flex items-start gap-2">

@@ -16,7 +16,7 @@
   <div *ngIf="sucursales.length > 1" class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-2 max-w-md">
     <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1 ml-1">Sucursal a configurar</label>
     <app-custom-select
-      [ngModel]="sucursalActual?.id || sucursalActual?.sucursalId || sucursalActual?.idSuc"
+      [ngModel]="sucursalActual?.id"
       (ngModelChange)="seleccionar($event)"
       [options]="opcionesSucursales"
       placeholder="Selecciona una sucursal"
@@ -42,7 +42,7 @@
         <div class="flex-1 text-center sm:text-left space-y-3">
           <div>
             <h3 class="font-heading font-bold text-lg text-on-surface">Logo de la tienda</h3>
-            <p class="font-sans text-xs text-on-surface-variant mt-0.5">Formatos admitidos: JPEG, PNG o WEBP (máximo 5 MB).</p>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">Formatos admitidos: JPEG, PNG o WEBP (máximo 10 MB).</p>
           </div>
 
           <!-- Botones de Acción de Logo -->
@@ -65,7 +65,7 @@
                     (click)="quitarPreview()">
               Descartar cambio
             </button>
-            <button *ngIf="!logoPendiente && sucursalActual?.logoSuc" 
+            <button *ngIf="!logoPendiente && (sucursalActual?.logoSuc || sucursalActual?.logo)" 
                     type="button" 
                     class="text-error hover:bg-error-container/20 px-3 py-2 rounded-xl font-sans font-semibold text-xs transition-colors disabled:opacity-50"
                     [disabled]="guardando"

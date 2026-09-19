@@ -22,20 +22,22 @@ export const toSucursalDto = (sucursal: any) => {
   if (!sucursal) return null;
   const d = sucursal.direccion;
   const direccionStr = d
-    ? [d.calle, [d.noExt, d.noInt].filter(Boolean).join(' '), d.colonia, d.municipio, d.estado, d.codPostal, d.pais]
-        .filter(Boolean)
-        .join(', ') || null
+    ? typeof d === 'string'
+      ? d
+      : [d.calle, [d.noExt, d.noInt].filter(Boolean).join(' '), d.colonia, d.municipio, d.estado, d.codPostal, d.pais]
+          .filter(Boolean)
+          .join(', ') || null
     : null;
 
   return {
     id: encodeId(sucursal.idSuc),
     nombre: sucursal.nombreSuc,
-    descripcion: sucursal.descripcionSuc,
-    telefono: sucursal.telefonoSuc,
-    correo: sucursal.correoSuc,
-    paginaWeb: sucursal.paginaWebSuc,
-    redSocial: sucursal.redSocialSuc,
-    logo: sucursal.logoSuc,
+    descripcion: sucursal.descripcionSuc || null,
+    telefono: sucursal.telefonoSuc || null,
+    correo: sucursal.correoSuc || null,
+    paginaWeb: sucursal.paginaWebSuc || null,
+    redSocial: sucursal.redSocialSuc || null,
+    logo: sucursal.logoSuc || null,
     direccion: direccionStr,
   };
 };
@@ -45,7 +47,7 @@ export const toSucursalPublicaDto = (sucursal: any) => {
   return {
     id: encodeId(sucursal.idSuc),
     nombre: sucursal.nombreSuc,
-    descripcion: sucursal.descripcionSuc,
-    logo: sucursal.logoSuc,
+    descripcion: sucursal.descripcionSuc || null,
+    logo: sucursal.logoSuc || null,
   };
 };

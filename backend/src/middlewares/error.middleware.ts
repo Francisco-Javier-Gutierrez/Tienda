@@ -8,16 +8,6 @@ export function errorServidor(
 ): Response {
   console.error('Error Servidor:', error);
 
-  if (error && (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === '23503')) {
-    return res.status(409).json({
-      message: 'No se puede eliminar porque el registro está en uso o tiene dependencias relacionadas',
-    });
-  }
-
-  if (error && error.code === 'P2025') {
-    return res.status(404).json({ message: 'El registro solicitado no fue encontrado' });
-  }
-
   if (error && (error.name === 'TransactionCanceledException' || error.name === 'ConditionalCheckFailedException')) {
     return res.status(409).json({
       message: error.message && !error.message.includes('Transaction cancelled')

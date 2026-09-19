@@ -1,44 +1,49 @@
 import fs from 'fs';
 import { Request, Response } from 'express';
-import { productosService } from './productos.service';
+import { productosService, IProductosService } from './productos.service';
 import { idValido, texto } from '../../utils/formatters';
-import { prisma } from '../../config/prisma';
 
+/**
+ * ProductosController: Controlador HTTP desacoplado mediante el Principio de Inversión
+ * de Dependencias (DIP). Acepta IProductosService mediante inyección en constructor.
+ */
 export class ProductosController {
+  constructor(private service: any = productosService) {}
+
   async listarAdmin(req: Request, res: Response): Promise<void> {
-    const productos = await productosService.listarAdmin();
-      res.json(productos);
+    const productos = await this.service.listarAdmin();
+    res.json(productos);
   }
 
   async listarPos(req: Request, res: Response): Promise<void> {
-    const productos = await productosService.listarPos();
-      res.json(productos);
+    const productos = await this.service.listarPos();
+    res.json(productos);
   }
 
   async listarPublico(req: Request, res: Response): Promise<void> {
-    const productos = await productosService.listarPublico();
-      res.json(productos);
+    const productos = await this.service.listarPublico();
+    res.json(productos);
   }
 
   async buscarPorQR(req: Request, res: Response): Promise<void> {
     const codigo = texto(req.params.codigo);
-      const producto = await productosService.buscarPorQR(codigo);
-      if (!producto) {
-              res.status(404).json({ message: 'Producto no encontrado' });
-              return;
-            }
-      res.json(producto);
+    const producto = await this.service.buscarPorQR(codigo);
+    if (!producto) {
+      res.status(404).json({ message: 'Producto no encontrado' });
+      return;
+    }
+    res.json(producto);
   }
 
   async consultarExterno(req: Request, res: Response): Promise<void> {
     const codigo = texto(req.params.codigo);
-      const info = await productosService.consultarExterno(codigo);
-      res.json(info);
+    const info = await this.service.consultarExterno(codigo);
+    res.json(info);
   }
 
   async crear(req: Request, res: Response): Promise<void> {
-    const nuevo = await productosService.crear(req.body);
-      res.status(201).json(nuevo);
+    const nuevo = await this.service.crear(req.body);
+    res.status(201).json(nuevo);
   }
 
   async subirImagenLocal(req: Request, res: Response): Promise<void> {
@@ -54,19 +59,13 @@ export class ProductosController {
     }
 
     try {
-      const productoExistente = await productosService.obtenerProducto(idPro);
-      if (!productoExistente) {
-        fs.unlink(req.file.path, () => undefined);
+      const producto = await this.service.actualizarImagenLocal(idPro, req.file.filename, req.file.path);
+      res.json(producto);
+    } catch (error: any) {
+      if (error?.status === 404) {
         res.status(404).json({ message: 'Producto no encontrado' });
         return;
       }
-
-      const rutaPublica = `/uploads/productos/${req.file.filename}`;
-      await prisma.producto.update({ where: { idPro }, data: { imagenPro: rutaPublica } });
-      const producto = await productosService.obtenerProducto(idPro);
-      res.json(producto);
-    } catch (error) {
-      fs.unlink(req.file.path, () => undefined);
       throw error;
     }
   }
@@ -84,8 +83,8 @@ export class ProductosController {
       return;
     }
 
-    const data = await productosService.presignImagen(idPro, mimeType, extension);
-      res.json(data);
+    const data = await this.service.presignImagen(idPro, mimeType, extension);
+    res.json(data);
   }
 
   async confirmarImagen(req: Request, res: Response): Promise<void> {
@@ -100,8 +99,8 @@ export class ProductosController {
       return;
     }
 
-    const producto = await productosService.confirmarImagen(idPro, key);
-      res.json(producto);
+    const producto = await this.service.confirmarImagen(idPro, key);
+    res.json(producto);
   }
 
   async actualizar(req: Request, res: Response): Promise<void> {
@@ -111,8 +110,8 @@ export class ProductosController {
       return;
     }
 
-    const producto = await productosService.actualizar(idPro, req.body);
-      res.json(producto);
+    const producto = await this.service.actualizar(idPro, req.body);
+    res.json(producto);
   }
 
   async eliminar(req: Request, res: Response): Promise<void> {
@@ -122,8 +121,8 @@ export class ProductosController {
       return;
     }
 
-    const resultado = await productosService.eliminar(idPro);
-      res.json(resultado);
+    const resultado = await this.service.eliminar(idPro);
+    res.json(resultado);
   }
 }
 

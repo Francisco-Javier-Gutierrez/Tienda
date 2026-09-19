@@ -1,10 +1,10 @@
-<div class="relative w-full font-sans select-none">
+<div class="relative w-full font-sans">
   <!-- Trigger Button -->
   <button
     type="button"
     [disabled]="disabled"
     (click)="toggleDropdown()"
-    class="w-full flex items-center justify-between text-left transition-all duration-200 outline-none group"
+    class="w-full flex items-center justify-between text-left transition-all duration-200 outline-none group select-none"
     [ngClass]="[
       compact ? 'py-2 px-3 text-xs rounded-lg' : 'py-3 px-4 text-sm rounded-xl',
       isOpen ? 'ring-2 ring-primary/20 border-primary bg-surface-container-lowest shadow-sm' : 'border border-outline-variant/30 bg-surface-container hover:border-outline-variant/60 focus:border-primary',
@@ -54,11 +54,12 @@
           search
         </span>
         <input
+          #searchInput
           type="text"
           [(ngModel)]="searchQuery"
           placeholder="Buscar..."
           (click)="$event.stopPropagation()"
-          class="w-full bg-surface-container pl-8 pr-3 py-1.5 text-xs text-on-surface rounded-lg border-none outline-none focus:ring-1 focus:ring-primary font-sans"
+          class="w-full bg-surface-container pl-8 pr-3 py-1.5 text-xs text-on-surface rounded-lg border-none outline-none focus:ring-1 focus:ring-primary font-sans select-text"
         />
       </div>
     </div>

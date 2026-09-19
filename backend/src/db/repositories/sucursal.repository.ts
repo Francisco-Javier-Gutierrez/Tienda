@@ -59,6 +59,78 @@ export class SucursalRepository {
     );
     return (res.Attributes as SucursalEntity) || null;
   }
+
+  async update(idSuc: number, datos: Partial<SucursalEntity>): Promise<SucursalEntity | null> {
+    const campos: string[] = [];
+    const attrValues: Record<string, any> = {};
+    const attrNames: Record<string, string> = {};
+
+    if (datos.nombreSuc !== undefined) {
+      campos.push('#nom = :nom');
+      attrNames['#nom'] = 'nombreSuc';
+      attrValues[':nom'] = datos.nombreSuc;
+    }
+    if (datos.descripcionSuc !== undefined) {
+      campos.push('descripcionSuc = :desc');
+      attrValues[':desc'] = datos.descripcionSuc;
+    }
+    if (datos.telefonoSuc !== undefined) {
+      campos.push('telefonoSuc = :tel');
+      attrValues[':tel'] = datos.telefonoSuc;
+    }
+    if (datos.correoSuc !== undefined) {
+      campos.push('correoSuc = :cor');
+      attrValues[':cor'] = datos.correoSuc;
+    }
+    if (datos.paginaWebSuc !== undefined) {
+      campos.push('paginaWebSuc = :web');
+      attrValues[':web'] = datos.paginaWebSuc;
+    }
+    if (datos.redSocialSuc !== undefined) {
+      campos.push('redSocialSuc = :red');
+      attrValues[':red'] = datos.redSocialSuc;
+    }
+
+    if (campos.length === 0) {
+      return await this.getById(idSuc);
+    }
+
+    const res = await docClient.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: Keys.sucursal(idSuc),
+        UpdateExpression: `SET ${campos.join(', ')}`,
+        ...(Object.keys(attrNames).length > 0 && { ExpressionAttributeNames: attrNames }),
+        ExpressionAttributeValues: attrValues,
+        ReturnValues: 'ALL_NEW',
+      }),
+    );
+    return (res.Attributes as SucursalEntity) || null;
+  }
+
+  async create(datos: Partial<SucursalEntity>): Promise<SucursalEntity> {
+    const idSuc = datos.idSuc || 1;
+    const entidad: SucursalEntity = {
+      idSuc,
+      nombreSuc: datos.nombreSuc || 'Mi Tienda',
+      descripcionSuc: datos.descripcionSuc || null,
+      telefonoSuc: datos.telefonoSuc || null,
+      correoSuc: datos.correoSuc || null,
+      paginaWebSuc: datos.paginaWebSuc || null,
+      redSocialSuc: datos.redSocialSuc || null,
+      logoSuc: datos.logoSuc || null,
+    };
+    await docClient.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          ...Keys.sucursal(idSuc),
+          ...entidad,
+        },
+      }),
+    );
+    return entidad;
+  }
 }
 
 export const sucursalRepository = new SucursalRepository();

@@ -1,4 +1,3 @@
-import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { extensionesImagen, generarPresignedUpload, s3Bucket, s3Region } from '../../config/s3';
 import { tiendaUploadDir } from '../../middlewares/upload.middleware';
@@ -8,9 +7,9 @@ import { toMarcaDto, toCategoriaDto, toSucursalDto, toSucursalPublicaDto } from 
 import { catalogoRepository } from '../../db/repositories/catalogo.repository';
 import { sucursalRepository } from '../../db/repositories/sucursal.repository';
 
-
 export function validarSucursal(sucursal: any): string | null {
-  if (!texto(sucursal.nombreSuc)) return 'El nombre de la sucursal es obligatorio';
+  const nombre = texto(sucursal.nombreSuc || sucursal.nombre);
+  if (!nombre) return 'El nombre de la sucursal es obligatorio';
   const limites: Record<string, number> = {
     nombreSuc: 100,
     descripcionSuc: 255,
@@ -19,16 +18,24 @@ export function validarSucursal(sucursal: any): string | null {
     paginaWebSuc: 100,
     redSocialSuc: 100,
   };
+  const mapeados: Record<string, any> = {
+    nombreSuc: sucursal.nombreSuc || sucursal.nombre,
+    descripcionSuc: sucursal.descripcionSuc ?? sucursal.descripcion,
+    telefonoSuc: sucursal.telefonoSuc ?? sucursal.telefono,
+    correoSuc: sucursal.correoSuc ?? sucursal.correo,
+    paginaWebSuc: sucursal.paginaWebSuc ?? sucursal.paginaWeb,
+    redSocialSuc: sucursal.redSocialSuc ?? sucursal.redSocial,
+  };
   for (const [campo, limite] of Object.entries(limites)) {
-    if (texto(sucursal[campo]).length > limite) {
+    if (texto(mapeados[campo]).length > limite) {
       return `El campo ${campo} no puede superar ${limite} caracteres`;
     }
   }
-  const correo = texto(sucursal.correoSuc);
+  const correo = texto(mapeados.correoSuc);
   if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
     return 'El correo no tiene un formato válido';
   }
-  const paginaWeb = texto(sucursal.paginaWebSuc);
+  const paginaWeb = texto(mapeados.paginaWebSuc);
   if (paginaWeb) {
     try {
       const url = new URL(paginaWeb);
@@ -45,13 +52,7 @@ export function validarSucursal(sucursal: any): string | null {
 export class CatalogosService {
   // MARCAS
   async listarMarcas() {
-    if (process.env.DYNAMODB_TABLE) {
-      const marcas = await catalogoRepository.listMarcas();
-      return marcas.map(toMarcaDto);
-    }
-    const marcas = await prisma.marca.findMany({
-      orderBy: { nombreMarca: 'asc' },
-    });
+    const marcas = await catalogoRepository.listMarcas();
     return marcas.map(toMarcaDto);
   }
 
@@ -60,16 +61,7 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const marca = await catalogoRepository.createMarca({ nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
-      return toMarcaDto(marca);
-    }
-    const marca = await prisma.marca.create({
-      data: {
-        nombreMarca: nombreLimpio,
-        descripMarca: textoNullable(descripcion),
-      },
-    });
+    const marca = await catalogoRepository.createMarca({ nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
     return toMarcaDto(marca);
   }
 
@@ -78,42 +70,18 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const marca = await catalogoRepository.updateMarca(idMarca, { nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
-      return toMarcaDto(marca);
-    }
-    const marca = await prisma.marca.update({
-      where: { idMarca },
-      data: {
-        nombreMarca: nombreLimpio,
-        descripMarca: textoNullable(descripcion),
-      },
-    });
+    const marca = await catalogoRepository.updateMarca(idMarca, { nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
     return toMarcaDto(marca);
   }
 
   async eliminarMarca(idMarca: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      await catalogoRepository.deleteMarca(idMarca);
-      return { message: 'Marca eliminada correctamente' };
-    }
-    const productos = await prisma.producto.count({ where: { idMarca } });
-    if (productos > 0) {
-      throw errorFuncional('No se puede eliminar la marca porque tiene productos asociados', 409);
-    }
-    await prisma.marca.delete({ where: { idMarca } });
+    await catalogoRepository.deleteMarca(idMarca);
     return { message: 'Marca eliminada correctamente' };
   }
 
   // CATEGORÍAS
   async listarCategorias() {
-    if (process.env.DYNAMODB_TABLE) {
-      const categorias = await catalogoRepository.listCategorias();
-      return categorias.map(toCategoriaDto);
-    }
-    const categorias = await prisma.categoria.findMany({
-      orderBy: { nombreCat: 'asc' },
-    });
+    const categorias = await catalogoRepository.listCategorias();
     return categorias.map(toCategoriaDto);
   }
 
@@ -122,16 +90,7 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const categoria = await catalogoRepository.createCategoria({ nombreCat: nombreLimpio, descripCat: descripcion || undefined });
-      return toCategoriaDto(categoria);
-    }
-    const categoria = await prisma.categoria.create({
-      data: {
-        nombreCat: nombreLimpio,
-        descripCat: textoNullable(descripcion),
-      },
-    });
+    const categoria = await catalogoRepository.createCategoria({ nombreCat: nombreLimpio, descripCat: descripcion || undefined });
     return toCategoriaDto(categoria);
   }
 
@@ -140,57 +99,24 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const categoria = await catalogoRepository.updateCategoria(idCat, { nombreCat: nombreLimpio, descripCat: descripcion || undefined });
-      return toCategoriaDto(categoria);
-    }
-    const categoria = await prisma.categoria.update({
-      where: { idCat },
-      data: {
-        nombreCat: nombreLimpio,
-        descripCat: textoNullable(descripcion),
-      },
-    });
+    const categoria = await catalogoRepository.updateCategoria(idCat, { nombreCat: nombreLimpio, descripCat: descripcion || undefined });
     return toCategoriaDto(categoria);
   }
 
   async eliminarCategoria(idCat: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      await catalogoRepository.deleteCategoria(idCat);
-      return { message: 'Categoría eliminada correctamente' };
-    }
-    const productos = await prisma.producto.count({ where: { idCat } });
-    if (productos > 0) {
-      throw errorFuncional('No se puede eliminar la categoría porque tiene productos asociados', 409);
-    }
-    await prisma.categoria.delete({ where: { idCat } });
+    await catalogoRepository.deleteCategoria(idCat);
     return { message: 'Categoría eliminada correctamente' };
   }
 
-
   // SUCURSALES
   async obtenerSucursal(idSuc: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      const s = await sucursalRepository.getById(idSuc);
-      return toSucursalDto(s);
-    }
-    const s = await prisma.sucursal.findUnique({
-      where: { idSuc },
-      include: { direccion: true },
-    });
+    const s = await sucursalRepository.getById(idSuc);
     return toSucursalDto(s);
   }
 
   async listarSucursales() {
-    if (process.env.DYNAMODB_TABLE) {
-      const s = await sucursalRepository.getById(1);
-      return s ? [toSucursalDto(s)] : [];
-    }
-    const sucursales = await prisma.sucursal.findMany({
-      orderBy: [{ nombreSuc: 'asc' }, { idSuc: 'asc' }],
-      include: { direccion: true },
-    });
-    return sucursales.map(toSucursalDto);
+    const s = await sucursalRepository.getById(1);
+    return s ? [toSucursalDto(s)] : [];
   }
 
   async crearSucursal(body: any) {
@@ -198,17 +124,16 @@ export class CatalogosService {
     if (errorValidacion) {
       throw errorFuncional(errorValidacion, 400);
     }
-    const nueva = await prisma.sucursal.create({
-      data: {
-        nombreSuc: texto(body.nombreSuc),
-        descripcionSuc: textoNullable(body.descripcionSuc),
-        telefonoSuc: textoNullable(body.telefonoSuc),
-        correoSuc: textoNullable(body.correoSuc),
-        paginaWebSuc: textoNullable(body.paginaWebSuc),
-        redSocialSuc: textoNullable(body.redSocialSuc),
-      },
-    });
-    return await this.obtenerSucursal(nueva.idSuc);
+    const datosNormalizados = {
+      nombreSuc: texto(body.nombreSuc || body.nombre),
+      descripcionSuc: textoNullable(body.descripcionSuc ?? body.descripcion),
+      telefonoSuc: textoNullable(body.telefonoSuc ?? body.telefono),
+      correoSuc: textoNullable(body.correoSuc ?? body.correo),
+      paginaWebSuc: textoNullable(body.paginaWebSuc ?? body.paginaWeb),
+      redSocialSuc: textoNullable(body.redSocialSuc ?? body.redSocial),
+    };
+    const creada = await sucursalRepository.create(datosNormalizados);
+    return toSucursalDto(creada);
   }
 
   async actualizarSucursal(idSuc: number, body: any) {
@@ -216,17 +141,15 @@ export class CatalogosService {
     if (errorValidacion) {
       throw errorFuncional(errorValidacion, 400);
     }
-    await prisma.sucursal.update({
-      where: { idSuc },
-      data: {
-        nombreSuc: texto(body.nombreSuc),
-        descripcionSuc: textoNullable(body.descripcionSuc),
-        telefonoSuc: textoNullable(body.telefonoSuc),
-        correoSuc: textoNullable(body.correoSuc),
-        paginaWebSuc: textoNullable(body.paginaWebSuc),
-        redSocialSuc: textoNullable(body.redSocialSuc),
-      },
-    });
+    const datosNormalizados = {
+      nombreSuc: texto(body.nombreSuc || body.nombre),
+      descripcionSuc: textoNullable(body.descripcionSuc ?? body.descripcion),
+      telefonoSuc: textoNullable(body.telefonoSuc ?? body.telefono),
+      correoSuc: textoNullable(body.correoSuc ?? body.correo),
+      paginaWebSuc: textoNullable(body.paginaWebSuc ?? body.paginaWeb),
+      redSocialSuc: textoNullable(body.redSocialSuc ?? body.redSocial),
+    };
+    await sucursalRepository.update(idSuc, datosNormalizados);
     return await this.obtenerSucursal(idSuc);
   }
 
@@ -254,11 +177,7 @@ export class CatalogosService {
         ? logoUrlInput
         : `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${logoUrlInput}`;
 
-    if (process.env.DYNAMODB_TABLE) {
-      await sucursalRepository.updateLogo(idSuc, rutaFinal);
-    } else {
-      await prisma.sucursal.update({ where: { idSuc }, data: { logoSuc: rutaFinal } });
-    }
+    await sucursalRepository.updateLogo(idSuc, rutaFinal);
 
     if (anterior.logo && anterior.logo !== rutaFinal) {
       eliminarUploadControlado(anterior.logo, tiendaUploadDir, '/uploads/tienda/');
@@ -272,46 +191,21 @@ export class CatalogosService {
     if (!anterior) {
       throw errorFuncional('Sucursal no encontrada', 404);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      await sucursalRepository.updateLogo(idSuc, null);
-    } else {
-      await prisma.sucursal.update({ where: { idSuc }, data: { logoSuc: null } });
-    }
+    await sucursalRepository.updateLogo(idSuc, null);
     eliminarUploadControlado(anterior.logo, tiendaUploadDir, '/uploads/tienda/');
     return await this.obtenerSucursal(idSuc);
   }
 
   // CARGOS
   async listarCargos() {
-    if (process.env.DYNAMODB_TABLE) {
-      return await catalogoRepository.listCargos();
-    }
-    return await prisma.cargo.findMany({
-      where: { nombreCargo: { in: ['ADMINISTRADOR', 'CAJERO'] } },
-      orderBy: { nombreCargo: 'asc' },
-    });
+    return await catalogoRepository.listCargos();
   }
 
   // TIENDA PÚBLICA
   async listarTiendaPublica() {
-    if (process.env.DYNAMODB_TABLE) {
-      const sucursales = await sucursalRepository.getPublic(1);
-      return sucursales.map(toSucursalPublicaDto);
-    }
-    return await prisma.sucursal.findMany({
-      orderBy: { idSuc: 'asc' },
-      select: {
-        idSuc: true,
-        nombreSuc: true,
-        descripcionSuc: true,
-        logoSuc: true,
-      },
-    });
+    const sucursales = await sucursalRepository.getPublic(1);
+    return sucursales.map(toSucursalPublicaDto).filter(Boolean);
   }
-
 }
 
 export const catalogosService = new CatalogosService();
-
-
-
