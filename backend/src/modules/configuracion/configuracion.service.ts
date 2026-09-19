@@ -1,7 +1,5 @@
-import { prisma } from '../../config/prisma';
 import { texto, errorFuncional } from '../../utils/formatters';
 import { normalizarConfiguracionTransferencia } from '../../dtos/pedido.dto';
-import { pedidosService } from '../pedidos/pedidos.service';
 import { configuracionRepository } from '../../db/repositories/configuracion.repository';
 
 function booleanoEstricto(value: unknown): boolean | null {
@@ -41,14 +39,8 @@ export function validarConfiguracionTransferencia(body: any) {
 
 export class ConfiguracionService {
   async obtenerAdmin(idSuc: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      const conf = await configuracionRepository.getConfiguracion(idSuc);
-      return normalizarConfiguracionTransferencia(conf, true);
-    }
-    const configuracion = await prisma.configuracionTransferencia.findUnique({
-      where: { idSuc },
-    });
-    return normalizarConfiguracionTransferencia(configuracion, true);
+    const conf = await configuracionRepository.getConfiguracion(idSuc);
+    return normalizarConfiguracionTransferencia(conf, true);
   }
 
   async actualizarAdmin(idSuc: number, body: any) {
@@ -57,46 +49,14 @@ export class ConfiguracionService {
       throw errorFuncional(validacion.error, 400);
     }
     const datos = validacion.valores!;
-
-    if (process.env.DYNAMODB_TABLE) {
-      const conf = await configuracionRepository.updateConfiguracion(idSuc, datos);
-      return normalizarConfiguracionTransferencia(conf, true);
-    }
-
-    const configuracion = await prisma.configuracionTransferencia.upsert({
-      where: { idSuc },
-      update: {
-        banco: datos.banco,
-        titular: datos.titular,
-        clabe: datos.clabe,
-        numeroCuenta: datos.numeroCuenta,
-        instrucciones: datos.instrucciones,
-        activo: datos.activo,
-        fechaActualizacion: new Date(),
-      },
-      create: {
-        idSuc,
-        banco: datos.banco,
-        titular: datos.titular,
-        clabe: datos.clabe,
-        numeroCuenta: datos.numeroCuenta,
-        instrucciones: datos.instrucciones,
-        activo: datos.activo,
-      },
-    });
-    return normalizarConfiguracionTransferencia(configuracion, true);
+    const conf = await configuracionRepository.updateConfiguracion(idSuc, datos);
+    return normalizarConfiguracionTransferencia(conf, true);
   }
 
   async obtenerCliente() {
-    if (process.env.DYNAMODB_TABLE) {
-      const conf = await configuracionRepository.getConfiguracion(1);
-      return normalizarConfiguracionTransferencia(conf);
-    }
-    const idSuc = await pedidosService.obtenerSucursalDisponibleCliente();
-    const configuracion = await pedidosService.obtenerConfiguracionTransferencia(idSuc, true);
-    return normalizarConfiguracionTransferencia(configuracion);
+    const conf = await configuracionRepository.getConfiguracion(1);
+    return normalizarConfiguracionTransferencia(conf);
   }
 }
 
 export const configuracionService = new ConfiguracionService();
-

@@ -1,15 +1,10 @@
-import { prisma, DbClient } from '../../config/prisma';
 import {
   dineroCentavos,
   errorFuncional,
-  formatearFechaVenta,
-  formatearHoraVenta,
   idValido,
   texto,
   uuidValido,
-  encodeId,
 } from '../../utils/formatters';
-import { empleadoSeguro } from '../../utils/security';
 import { toVentaRegistradaDto, toVentaListDto, toVentaDetalleDto } from '../../dtos/venta.dto';
 import { cajaRepository } from '../../db/repositories/caja.repository';
 import { productoRepository } from '../../db/repositories/producto.repository';
@@ -17,10 +12,11 @@ import { ventaRepository } from '../../db/repositories/venta.repository';
 import { PaymentStrategyRegistry, defaultPaymentRegistry } from './payment.strategy';
 
 export interface IVentasService {
-  obtenerVentaRegistrada(idVenta: number, empleado: any, client?: DbClient): Promise<any>;
-  crearVenta(empleado: any, body: any, client?: DbClient): Promise<any>;
-  cancelarVenta(idVenta: number, idEmp: number, idSuc: number, motivo?: string, client?: DbClient): Promise<any>;
-  listarVentas(filtros: any, empleado: any, client?: DbClient): Promise<any>;
+  obtenerVentaRegistrada(idVenta: number, empleado: any): Promise<any>;
+  crearVenta(empleado: any, body: any): Promise<any>;
+  cancelarVenta(idVenta: number, idEmp: number, idSuc: number, motivo?: string): Promise<any>;
+  listarVentas(empleado: any): Promise<any>;
+  detalleVenta(idVenta: number, empleado: any): Promise<any>;
 }
 
 export class VentasService implements IVentasService {
@@ -31,30 +27,23 @@ export class VentasService implements IVentasService {
     private ventaRepo: any = ventaRepository,
   ) {}
 
-  async obtenerVentaRegistrada(idVenta: number, empleado: any, client: DbClient = prisma) {
-    if (process.env.DYNAMODB_TABLE) {
-      const v = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
-      if (!v) return null;
-      return toVentaRegistradaDto(v, empleado);
-    }
-    const v = await client.venta.findUnique({
-      where: { idVenta: Number(idVenta) },
-      include: {
-        empleado: true,
-        detalles: {
-          include: { producto: true },
-          orderBy: { idDetVenta: 'asc' },
-        },
-      },
-    });
+  async obtenerVentaRegistrada(idVenta: number, empleado: any) {
+    const v = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
     if (!v) return null;
-
     return toVentaRegistradaDto(v, empleado);
   }
 
   async crearVenta(empleado: any, body: any) {
     const uuidVenta = uuidValido(body.uuidVenta);
     if (!uuidVenta) throw errorFuncional('uuidVenta no es válido', 400);
+
+    // Idempotencia rápida: Si la venta ya fue registrada previamente, retornarla sin duplicar
+    if (this.ventaRepo.getVentaByUuid) {
+      const existente = await this.ventaRepo.getVentaByUuid(uuidVenta, empleado?.idSuc || 1);
+      if (existente) {
+        return toVentaRegistradaDto(existente, empleado);
+      }
+    }
 
     const metodoPago = texto(body.metodoPago).toUpperCase();
     const strategy = this.paymentRegistry.get(metodoPago);
@@ -73,141 +62,51 @@ export class VentasService implements IVentasService {
       cantidades.set(idPro, (cantidades.get(idPro) || 0) + cantidad);
     }
 
-    const ids = [...cantidades.keys()].sort((a, b) => a - b);
-    strategy.validarEntrada(body);
-
-    if (process.env.DYNAMODB_TABLE) {
-      const caja = await this.cajaRepo.getSesionAbierta(empleado?.idSuc || 1);
-      if (!caja) {
-        throw errorFuncional('Debes abrir caja antes de registrar ventas.', 409);
-      }
-
-      let totalCalculado = 0;
-      const itemsParaVenta = [];
-      for (const [idPro, cantidad] of cantidades.entries()) {
-        const prod = await this.prodRepo.getProductoById(idPro, empleado?.idSuc || 1);
-        if (!prod) throw errorFuncional(`El producto no existe`, 404);
-        if (prod.existenciaPro < cantidad) {
-          throw errorFuncional(`Existencias insuficientes para "${prod.nombrePro}". Disponibles: ${prod.existenciaPro}`, 409);
-        }
-        const precio = Number(prod.precioVentaPro);
-        totalCalculado += Number((precio * cantidad).toFixed(2));
-        itemsParaVenta.push({
-          idPro,
-          nombrePro: prod.nombrePro,
-          cantidad,
-          precioUnitario: precio,
-        });
-      }
-
-      const pagoResult = strategy.validarYCalcular(totalCalculado, body);
-
-      const venta = await this.ventaRepo.createVenta({
-        idSuc: empleado?.idSuc || 1,
-        idEmp: empleado?.idEmp || 1,
-        idSesionCaja: caja.idSesionCaja,
-        totalVenta: totalCalculado,
-        pagoCon: pagoResult.pagoCon,
-        cambio: pagoResult.cambio,
-        metodoPago,
-        items: itemsParaVenta,
-      });
-
-      return toVentaRegistradaDto(venta, empleado);
+    if (cantidades.size > 90) {
+      throw errorFuncional('La venta no puede contener más de 90 productos distintos por transacción.', 400);
     }
 
-    return await prisma.$transaction(async (tx) => {
+    strategy.validarEntrada(body);
 
-      const repetida = await tx.venta.findUnique({
-        where: { uuidVenta },
-      });
-      if (repetida) {
-        if (Number(repetida.idEmp) !== Number(empleado.idEmp) || Number(repetida.idSuc) !== Number(empleado.idSuc)) {
-          throw errorFuncional('El identificador de venta ya está en uso.', 409);
-        }
-        return await this.obtenerVentaRegistrada(repetida.idVenta, empleado, tx);
+    const caja = await this.cajaRepo.getSesionAbierta(empleado?.idSuc || 1, empleado?.idEmp);
+    if (!caja) {
+      throw errorFuncional('Debes abrir caja antes de registrar ventas.', 409);
+    }
+
+    let totalCalculado = 0;
+    const itemsParaVenta = [];
+    for (const [idPro, cantidad] of cantidades.entries()) {
+      const prod = await this.prodRepo.getProductoById(idPro, empleado?.idSuc || 1);
+      if (!prod) throw errorFuncional('El producto no existe', 404);
+      if (prod.existenciaPro < cantidad) {
+        throw errorFuncional(`Existencias insuficientes para "${prod.nombrePro}". Disponibles: ${prod.existenciaPro}`, 409);
       }
-
-      const caja = await tx.sesionCaja.findFirst({
-        where: { idEmp: empleado.idEmp, estado: 'ABIERTA' },
+      const precio = Number(prod.precioVentaPro);
+      totalCalculado += Number((precio * cantidad).toFixed(2));
+      itemsParaVenta.push({
+        idPro,
+        nombrePro: prod.nombrePro,
+        cantidad,
+        precioUnitario: precio,
       });
-      if (!caja) {
-        throw errorFuncional('Debes abrir caja antes de registrar ventas.', 409);
-      }
+    }
 
-      const productos = await tx.producto.findMany({
-        where: { idPro: { in: ids } },
-        orderBy: { idPro: 'asc' },
-      });
+    totalCalculado = Number(totalCalculado.toFixed(2));
+    const pagoResult = strategy.validarYCalcular(totalCalculado, body);
 
-      if (productos.length !== ids.length) {
-        const encontrados = new Set(productos.map((p) => Number(p.idPro)));
-        const faltante = ids.find((id) => !encontrados.has(id));
-        throw errorFuncional('Uno de los productos ya no está disponible', 404, { idPro: faltante });
-      }
-
-      let totalCentavos = 0;
-      const itemsVenta = productos.map((producto) => {
-        const cantidad = cantidades.get(Number(producto.idPro))!;
-        const disponible = Number(producto.existenciaPro) || 0;
-        if (!producto.activoPro) {
-          throw errorFuncional(`${producto.nombrePro || 'El producto'} no está disponible para venta.`, 409, { idPro: producto.idPro });
-        }
-        if (cantidad > disponible) {
-          throw errorFuncional(`Stock insuficiente para ${producto.nombrePro || 'el producto'}.`, 409, { idPro: producto.idPro, disponible });
-        }
-        const precioCentavos = dineroCentavos(producto.precioVentaPro);
-        if (precioCentavos === null || precioCentavos < 0) {
-          throw errorFuncional(`${producto.nombrePro || 'El producto'} no tiene un precio válido.`, 409, { idPro: producto.idPro });
-        }
-        const subtotalCentavos = precioCentavos * cantidad;
-        totalCentavos += subtotalCentavos;
-        return {
-          idPro: Number(producto.idPro),
-          nombre: producto.nombrePro,
-          cantidad,
-          precioUnitario: precioCentavos / 100,
-          subtotal: subtotalCentavos / 100,
-        };
-      });
-
-      const pagoResult = strategy.validarYCalcular(totalCentavos / 100, body);
-
-      const ahora = new Date();
-
-      const venta = await tx.venta.create({
-        data: {
-          uuidVenta,
-          fechaVenta: ahora,
-          horaVenta: ahora,
-          total: totalCentavos / 100,
-          metodoPago,
-          montoRecibido: pagoResult.montoRecibidoDb,
-          cambio: pagoResult.cambio,
-          estadoVenta: 'COMPLETADA',
-          idEmp: empleado.idEmp,
-          idSuc: empleado.idSuc,
-          idSesionCaja: caja.idSesionCaja,
-          detalles: {
-            create: itemsVenta.map((item) => ({
-              idPro: item.idPro,
-              cantidadDetVenta: item.cantidad,
-              precioUnitarioDetVenta: item.precioUnitario,
-              subtotalDetVenta: item.subtotal,
-            })),
-          },
-        },
-      });
-
-      for (const item of itemsVenta) {
-        await tx.producto.update({
-          where: { idPro: item.idPro },
-          data: { existenciaPro: { decrement: item.cantidad } },
-        });
-      }
-
-      return await this.obtenerVentaRegistrada(venta.idVenta, empleado, tx);
+    const venta = await this.ventaRepo.createVenta({
+      uuidVenta,
+      idSuc: empleado?.idSuc || 1,
+      idEmp: empleado?.idEmp || 1,
+      idSesionCaja: caja.idSesionCaja,
+      totalVenta: totalCalculado,
+      pagoCon: pagoResult.pagoCon,
+      cambio: pagoResult.cambio,
+      metodoPago,
+      items: itemsParaVenta,
     });
+
+    return toVentaRegistradaDto(venta, empleado);
   }
 
   async cancelarVenta(idVenta: number, idEmp: number, idSuc: number, motivoInput: string) {
@@ -217,103 +116,23 @@ export class VentasService implements IVentasService {
       throw errorFuncional('El motivo debe tener entre 3 y 255 caracteres', 400);
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const venta = await tx.venta.findFirst({
-        where: { idVenta },
-        include: {
-          sesionCaja: true,
-          pedidos: true,
-          detalles: true,
-        },
-      });
-      if (!venta || Number(venta.idSuc) !== Number(idSuc)) {
-        throw errorFuncional('Venta no encontrada', 404);
-      }
-      if (venta.estadoVenta === 'CANCELADA') {
-        throw errorFuncional('La venta ya fue cancelada.', 409);
-      }
-      if (venta.estadoVenta !== 'COMPLETADA') {
-        throw errorFuncional('La venta no se encuentra en un estado cancelable.', 409);
-      }
-      if (venta.idSesionCaja && venta.sesionCaja?.estado === 'CERRADA') {
-        throw errorFuncional('La venta pertenece a una caja cerrada.', 409);
-      }
-      if (venta.pedidos && venta.pedidos.length > 0) {
-        throw errorFuncional('Las ventas de pedidos online deben gestionarse desde el pedido.', 409);
-      }
-      if (!venta.detalles.length) {
-        throw errorFuncional('La venta no contiene detalles para restaurar.', 409);
-      }
-
-      for (const d of venta.detalles) {
-        await tx.producto.update({
-          where: { idPro: d.idPro },
-          data: { existenciaPro: { increment: d.cantidadDetVenta } },
-        });
-      }
-
-      const ahora = new Date();
-      const actualizada = await tx.venta.update({
-        where: { idVenta },
-        data: {
-          estadoVenta: 'CANCELADA',
-          fechaCancelacion: ahora,
-          motivoCancelacion: motivo,
-          idEmpCancela: idEmp,
-        },
-      });
-
-      return { id: encodeId(actualizada.idVenta), estado: actualizada.estadoVenta, fechaCancelacion: actualizada.fechaCancelacion?.toISOString() || null, motivoCancelacion: actualizada.motivoCancelacion, cajeroCancelaId: encodeId(actualizada.idEmpCancela), };
-    });
+    return await this.ventaRepo.cancelarVenta(idVenta, idEmp, idSuc, motivo);
   }
 
   async listarVentas(empleado: { idEmp: number; idSuc: number; cargo: string }) {
-    if (process.env.DYNAMODB_TABLE) {
-      const ventas = await this.ventaRepo.listVentas(empleado?.idSuc || 1);
-      return ventas.map(toVentaListDto);
+    const ventas = await this.ventaRepo.listVentas(empleado?.idSuc || 1);
+    if (empleado.cargo === 'CAJERO') {
+      return ventas.filter((v: any) => v.idEmp === empleado.idEmp).map(toVentaListDto);
     }
-    const where = empleado.cargo === 'CAJERO' ? { idEmp: empleado.idEmp } : { idSuc: empleado.idSuc };
-
-    const ventas = await prisma.venta.findMany({
-      where,
-      orderBy: [{ fechaVenta: 'desc' }, { horaVenta: 'desc' }, { idVenta: 'desc' }],
-      include: {
-        empleado: true,
-        pedidos: { select: { idPedido: true } },
-      },
-    });
-
     return ventas.map(toVentaListDto);
   }
 
   async detalleVenta(idVenta: number, empleado: { idEmp: number; idSuc: number; cargo: string }) {
-    if (process.env.DYNAMODB_TABLE) {
-      const v = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
-      if (!v) return null;
-      return toVentaDetalleDto(v);
-    }
-
-    const where = {
-      idVenta,
-      ...(empleado.cargo === 'CAJERO' ? { idEmp: empleado.idEmp } : { idSuc: empleado.idSuc }),
-    };
-
-    const v = await prisma.venta.findFirst({
-      where,
-      include: {
-        empleado: true,
-        empleadoCancela: true,
-        sucursal: true,
-        pedidos: { select: { idPedido: true } },
-        detalles: {
-          include: { producto: true },
-          orderBy: { idDetDetVenta: 'asc' } as any,
-        },
-      },
-    });
-
+    const v = await this.ventaRepo.getVentaById(idVenta, empleado?.idSuc || 1);
     if (!v) return null;
-
+    if (empleado.cargo === 'CAJERO' && v.idEmp !== empleado.idEmp) {
+      return null;
+    }
     return toVentaDetalleDto(v);
   }
 }

@@ -1,10 +1,25 @@
 import request from 'supertest';
 import { app } from '../../../src/app';
 import { emitirSesionCliente, emitirSesionEmpleado } from '../../../src/utils/security';
+import { authRepository } from '../../../src/db/repositories/auth.repository';
 
 describe('Uploads Presign Routes', () => {
   const tokenEmpleado = emitirSesionEmpleado({ idEmp: 1 });
   const tokenCliente = emitirSesionCliente({ idCliente: 10 });
+
+  beforeEach(() => {
+    jest.spyOn(authRepository, 'findEmpleadoById').mockResolvedValue({
+      idEmp: 1,
+      idCargo: 1,
+      estadoEmp: true,
+      cargoNombre: 'ADMINISTRADOR',
+      cargo: 'ADMINISTRADOR',
+    } as any);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   it('debe rechazar sin autorización con 401', async () => {
     const res = await request(app).post('/uploads/presign').send({

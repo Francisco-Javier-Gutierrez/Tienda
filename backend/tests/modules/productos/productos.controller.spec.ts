@@ -2,7 +2,6 @@ import fs from 'fs';
 import { Request, Response } from 'express';
 import { productosController } from '../../../src/modules/productos/productos.controller';
 import { productosService } from '../../../src/modules/productos/productos.service';
-import { prisma } from '../../../src/config/prisma';
 
 describe('ProductosController', () => {
   let mockReq: Partial<Request>;
@@ -73,23 +72,19 @@ describe('ProductosController', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
 
     mockReq.file = { path: 'path', filename: 'foto.jpg' } as any;
-    jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce(null);
+    jest.spyOn(productosService, 'actualizarImagenLocal').mockRejectedValueOnce({ status: 404 });
     await productosController.subirImagenLocal(mockReq as Request, mockRes as Response);
     expect(mockRes.status).toHaveBeenCalledWith(404);
 
     // Error en base de datos al guardar imagen
-    jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce({ idPro: 1 } as any);
-    jest.spyOn(prisma.producto, 'update').mockRejectedValueOnce(new Error('DB Error'));
+    jest.spyOn(productosService, 'actualizarImagenLocal').mockRejectedValueOnce(new Error('DB Error'));
     await expect(productosController.subirImagenLocal(mockReq as Request, mockRes as Response)).rejects.toThrow('DB Error');
 
     // Éxito
-    jest.spyOn(productosService, 'obtenerProducto')
-      .mockResolvedValueOnce({ idPro: 1 } as any)
-      .mockResolvedValueOnce({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' } as any);
-    jest.spyOn(prisma.producto, 'update').mockResolvedValue({ idPro: 1 } as any);
+    jest.spyOn(productosService, 'actualizarImagenLocal').mockResolvedValueOnce({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' } as any);
 
     await productosController.subirImagenLocal(mockReq as Request, mockRes as Response);
-    expect(mockRes.json).toHaveBeenCalled();
+    expect(mockRes.json).toHaveBeenCalledWith({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' });
   });
 
   it('presignImagen y confirmarImagen', async () => {

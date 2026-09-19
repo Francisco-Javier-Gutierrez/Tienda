@@ -1,4 +1,3 @@
-import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { extensionesImagen, generarPresignedUpload, s3Bucket, s3Region } from '../../config/s3';
 import { tiendaUploadDir } from '../../middlewares/upload.middleware';
@@ -7,7 +6,6 @@ import { texto, textoNullable, errorFuncional } from '../../utils/formatters';
 import { toMarcaDto, toCategoriaDto, toSucursalDto, toSucursalPublicaDto } from '../../dtos/catalogo.dto';
 import { catalogoRepository } from '../../db/repositories/catalogo.repository';
 import { sucursalRepository } from '../../db/repositories/sucursal.repository';
-
 
 export function validarSucursal(sucursal: any): string | null {
   const nombre = texto(sucursal.nombreSuc || sucursal.nombre);
@@ -54,13 +52,7 @@ export function validarSucursal(sucursal: any): string | null {
 export class CatalogosService {
   // MARCAS
   async listarMarcas() {
-    if (process.env.DYNAMODB_TABLE) {
-      const marcas = await catalogoRepository.listMarcas();
-      return marcas.map(toMarcaDto);
-    }
-    const marcas = await prisma.marca.findMany({
-      orderBy: { nombreMarca: 'asc' },
-    });
+    const marcas = await catalogoRepository.listMarcas();
     return marcas.map(toMarcaDto);
   }
 
@@ -69,16 +61,7 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const marca = await catalogoRepository.createMarca({ nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
-      return toMarcaDto(marca);
-    }
-    const marca = await prisma.marca.create({
-      data: {
-        nombreMarca: nombreLimpio,
-        descripMarca: textoNullable(descripcion),
-      },
-    });
+    const marca = await catalogoRepository.createMarca({ nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
     return toMarcaDto(marca);
   }
 
@@ -87,42 +70,18 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const marca = await catalogoRepository.updateMarca(idMarca, { nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
-      return toMarcaDto(marca);
-    }
-    const marca = await prisma.marca.update({
-      where: { idMarca },
-      data: {
-        nombreMarca: nombreLimpio,
-        descripMarca: textoNullable(descripcion),
-      },
-    });
+    const marca = await catalogoRepository.updateMarca(idMarca, { nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
     return toMarcaDto(marca);
   }
 
   async eliminarMarca(idMarca: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      await catalogoRepository.deleteMarca(idMarca);
-      return { message: 'Marca eliminada correctamente' };
-    }
-    const productos = await prisma.producto.count({ where: { idMarca } });
-    if (productos > 0) {
-      throw errorFuncional('No se puede eliminar la marca porque tiene productos asociados', 409);
-    }
-    await prisma.marca.delete({ where: { idMarca } });
+    await catalogoRepository.deleteMarca(idMarca);
     return { message: 'Marca eliminada correctamente' };
   }
 
   // CATEGORÍAS
   async listarCategorias() {
-    if (process.env.DYNAMODB_TABLE) {
-      const categorias = await catalogoRepository.listCategorias();
-      return categorias.map(toCategoriaDto);
-    }
-    const categorias = await prisma.categoria.findMany({
-      orderBy: { nombreCat: 'asc' },
-    });
+    const categorias = await catalogoRepository.listCategorias();
     return categorias.map(toCategoriaDto);
   }
 
@@ -131,16 +90,7 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const categoria = await catalogoRepository.createCategoria({ nombreCat: nombreLimpio, descripCat: descripcion || undefined });
-      return toCategoriaDto(categoria);
-    }
-    const categoria = await prisma.categoria.create({
-      data: {
-        nombreCat: nombreLimpio,
-        descripCat: textoNullable(descripcion),
-      },
-    });
+    const categoria = await catalogoRepository.createCategoria({ nombreCat: nombreLimpio, descripCat: descripcion || undefined });
     return toCategoriaDto(categoria);
   }
 
@@ -149,57 +99,24 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      const categoria = await catalogoRepository.updateCategoria(idCat, { nombreCat: nombreLimpio, descripCat: descripcion || undefined });
-      return toCategoriaDto(categoria);
-    }
-    const categoria = await prisma.categoria.update({
-      where: { idCat },
-      data: {
-        nombreCat: nombreLimpio,
-        descripCat: textoNullable(descripcion),
-      },
-    });
+    const categoria = await catalogoRepository.updateCategoria(idCat, { nombreCat: nombreLimpio, descripCat: descripcion || undefined });
     return toCategoriaDto(categoria);
   }
 
   async eliminarCategoria(idCat: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      await catalogoRepository.deleteCategoria(idCat);
-      return { message: 'Categoría eliminada correctamente' };
-    }
-    const productos = await prisma.producto.count({ where: { idCat } });
-    if (productos > 0) {
-      throw errorFuncional('No se puede eliminar la categoría porque tiene productos asociados', 409);
-    }
-    await prisma.categoria.delete({ where: { idCat } });
+    await catalogoRepository.deleteCategoria(idCat);
     return { message: 'Categoría eliminada correctamente' };
   }
 
-
   // SUCURSALES
   async obtenerSucursal(idSuc: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      const s = await sucursalRepository.getById(idSuc);
-      return toSucursalDto(s);
-    }
-    const s = await prisma.sucursal.findUnique({
-      where: { idSuc },
-      include: { direccion: true },
-    });
+    const s = await sucursalRepository.getById(idSuc);
     return toSucursalDto(s);
   }
 
   async listarSucursales() {
-    if (process.env.DYNAMODB_TABLE) {
-      const s = await sucursalRepository.getById(1);
-      return s ? [toSucursalDto(s)] : [];
-    }
-    const sucursales = await prisma.sucursal.findMany({
-      orderBy: [{ nombreSuc: 'asc' }, { idSuc: 'asc' }],
-      include: { direccion: true },
-    });
-    return sucursales.map(toSucursalDto);
+    const s = await sucursalRepository.getById(1);
+    return s ? [toSucursalDto(s)] : [];
   }
 
   async crearSucursal(body: any) {
@@ -215,14 +132,8 @@ export class CatalogosService {
       paginaWebSuc: textoNullable(body.paginaWebSuc ?? body.paginaWeb),
       redSocialSuc: textoNullable(body.redSocialSuc ?? body.redSocial),
     };
-    if (process.env.DYNAMODB_TABLE) {
-      const creada = await sucursalRepository.create(datosNormalizados);
-      return toSucursalDto(creada);
-    }
-    const nueva = await prisma.sucursal.create({
-      data: datosNormalizados,
-    });
-    return await this.obtenerSucursal(nueva.idSuc);
+    const creada = await sucursalRepository.create(datosNormalizados);
+    return toSucursalDto(creada);
   }
 
   async actualizarSucursal(idSuc: number, body: any) {
@@ -238,14 +149,7 @@ export class CatalogosService {
       paginaWebSuc: textoNullable(body.paginaWebSuc ?? body.paginaWeb),
       redSocialSuc: textoNullable(body.redSocialSuc ?? body.redSocial),
     };
-    if (process.env.DYNAMODB_TABLE) {
-      await sucursalRepository.update(idSuc, datosNormalizados);
-      return await this.obtenerSucursal(idSuc);
-    }
-    await prisma.sucursal.update({
-      where: { idSuc },
-      data: datosNormalizados,
-    });
+    await sucursalRepository.update(idSuc, datosNormalizados);
     return await this.obtenerSucursal(idSuc);
   }
 
@@ -273,11 +177,7 @@ export class CatalogosService {
         ? logoUrlInput
         : `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${logoUrlInput}`;
 
-    if (process.env.DYNAMODB_TABLE) {
-      await sucursalRepository.updateLogo(idSuc, rutaFinal);
-    } else {
-      await prisma.sucursal.update({ where: { idSuc }, data: { logoSuc: rutaFinal } });
-    }
+    await sucursalRepository.updateLogo(idSuc, rutaFinal);
 
     if (anterior.logo && anterior.logo !== rutaFinal) {
       eliminarUploadControlado(anterior.logo, tiendaUploadDir, '/uploads/tienda/');
@@ -291,47 +191,21 @@ export class CatalogosService {
     if (!anterior) {
       throw errorFuncional('Sucursal no encontrada', 404);
     }
-    if (process.env.DYNAMODB_TABLE) {
-      await sucursalRepository.updateLogo(idSuc, null);
-    } else {
-      await prisma.sucursal.update({ where: { idSuc }, data: { logoSuc: null } });
-    }
+    await sucursalRepository.updateLogo(idSuc, null);
     eliminarUploadControlado(anterior.logo, tiendaUploadDir, '/uploads/tienda/');
     return await this.obtenerSucursal(idSuc);
   }
 
   // CARGOS
   async listarCargos() {
-    if (process.env.DYNAMODB_TABLE) {
-      return await catalogoRepository.listCargos();
-    }
-    return await prisma.cargo.findMany({
-      where: { nombreCargo: { in: ['ADMINISTRADOR', 'CAJERO'] } },
-      orderBy: { nombreCargo: 'asc' },
-    });
+    return await catalogoRepository.listCargos();
   }
 
   // TIENDA PÚBLICA
   async listarTiendaPublica() {
-    if (process.env.DYNAMODB_TABLE) {
-      const sucursales = await sucursalRepository.getPublic(1);
-      return sucursales.map(toSucursalPublicaDto).filter(Boolean);
-    }
-    const sucursales = await prisma.sucursal.findMany({
-      orderBy: { idSuc: 'asc' },
-      select: {
-        idSuc: true,
-        nombreSuc: true,
-        descripcionSuc: true,
-        logoSuc: true,
-      },
-    });
+    const sucursales = await sucursalRepository.getPublic(1);
     return sucursales.map(toSucursalPublicaDto).filter(Boolean);
   }
-
 }
 
 export const catalogosService = new CatalogosService();
-
-
-

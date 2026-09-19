@@ -74,4 +74,25 @@ export const Keys = {
     PK: `CLI#${idCliente}`,
     SK: `PEDIDO#${idPedido}`,
   }),
+
+  movimientoCaja: (idSuc: number, idMovimiento: number) => ({
+    PK: `SUC#${idSuc}`,
+    SK: `MOVIMIENTO#${idMovimiento}`,
+  }),
+
+  fcmTokenCliente: (idCliente: number, token: string) => ({
+    PK: `CLI#${idCliente}`,
+    SK: `FCM#${token}`,
+  }),
+
+  fcmTokenEmpleado: (idEmp: number, token: string) => ({
+    PK: `EMP#${idEmp}`,
+    SK: `FCM#${token}`,
+  }),
+
+  idempotency: (uuid: string, operation: string) => ({
+    PK: `IDEMP#${uuid}`,
+    SK: operation,
+  }),
 };
+

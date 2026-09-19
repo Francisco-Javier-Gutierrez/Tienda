@@ -1,11 +1,9 @@
-import { prisma, DbClient } from '../../config/prisma';
-import { env } from '../../config/env';
-import { esUrlS3 } from '../../config/s3';
 import { comprobantesUploadDir } from '../../middlewares/upload.middleware';
 import { dineroCentavos, errorFuncional, idValido, encodeId, texto, uuidValido } from '../../utils/formatters';
 import { pedidoRepository } from '../../db/repositories/pedido.repository';
 import { productoRepository } from '../../db/repositories/producto.repository';
 import { configuracionRepository } from '../../db/repositories/configuracion.repository';
+import { authRepository } from '../../db/repositories/auth.repository';
 import {
   folioPedido,
   normalizarConfiguracionTransferencia,
@@ -16,9 +14,7 @@ import {
 } from '../../dtos/pedido.dto';
 import { storageService, IStorageService } from '../../services/storage.service';
 import { OrderStateMachine, defaultOrderStateMachine } from './pedido-state.machine';
-
-const HORAS_RESERVA_PEDIDO = 2;
-const MAX_TOTAL_PEDIDO_CENTAVOS = 9999999999;
+import { FcmService, IFcmService } from '../notificaciones/fcm.service';
 
 export {
   folioPedido,
@@ -52,7 +48,7 @@ export interface IClientePedidoService {
   crearPedidoCliente(idCliente: number, body: any): Promise<any>;
   liberarPedidosExpirados(idCliente?: number): Promise<any>;
   listarPedidosCliente(idCliente: number): Promise<any>;
-  obtenerPedidoSeguro(idPedido: number, idCliente: number, tx?: DbClient): Promise<any>;
+  obtenerPedidoSeguro(idPedido: number, idCliente: number): Promise<any>;
   cancelarPedidoCliente(idPedido: number, idCliente: number): Promise<any>;
   presignComprobante(
     idPedido: number,
@@ -72,7 +68,7 @@ export interface IClientePedidoService {
 
 export interface IAdminPedidoService {
   listarPedidosAdmin(idSuc: number): Promise<any>;
-  obtenerPedidoAdmin(idPedido: number, idSuc: number, tx?: DbClient): Promise<any>;
+  obtenerPedidoAdmin(idPedido: number, idSuc: number): Promise<any>;
   rechazarPedidoAdmin(idPedido: number, idSuc: number, idEmp: number, motivoInput: string): Promise<any>;
   aprobarPedidoAdmin(idPedido: number, idSuc: number, idEmp: number): Promise<any>;
   cambiarEstadoOperativo(idPedido: number, idSuc: number, estadoActual: string, estadoNuevo: string): Promise<any>;
@@ -87,468 +83,316 @@ export class PedidosService implements IPedidosService {
     private pedidoRepo: any = pedidoRepository,
     private prodRepo: any = productoRepository,
     private configRepo: any = configuracionRepository,
+    private authRepo: any = authRepository,
+    private fcmService: IFcmService = new FcmService(),
   ) {}
 
   async obtenerSucursalDisponibleCliente() {
-    if (process.env.DYNAMODB_TABLE) return 1;
-
-    const sucursales = await prisma.sucursal.findMany({
-      orderBy: { idSuc: 'asc' },
-      take: 2,
-      select: { idSuc: true },
-    });
-    if (!sucursales.length) throw errorFuncional('No hay una sucursal disponible para recibir pedidos.', 409);
-    if (sucursales.length > 1) {
-      throw errorFuncional('Selecciona una sucursal antes de continuar con tu pedido.', 409);
-    }
-    return Number(sucursales[0].idSuc);
+    return 1;
   }
 
   async obtenerConfiguracionTransferencia(idSuc: number, exigirActiva = true) {
-    if (process.env.DYNAMODB_TABLE) {
-      const conf = await this.configRepo.getConfiguracion(idSuc);
-      if (!conf || (exigirActiva && !conf.activo)) {
-        throw errorFuncional('Los pagos por transferencia no están disponibles en este momento.', 409);
-      }
-      return conf;
-    }
-
-    const configuracion = await prisma.configuracionTransferencia.findUnique({
-      where: { idSuc: Number(idSuc) },
-    });
-    if (!configuracion || (exigirActiva && !configuracion.activo)) {
+    const conf = await this.configRepo.getConfiguracion(idSuc);
+    if (!conf || (exigirActiva && !conf.activo)) {
       throw errorFuncional('Los pagos por transferencia no están disponibles en este momento.', 409);
     }
-    return configuracion;
+    return conf;
   }
 
-  async restaurarStockPedido(tx: DbClient, idPedido: number) {
-    const detalles = await tx.detallePedidoCliente.findMany({
-      where: { idPedido: Number(idPedido) },
-      orderBy: { idPro: 'asc' },
-    });
-    for (const d of detalles) {
-      await tx.producto.update({
-        where: { idPro: d.idPro },
-        data: { existenciaPro: { increment: d.cantidad } },
-      });
-    }
+  async liberarPedidosExpirados(_idCliente?: number | null) {
+    // Single-table DynamoDB: expiraciones automáticas controladas por tiempo o TTL
+    return;
   }
 
-  async expirarPedidoBloqueado(tx: DbClient, pedido: any): Promise<boolean> {
-    const vencido =
-      pedido.estado === 'PENDIENTE_PAGO' &&
-      !pedido.comprobanteRuta &&
-      pedido.fechaLimitePago &&
-      new Date(pedido.fechaLimitePago).getTime() < Date.now();
-    if (!vencido) return false;
-
-    await this.restaurarStockPedido(tx, Number(pedido.idPedido));
-    await tx.pedidoCliente.update({
-      where: { idPedido: Number(pedido.idPedido) },
-      data: { estado: 'EXPIRADO' },
-    });
-    return true;
-  }
-
-  async liberarPedidosExpirados(idCliente?: number | null) {
-    if (process.env.DYNAMODB_TABLE) return;
-
-    const where: any = {
-      estado: 'PENDIENTE_PAGO',
-      comprobanteRuta: null,
-      fechaLimitePago: { lt: new Date() },
-    };
-    if (idCliente) where.idCliente = Number(idCliente);
-
-    const candidatos = await prisma.pedidoCliente.findMany({
-      where,
-      select: { idPedido: true },
-      orderBy: { idPedido: 'asc' },
-      take: 50,
-    });
-
-    for (const candidato of candidatos) {
-      try {
-        await prisma.$transaction(async (tx) => {
-          const p = await tx.pedidoCliente.findUnique({
-            where: { idPedido: candidato.idPedido },
-          });
-          if (p) await this.expirarPedidoBloqueado(tx, p);
-        });
-      } catch (error: any) {
-        console.error('No se pudo liberar un pedido expirado:', error.message);
-      }
-    }
-  }
-
-  async obtenerPedidoSeguro(idPedido: number, idCliente: number, client: DbClient = prisma) {
-    if (process.env.DYNAMODB_TABLE) {
-      const p = await this.pedidoRepo.getPedidoById(idCliente, idPedido);
-      if (!p) return null;
-      return {
-        id: encodeId(p.idPedido),
-        folio: folioPedido(p.idPedido),
-        uuidPedido: `pedido-${p.idPedido}`,
-        fechaPedido: p.fechaCreacion,
-        fechaLimitePago: p.fechaCreacion,
-        estado: p.estado,
-        total: Number(p.totalPedido || 0),
-        tieneComprobante: Boolean(p.comprobanteUrl),
-        fechaComprobante: p.fechaCreacion,
-        motivoRechazo: null,
-        idVenta: null,
-        fechaRevision: null,
-        comprobanteUrl: p.comprobanteUrl || null,
-        comprobante: p.comprobanteUrl ? { nombre: 'comprobante', mime: 'image/jpeg', fecha: p.fechaCreacion, url: p.comprobanteUrl } : null,
-        items: (p.detalles || []).map(normalizarDetallePedido),
-        configuracionTransferencia: null,
-      };
-    }
-
-    const p = await client.pedidoCliente.findFirst({
-      where: {
-        idPedido: Number(idPedido),
-        idCliente: Number(idCliente),
-      },
-      include: {
-        detalles: {
-          include: { producto: true },
-          orderBy: { idDetallePedido: 'asc' },
-        },
-      },
-    });
+  async obtenerPedidoSeguro(idPedido: number, idCliente: number) {
+    const p = await this.pedidoRepo.getPedidoById(idCliente, idPedido);
     if (!p) return null;
 
-    let configuracionTransferencia = configuracionTransferenciaPedido(p);
-    if (!configuracionTransferencia) {
-      try {
-        const conf = await client.configuracionTransferencia.findUnique({
-          where: { idSuc: p.idSuc },
-        });
-        configuracionTransferencia = normalizarConfiguracionTransferencia(conf);
-      } catch {
-        configuracionTransferencia = null;
-      }
-    }
-
     let comprobanteUrl: string | null = null;
-    if (p.comprobanteRuta) {
+    const rutaComprobante = p.comprobanteRuta || p.comprobanteUrl;
+    if (rutaComprobante) {
       try {
-        if (this.storage.esS3(p.comprobanteRuta)) {
-          const key = this.storage.extraerKey(p.comprobanteRuta) || p.comprobanteRuta;
+        if (this.storage.esS3(rutaComprobante)) {
+          const key = this.storage.extraerKey(rutaComprobante) || rutaComprobante;
           comprobanteUrl = await this.storage.generarPresignedDownload(key, p.comprobanteNombre, p.comprobanteMime);
+        } else {
+          comprobanteUrl = rutaComprobante;
         }
       } catch (err) {
         console.error('Error al generar presigned download para comprobante:', err);
       }
     }
 
+    let configuracionTransferencia: any = null;
+    try {
+      const conf = await this.configRepo.getConfiguracion(p.idSuc || 1);
+      if (conf) {
+        configuracionTransferencia = {
+          banco: conf.banco,
+          titular: conf.titular,
+          clabe: conf.clabe || null,
+          numeroCuenta: conf.numeroCuenta || null,
+          instrucciones: conf.instrucciones || null,
+        };
+      }
+    } catch (err) {
+      console.error('Error al obtener configuracion de transferencia para pedido:', err);
+    }
+
+    if (
+      p.estado === 'PENDIENTE_PAGO' &&
+      !rutaComprobante &&
+      p.fechaLimitePago &&
+      new Date(p.fechaLimitePago).getTime() < Date.now()
+    ) {
+      await this.pedidoRepo.expirarPedido(p.idCliente, p.idPedido);
+      p.estado = 'EXPIRADO';
+    }
+
     return {
-      ...normalizarPedido(p),
+      id: encodeId(p.idPedido),
+      folio: folioPedido(p.idPedido),
+      uuidPedido: `pedido-${p.idPedido}`,
+      fechaPedido: p.fechaCreacion,
+      fechaLimitePago: p.fechaLimitePago || p.fechaCreacion,
+      estado: p.estado,
+      total: Number(p.totalPedido || 0),
+      tieneComprobante: Boolean(rutaComprobante),
+      fechaComprobante: p.fechaComprobante || p.fechaCreacion,
+      motivoRechazo: p.motivoRechazo || null,
+      idVenta: p.idVenta ? encodeId(p.idVenta) : null,
+      fechaRevision: p.fechaRevision || null,
       comprobanteUrl,
-      comprobante: p.comprobanteRuta
+      comprobante: rutaComprobante
         ? {
             nombre: p.comprobanteNombre || 'comprobante',
             mime: p.comprobanteMime || 'image/jpeg',
-            fecha: p.fechaComprobante,
+            fecha: p.fechaComprobante || p.fechaCreacion,
             url: comprobanteUrl,
           }
         : null,
-      items: p.detalles.map(normalizarDetallePedido),
       configuracionTransferencia,
+      items: (p.detalles || []).map(normalizarDetallePedido),
     };
   }
 
-  async obtenerPedidoAdmin(idPedido: number, idSuc: number, client: DbClient = prisma) {
-    if (process.env.DYNAMODB_TABLE) {
-      const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
-      const p = pedidos.find((item: any) => item.idPedido === idPedido);
-      if (!p) return null;
-      return {
-        id: encodeId(p.idPedido),
-        folio: folioPedido(p.idPedido),
-        uuidPedido: `pedido-${p.idPedido}`,
-        fechaPedido: p.fechaCreacion,
-        fechaLimitePago: p.fechaCreacion,
-        estado: p.estado,
-        total: Number(p.totalPedido || 0),
-        tieneComprobante: Boolean(p.comprobanteUrl),
-        fechaComprobante: p.fechaCreacion,
-        motivoRechazo: null,
-        idVenta: null,
-        fechaRevision: null,
-        cliente: {
-          id: encodeId(p.idCliente),
-          nombre: p.clienteNombre || 'Cliente',
-          correo: p.clienteCorreo || '',
-          foto: null,
-        },
-        comprobanteUrl: p.comprobanteUrl || null,
-        comprobante: p.comprobanteUrl ? { nombre: 'comprobante', mime: 'image/jpeg', fecha: p.fechaCreacion, url: p.comprobanteUrl } : null,
-        empleadoRevisa: null,
-        configuracionTransferencia: null,
-        items: (p.detalles || []).map(normalizarDetallePedido),
-      };
-    }
-
-    const p = await client.pedidoCliente.findFirst({
-      where: {
-        idPedido: Number(idPedido),
-        idSuc: Number(idSuc),
-      },
-      include: {
-        cliente: true,
-        empleadoRevisa: true,
-        detalles: {
-          include: { producto: true },
-          orderBy: { idDetallePedido: 'asc' },
-        },
-      },
-    });
+  async obtenerPedidoAdmin(idPedido: number, idSuc: number) {
+    const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
+    const p = pedidos.find((item: any) => item.idPedido === idPedido);
     if (!p) return null;
 
-    let configuracionTransferencia = configuracionTransferenciaPedido(p);
-    if (!configuracionTransferencia) {
-      try {
-        const conf = await client.configuracionTransferencia.findUnique({
-          where: { idSuc: p.idSuc },
-        });
-        configuracionTransferencia = normalizarConfiguracionTransferencia(conf);
-      } catch {
-        configuracionTransferencia = null;
-      }
-    }
-
-    const empRevisa = p.empleadoRevisa
-      ? [p.empleadoRevisa.nombreEmp, p.empleadoRevisa.apellidoPatEmp, p.empleadoRevisa.apellidoMatEmp]
-          .filter(Boolean)
-          .join(' ')
-      : null;
-
     let comprobanteUrl: string | null = null;
-    if (p.comprobanteRuta) {
+    const rutaComprobante = p.comprobanteRuta || p.comprobanteUrl;
+    if (rutaComprobante) {
       try {
-        if (this.storage.esS3(p.comprobanteRuta)) {
-          const key = this.storage.extraerKey(p.comprobanteRuta) || p.comprobanteRuta;
+        if (this.storage.esS3(rutaComprobante)) {
+          const key = this.storage.extraerKey(rutaComprobante) || rutaComprobante;
           comprobanteUrl = await this.storage.generarPresignedDownload(key, p.comprobanteNombre, p.comprobanteMime);
+        } else {
+          comprobanteUrl = rutaComprobante;
         }
       } catch (err) {
         console.error('Error al generar presigned download para comprobante admin:', err);
       }
     }
 
+    let clienteData = {
+      id: encodeId(p.idCliente),
+      nombre: p.clienteNombre || 'Cliente',
+      correo: p.clienteCorreo || '',
+      foto: null as string | null,
+    };
+
+    try {
+      const cli = await this.authRepo.findClienteById(p.idCliente);
+      if (cli) {
+        const nombreCompleto = [cli.nombreCliente, cli.apellidoPatCliente, cli.apellidoMatCliente]
+          .filter(Boolean)
+          .join(' ');
+        clienteData = {
+          id: encodeId(cli.idCliente),
+          nombre: nombreCompleto || cli.nombreCliente || 'Cliente',
+          correo: cli.correoCliente || '',
+          foto: cli.fotoPerfil || null,
+        };
+      }
+    } catch (err) {
+      console.error('Error al obtener cliente para pedido admin:', err);
+    }
+
+    let empleadoRevisa: string | null = null;
+    if (p.idEmpRevisa) {
+      try {
+        const emp = await this.authRepo.findEmpleadoById(p.idEmpRevisa);
+        if (emp) {
+          empleadoRevisa = [emp.nombreEmp, emp.apellidoPatEmp, emp.apellidoMatEmp].filter(Boolean).join(' ');
+        }
+      } catch (err) {
+        console.error('Error al obtener empleado revisa para pedido admin:', err);
+      }
+    }
+
     return {
-      ...normalizarPedidoAdmin(p),
+      id: encodeId(p.idPedido),
+      folio: folioPedido(p.idPedido),
+      uuidPedido: `pedido-${p.idPedido}`,
+      fechaPedido: p.fechaCreacion,
+      fechaLimitePago: p.fechaLimitePago || p.fechaCreacion,
+      estado: p.estado,
+      total: Number(p.totalPedido || 0),
+      tieneComprobante: Boolean(rutaComprobante),
+      fechaComprobante: p.fechaComprobante || p.fechaCreacion,
+      motivoRechazo: p.motivoRechazo || null,
+      idVenta: p.idVenta ? encodeId(p.idVenta) : null,
+      fechaRevision: p.fechaRevision || null,
+      cliente: clienteData,
       comprobanteUrl,
-      comprobante: p.comprobanteRuta
+      comprobante: rutaComprobante
         ? {
             nombre: p.comprobanteNombre || 'comprobante',
             mime: p.comprobanteMime || 'image/jpeg',
-            fecha: p.fechaComprobante,
+            fecha: p.fechaComprobante || p.fechaCreacion,
             url: comprobanteUrl,
           }
         : null,
-      empleadoRevisa: empRevisa,
-      configuracionTransferencia,
-      items: p.detalles.map(normalizarDetallePedido),
+      empleadoRevisa,
+      configuracionTransferencia: await this.configRepo
+        .getConfiguracion(idSuc || 1)
+        .then((conf: any) =>
+          conf
+            ? {
+                banco: conf.banco,
+                titular: conf.titular,
+                clabe: conf.clabe || null,
+                numeroCuenta: conf.numeroCuenta || null,
+                instrucciones: conf.instrucciones || null,
+              }
+            : null,
+        )
+        .catch(() => null),
+      items: (p.detalles || []).map(normalizarDetallePedido),
     };
   }
 
   async crearPedidoCliente(idCliente: number, body: any) {
-    const uuid = uuidValido(body?.uuidPedido);
-    if (!uuid) throw errorFuncional('uuidPedido no es válido.', 400);
+    const uuid = uuidValido(body.uuidPedido);
+    if (!uuid) throw errorFuncional('uuidPedido no es válido', 400);
 
-    let idSuc = idValido(body?.idSuc);
-    if (!idSuc) {
-      idSuc = await this.obtenerSucursalDisponibleCliente();
+    // Idempotencia rápida: Si el pedido ya fue creado previamente, retornarlo sin duplicar
+    if (this.pedidoRepo.getPedidoByUuid) {
+      const existente = await this.pedidoRepo.getPedidoByUuid(uuid, idCliente);
+      if (existente) {
+        return await this.obtenerPedidoSeguro(existente.idPedido, idCliente);
+      }
     }
 
-    if (!Array.isArray(body?.items) || !body.items.length) {
+    const idSuc = 1;
+    if (!Array.isArray(body.items) || !body.items.length) {
       throw errorFuncional('El pedido debe incluir al menos un producto.', 400);
     }
 
     const cantidades = new Map<number, number>();
-    for (const item of body.items) {
-      const idPro = idValido(item?.idPro ?? item?.id ?? item?.productoId);
+    for (let index = 0; index < body.items.length; index++) {
+      const item = body.items[index];
+      const rawId = item?.idPro ?? item?.id ?? item?.productoId;
+      const idPro = idValido(rawId);
       const cantidad = Number(item?.cantidad);
-      if (!idPro || !Number.isInteger(cantidad) || cantidad <= 0) {
-        throw errorFuncional('Los productos o cantidades no son válidos.', 400);
+      if (!idPro) {
+        throw errorFuncional('El identificador del producto es requerido', 400, {
+          errores: [{ campo: `items.${index}.idPro`, mensaje: 'El identificador del producto es requerido' }],
+        });
+      }
+      if (!Number.isInteger(cantidad) || cantidad <= 0) {
+        throw errorFuncional('Cada producto debe tener una cantidad entera mayor que cero.', 400, {
+          errores: [{ campo: `items.${index}.cantidad`, mensaje: 'La cantidad debe ser mayor que cero' }],
+        });
       }
       cantidades.set(idPro, (cantidades.get(idPro) || 0) + cantidad);
     }
 
-    const ids = [...cantidades.keys()].sort((a, b) => a - b);
-    const configuracion = await this.obtenerConfiguracionTransferencia(idSuc);
-
-    if (process.env.DYNAMODB_TABLE) {
-      const itemsPedido = [];
-      let totalCentavos = 0;
-      for (const [idPro, cantidad] of cantidades.entries()) {
-        const prod = await this.prodRepo.getProductoById(idPro, idSuc);
-        if (!prod) {
-          throw errorFuncional('Uno de los productos ya no está disponible.', 404, { idPro });
-        }
-        if (!prod.activoPro) {
-          throw errorFuncional(`${prod.nombrePro} ya no está disponible para venta.`, 409, { idPro });
-        }
-        if (cantidad > prod.existenciaPro) {
-          throw errorFuncional(`Stock insuficiente para ${prod.nombrePro}.`, 409, { idPro, disponible: prod.existenciaPro });
-        }
-        const precioCentavos = dineroCentavos(prod.precioVentaPro);
-        if (precioCentavos === null || precioCentavos < 0) {
-          throw errorFuncional(`${prod.nombrePro} no tiene un precio válido.`, 409, { idPro });
-        }
-        const subtotalCentavos = precioCentavos * cantidad;
-        totalCentavos += subtotalCentavos;
-        itemsPedido.push({
-          idPro,
-          nombrePro: prod.nombrePro,
-          cantidad,
-          precioUnitario: precioCentavos / 100,
-          imagenPro: prod.imagenPro || undefined,
-        });
-      }
-
-      const pedido = await this.pedidoRepo.createPedido({
-        idCliente,
-        idSuc,
-        totalPedido: totalCentavos / 100,
-        items: itemsPedido,
-      });
-
-      return await this.obtenerPedidoSeguro(pedido.idPedido, idCliente);
+    if (cantidades.size > 90) {
+      throw errorFuncional('El pedido no puede contener más de 90 productos distintos por transacción.', 400);
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const repetido = await tx.pedidoCliente.findUnique({
-        where: { uuidPedido: uuid },
-      });
-      if (repetido) {
-        if (Number(repetido.idCliente) !== Number(idCliente)) {
-          throw errorFuncional('El identificador del pedido ya está en uso.', 409);
-        }
-        return await this.obtenerPedidoSeguro(repetido.idPedido, idCliente, tx);
+    await this.obtenerConfiguracionTransferencia(idSuc);
+
+    const itemsPedido = [];
+    let totalCentavos = 0;
+    for (const [idPro, cantidad] of cantidades.entries()) {
+      const prod = await this.prodRepo.getProductoById(idPro, idSuc);
+      if (!prod) {
+        throw errorFuncional('Uno de los productos ya no está disponible.', 404, { idPro });
       }
-
-      const countFn = typeof (tx.pedidoCliente as any)?.count === 'function'
-        ? (tx.pedidoCliente as any).count.bind(tx.pedidoCliente)
-        : async (args: any) => ((tx.pedidoCliente as any)?.findMany ? (await (tx.pedidoCliente as any).findMany(args)).length : 0);
-      const pendientes = await countFn({
-        where: {
-          idCliente: Number(idCliente),
-          estado: 'PENDIENTE_PAGO',
-          comprobanteRuta: null,
-          fechaLimitePago: { gt: new Date() },
-        },
-      });
-      if (pendientes >= 3) {
-        throw errorFuncional(
-          'Tienes 3 pedidos pendientes de pago. Completa o cancela alguno de ellos antes de generar uno nuevo.',
-          409,
-        );
+      if (!prod.activoPro) {
+        throw errorFuncional(`${prod.nombrePro} ya no está disponible para venta.`, 409, { idPro });
       }
-
-      const productos = await tx.producto.findMany({
-        where: { idPro: { in: ids } },
-        orderBy: { idPro: 'asc' },
-      });
-
-      if (productos.length !== ids.length) {
-        const encontrados = new Set(productos.map((p) => Number(p.idPro)));
-        const faltante = ids.find((id) => !encontrados.has(id));
-        throw errorFuncional('Uno de los productos ya no está disponible.', 404, { idPro: faltante });
+      if (cantidad > prod.existenciaPro) {
+        throw errorFuncional(`Stock insuficiente para ${prod.nombrePro}.`, 409, { idPro, disponible: prod.existenciaPro });
       }
-
-      let totalCentavos = 0;
-      const itemsPedido = productos.map((producto) => {
-        const cantidad = cantidades.get(Number(producto.idPro))!;
-        const disponible = Number(producto.existenciaPro) || 0;
-        if (!producto.activoPro) {
-          throw errorFuncional(`${producto.nombrePro || 'El producto'} ya no está disponible para venta.`, 409, { idPro: producto.idPro });
-        }
-        if (cantidad > disponible) {
-          throw errorFuncional(`Stock insuficiente para ${producto.nombrePro || 'el producto'}.`, 409, { idPro: producto.idPro, disponible });
-        }
-        const precioCentavos = dineroCentavos(producto.precioVentaPro);
-        if (precioCentavos === null || precioCentavos < 0) {
-          throw errorFuncional(`${producto.nombrePro || 'El producto'} no tiene un precio válido.`, 409, { idPro: producto.idPro });
-        }
-        const subtotalCentavos = precioCentavos * cantidad;
-        totalCentavos += subtotalCentavos;
-        if (!Number.isSafeInteger(totalCentavos) || totalCentavos > MAX_TOTAL_PEDIDO_CENTAVOS) {
-          throw errorFuncional('El total del pedido supera el límite permitido.', 409);
-        }
-        return {
-          idPro: Number(producto.idPro),
-          cantidad,
-          precioUnitario: precioCentavos / 100,
-          subtotal: subtotalCentavos / 100,
-        };
-      });
-
-      const ahora = new Date();
-      const fechaLimitePago = new Date(ahora.getTime() + HORAS_RESERVA_PEDIDO * 60 * 60 * 1000);
-
-      const pedido = await tx.pedidoCliente.create({
-        data: {
-          uuidPedido: uuid,
-          idCliente,
-          idSuc,
-          fechaPedido: ahora,
-          total: totalCentavos / 100,
-          estado: 'PENDIENTE_PAGO',
-          fechaLimitePago,
-          bancoSnapshot: configuracion.banco,
-          titularSnapshot: configuracion.titular,
-          clabeSnapshot: configuracion.clabe || null,
-          numeroCuentaSnapshot: configuracion.numeroCuenta || null,
-          instruccionesSnapshot: configuracion.instrucciones || null,
-          detalles: {
-            create: itemsPedido.map((item) => ({
-              idPro: item.idPro,
-              cantidad: item.cantidad,
-              precioUnitario: item.precioUnitario,
-              subtotal: item.subtotal,
-            })),
-          },
-        },
-      });
-
-      for (const item of itemsPedido) {
-        await tx.producto.update({
-          where: { idPro: item.idPro },
-          data: { existenciaPro: { decrement: item.cantidad } },
-        });
+      const precioCentavos = dineroCentavos(prod.precioVentaPro);
+      if (precioCentavos === null || precioCentavos < 0) {
+        throw errorFuncional(`${prod.nombrePro} no tiene un precio válido.`, 409, { idPro });
       }
+      const subtotalCentavos = precioCentavos * cantidad;
+      totalCentavos += subtotalCentavos;
+      itemsPedido.push({
+        idPro,
+        nombrePro: prod.nombrePro,
+        cantidad,
+        precioUnitario: precioCentavos / 100,
+        imagenPro: prod.imagenPro || undefined,
+      });
+    }
 
-      return await this.obtenerPedidoSeguro(pedido.idPedido, idCliente, tx);
+    const cliente = await this.authRepo.findClienteById(idCliente);
+    const nombreCompleto = cliente
+      ? [cliente.nombreCliente, cliente.apellidoPatCliente, cliente.apellidoMatCliente].filter(Boolean).join(' ')
+      : undefined;
+
+    const ahora = new Date();
+    const fechaLimitePago = new Date(ahora.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+    const pedido = await this.pedidoRepo.createPedido({
+      uuidPedido: uuid,
+      idCliente,
+      idSuc,
+      clienteNombre: nombreCompleto || cliente?.nombreCliente,
+      clienteCorreo: cliente?.correoCliente,
+      clienteTelefono: cliente?.telefono,
+      totalPedido: totalCentavos / 100,
+      fechaLimitePago,
+      items: itemsPedido,
     });
+
+    const folio = folioPedido(pedido.idPedido);
+    void this.fcmService.enviarACliente(idCliente, {
+      titulo: 'Pedido Registrado',
+      cuerpo: `Tu pedido #${folio} ha sido registrado exitosamente. Recuerda subir tu comprobante antes de vencer.`,
+      data: { idPedido: String(pedido.idPedido), url: '/mis-pedidos' },
+    });
+    void this.fcmService.enviarAEmpleados({
+      titulo: 'Nuevo Pedido en Línea',
+      cuerpo: `Se registró el pedido #${folio} por un total de $${pedido.totalPedido}.`,
+      data: { idPedido: String(pedido.idPedido), url: '/pedidos-admin' },
+    });
+
+    return await this.obtenerPedidoSeguro(pedido.idPedido, idCliente);
   }
 
   async cancelarPedidoCliente(idPedido: number, idCliente: number) {
-    return await prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedidoCliente.findFirst({
-        where: { idPedido, idCliente },
-      });
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+    const pedido = await this.pedidoRepo.getPedidoById(idCliente, idPedido);
+    if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
 
-      if (await this.expirarPedidoBloqueado(tx, pedido)) {
-        throw errorFuncional('Tu reserva expiró y los productos volvieron al inventario.', 409);
-      }
+    if (
+      (pedido.estado !== 'PENDIENTE_PAGO' && pedido.estado !== 'PENDIENTE') ||
+      pedido.comprobanteRuta ||
+      pedido.comprobanteUrl
+    ) {
+      throw errorFuncional(`El pedido ya no puede cancelarse porque está ${pedido.estado}.`, 409);
+    }
 
-      if (pedido.estado !== 'PENDIENTE_PAGO' || pedido.comprobanteRuta) {
-        throw errorFuncional(`El pedido ya no puede cancelarse porque está ${pedido.estado}.`, 409);
-      }
-
-      await this.restaurarStockPedido(tx, idPedido);
-      await tx.pedidoCliente.update({
-        where: { idPedido },
-        data: { estado: 'CANCELADO' },
-      });
-
-      return await this.obtenerPedidoSeguro(idPedido, idCliente, tx);
-    });
+    await this.pedidoRepo.cancelarPedido(idCliente, idPedido);
+    return await this.obtenerPedidoSeguro(idPedido, idCliente);
   }
 
   async presignComprobante(
@@ -558,10 +402,20 @@ export class PedidosService implements IPedidosService {
     extensionOriginal?: string,
     nombreOriginal?: string,
   ) {
-    const pedido = await prisma.pedidoCliente.findFirst({
-      where: { idPedido, idCliente },
-    });
+    const pedido = await this.pedidoRepo.getPedidoById(idCliente, idPedido);
     if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+
+    if (
+      pedido.estado === 'PENDIENTE_PAGO' &&
+      !pedido.comprobanteRuta &&
+      !pedido.comprobanteUrl &&
+      pedido.fechaLimitePago &&
+      new Date(pedido.fechaLimitePago).getTime() < Date.now()
+    ) {
+      await this.pedidoRepo.expirarPedido(idCliente, idPedido);
+      throw errorFuncional('Tu reserva expiró y los productos volvieron al inventario.', 409);
+    }
+
     if (!this.stateMachine.puedeTransicionar('SUBIR_COMPROBANTE', pedido.estado)) {
       throw errorFuncional(`No se puede subir comprobante a un pedido en estado ${pedido.estado}.`, 409);
     }
@@ -580,42 +434,49 @@ export class PedidosService implements IPedidosService {
     nombreOriginal?: string,
     mimeType?: string,
   ) {
-    return await prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedidoCliente.findFirst({
-        where: { idPedido, idCliente },
-      });
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+    const pedido = await this.pedidoRepo.getPedidoById(idCliente, idPedido);
+    if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
 
-      if (await this.expirarPedidoBloqueado(tx, pedido)) {
-        throw errorFuncional('Tu reserva expiró y los productos volvieron al inventario.', 409);
-      }
+    if (
+      pedido.estado === 'PENDIENTE_PAGO' &&
+      !pedido.comprobanteRuta &&
+      !pedido.comprobanteUrl &&
+      pedido.fechaLimitePago &&
+      new Date(pedido.fechaLimitePago).getTime() < Date.now()
+    ) {
+      await this.pedidoRepo.expirarPedido(idCliente, idPedido);
+      throw errorFuncional('Tu reserva expiró y los productos volvieron al inventario.', 409);
+    }
 
-      this.stateMachine.validarTransicion('SUBIR_COMPROBANTE', pedido.estado);
+    this.stateMachine.validarTransicion('SUBIR_COMPROBANTE', pedido.estado);
 
-      const anteriorRuta = pedido.comprobanteRuta;
-      const key = this.storage.extraerKey(keyOUrl) || keyOUrl;
-      const mime = mimeType || 'image/jpeg';
-      const baseFilename = key.includes('/') ? key.split('/').pop() : key;
-      const nombreSeguro = this.storage.sanitizarNombre(nombreOriginal || baseFilename || 'comprobante.jpg');
+    const anteriorRuta = pedido.comprobanteRuta || pedido.comprobanteUrl;
+    const key = this.storage.extraerKey(keyOUrl) || keyOUrl;
+    const mime = mimeType || 'image/jpeg';
+    const baseFilename = key.includes('/') ? key.split('/').pop() : key;
+    const nombreSeguro = this.storage.sanitizarNombre(nombreOriginal || baseFilename || 'comprobante.jpg');
 
-      await tx.pedidoCliente.update({
-        where: { idPedido },
-        data: {
-          comprobanteRuta: key,
-          comprobanteMime: mime,
-          comprobanteNombre: nombreSeguro,
-          fechaComprobante: new Date(),
-          estado: 'EN_REVISION',
-          motivoRechazo: null,
-        },
-      });
-
-      if (anteriorRuta && anteriorRuta !== key) {
-        void this.storage.eliminarArchivo(anteriorRuta, comprobantesUploadDir, '');
-      }
-
-      return await this.obtenerPedidoSeguro(idPedido, idCliente, tx);
+    await this.pedidoRepo.updateComprobante(idCliente, idPedido, {
+      comprobanteRuta: key,
+      comprobanteUrl: key,
+      comprobanteMime: mime,
+      comprobanteNombre: nombreSeguro,
+      fechaComprobante: new Date().toISOString(),
+      estado: 'EN_REVISION',
     });
+
+    if (anteriorRuta && anteriorRuta !== key) {
+      void this.storage.eliminarArchivo(anteriorRuta, comprobantesUploadDir, '');
+    }
+
+    const folio = folioPedido(idPedido);
+    void this.fcmService.enviarAEmpleados({
+      titulo: 'Comprobante de Pago Subido',
+      cuerpo: `El cliente subió comprobante para el pedido #${folio}. Requiere validación.`,
+      data: { idPedido: String(idPedido), url: '/pedidos-admin' },
+    });
+
+    return await this.obtenerPedidoSeguro(idPedido, idCliente);
   }
 
   async rechazarPedidoAdmin(idPedido: number, idSuc: number, idEmp: number, motivoInput: string) {
@@ -625,211 +486,130 @@ export class PedidosService implements IPedidosService {
       throw errorFuncional('El motivo debe tener entre 3 y 255 caracteres.', 400);
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedidoCliente.findFirst({
-        where: { idPedido, idSuc },
-      });
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
-      this.stateMachine.validarTransicion('RECHAZAR_PAGO', pedido.estado);
+    const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
+    const pedido = pedidos.find((p: any) => p.idPedido === idPedido);
+    if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+    this.stateMachine.validarTransicion('RECHAZAR_PAGO', pedido.estado);
 
-      const anteriorComprobante = pedido.comprobanteRuta;
+    const anteriorComprobante = pedido.comprobanteRuta || pedido.comprobanteUrl;
+    await this.pedidoRepo.rechazarPedido(pedido.idCliente, idPedido, idEmp, motivo);
 
-      await tx.pedidoCliente.update({
-        where: { idPedido },
-        data: {
-          estado: 'RECHAZADO',
-          idEmpRevisa: idEmp,
-          fechaRevision: new Date(),
-          motivoRechazo: motivo,
-          comprobanteRuta: null,
-          comprobanteMime: null,
-          comprobanteNombre: null,
-          fechaComprobante: null,
-        },
-      });
+    if (anteriorComprobante) {
+      void this.storage.eliminarArchivo(anteriorComprobante, comprobantesUploadDir, '');
+    }
 
-      if (anteriorComprobante) {
-        void this.storage.eliminarArchivo(anteriorComprobante, comprobantesUploadDir, '');
-      }
-
-      return await this.obtenerPedidoAdmin(idPedido, idSuc, tx);
+    const folio = folioPedido(idPedido);
+    void this.fcmService.enviarACliente(pedido.idCliente, {
+      titulo: 'Comprobante Rechazado',
+      cuerpo: `Tu comprobante del pedido #${folio} fue rechazado: ${motivo}. Por favor sube uno nuevo.`,
+      data: { idPedido: String(idPedido), url: '/mis-pedidos' },
     });
+
+    return await this.obtenerPedidoAdmin(idPedido, idSuc);
   }
 
   async aprobarPedidoAdmin(idPedido: number, idSuc: number, idEmp: number) {
     if (!idPedido) throw errorFuncional('El pedido no es válido.', 400);
 
-    return await prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedidoCliente.findFirst({
-        where: { idPedido, idSuc },
-        include: {
-          detalles: { orderBy: { idPro: 'asc' } },
-        },
-      });
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
-      if (pedido.estado === 'PAGADO' && pedido.idVenta) throw errorFuncional('El pedido ya fue aprobado.', 409);
-      this.stateMachine.validarTransicion('APROBAR_PAGO', pedido.estado);
-      if (!pedido.comprobanteRuta || !pedido.fechaComprobante)
-        throw errorFuncional('El pedido no tiene un comprobante válido para revisar.', 409);
-      if (!esUrlS3(pedido.comprobanteRuta) && !resolverComprobantePrivado(pedido.comprobanteRuta)) {
-        throw errorFuncional('El archivo del comprobante no está disponible.', 409);
-      }
-      if (!pedido.detalles.length) throw errorFuncional('El pedido no contiene productos.', 409);
+    const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
+    const pedido = pedidos.find((p: any) => p.idPedido === idPedido);
+    if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+    if (pedido.estado === 'PAGADO') throw errorFuncional('El pedido ya fue aprobado.', 409);
+    this.stateMachine.validarTransicion('APROBAR_PAGO', pedido.estado);
 
-      let sumaCentavos = 0;
-      for (const detalle of pedido.detalles) {
-        const cantidad = Number(detalle.cantidad);
-        const precioCentavos = dineroCentavos(detalle.precioUnitario);
-        const subtotalCentavos = dineroCentavos(detalle.subtotal);
-        if (
-          !Number.isInteger(cantidad) ||
-          cantidad <= 0 ||
-          precioCentavos === null ||
-          precioCentavos < 0 ||
-          subtotalCentavos === null ||
-          subtotalCentavos !== precioCentavos * cantidad
-        ) {
-          throw errorFuncional('Los importes históricos del pedido no son coherentes.', 409);
-        }
-        sumaCentavos += subtotalCentavos;
-        if (!Number.isSafeInteger(sumaCentavos)) throw errorFuncional('El total del pedido no es válido.', 409);
-      }
-      const totalPedidoCentavos = dineroCentavos(pedido.total);
-      if (totalPedidoCentavos === null || sumaCentavos !== totalPedidoCentavos)
-        throw errorFuncional('El total del pedido no coincide con sus productos.', 409);
+    await this.pedidoRepo.aprobarPedido(pedido.idCliente, idPedido, idEmp);
 
-      const ahora = new Date();
-
-      const venta = await tx.venta.create({
-        data: {
-          uuidVenta: crypto.randomUUID(),
-          fechaVenta: ahora,
-          horaVenta: ahora,
-          total: totalPedidoCentavos / 100,
-          metodoPago: 'TRANSFERENCIA',
-          montoRecibido: null,
-          cambio: 0.0,
-          estadoVenta: 'COMPLETADA',
-          idEmp,
-          idSuc: pedido.idSuc,
-          detalles: {
-            create: pedido.detalles.map((d) => ({
-              idPro: d.idPro,
-                cantidadDetVenta: d.cantidad,
-              precioUnitarioDetVenta: Number(d.precioUnitario),
-              subtotalDetVenta: Number(d.subtotal),
-            })),
-          },
-        },
-      });
-
-      await tx.pedidoCliente.update({
-        where: { idPedido },
-        data: {
-          estado: 'PAGADO',
-          idEmpRevisa: idEmp,
-          fechaRevision: ahora,
-          motivoRechazo: null,
-          idVenta: venta.idVenta,
-        },
-      });
-
-      return await this.obtenerPedidoAdmin(idPedido, idSuc, tx);
+    const folio = folioPedido(idPedido);
+    void this.fcmService.enviarACliente(pedido.idCliente, {
+      titulo: '¡Pago Aprobado!',
+      cuerpo: `Tu comprobante del pedido #${folio} ha sido aprobado. Lo estamos preparando.`,
+      data: { idPedido: String(idPedido), url: '/mis-pedidos' },
     });
+
+    return await this.obtenerPedidoAdmin(idPedido, idSuc);
   }
 
-  async cambiarEstadoOperativo(idPedido: number, idSuc: number, estadoActual: string, estadoNuevo: string) {
+  async cambiarEstadoOperativo(idPedido: number, idSuc: number, _estadoActual: string, estadoNuevo: string) {
     if (!idPedido) throw errorFuncional('El pedido no es válido.', 400);
 
-    if (process.env.DYNAMODB_TABLE) {
-      const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
-      const pedido = pedidos.find((p: any) => p.idPedido === idPedido);
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
-      await this.pedidoRepo.updateEstado(pedido.idCliente, idPedido, estadoNuevo as any);
-      return await this.obtenerPedidoAdmin(idPedido, idSuc);
+    const pedidos = await this.pedidoRepo.listPedidosAdmin(idSuc);
+    const pedido = pedidos.find((p: any) => p.idPedido === idPedido);
+    if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
+    await this.pedidoRepo.updateEstado(pedido.idCliente, idPedido, estadoNuevo as any);
+
+    if (estadoNuevo === 'LISTO') {
+      const folio = folioPedido(idPedido);
+      void this.fcmService.enviarACliente(pedido.idCliente, {
+        titulo: '¡Tu Pedido está LISTO!',
+        cuerpo: `Tu pedido #${folio} ya está listo para recoger en la tienda.`,
+        data: { idPedido: String(idPedido), url: '/mis-pedidos' },
+      });
     }
 
-    return await prisma.$transaction(async (tx) => {
-      const pedido = await tx.pedidoCliente.findFirst({
-        where: { idPedido, idSuc },
-      });
-      if (!pedido) throw errorFuncional('Pedido no encontrado.', 404);
-      if (pedido.estado !== estadoActual)
-        throw errorFuncional(`El pedido debe estar en estado ${estadoActual} para continuar.`, 409);
-
-      await tx.pedidoCliente.update({
-        where: { idPedido },
-        data: { estado: estadoNuevo },
-      });
-
-      return await this.obtenerPedidoAdmin(idPedido, idSuc, tx);
-    });
+    return await this.obtenerPedidoAdmin(idPedido, idSuc);
   }
 
   async listarPedidosCliente(idCliente: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      const rows = await this.pedidoRepo.listPedidosCliente(idCliente);
-      return rows.map((r: any) => ({
-        id: encodeId(r.idPedido),
-        folio: folioPedido(r.idPedido),
-        uuidPedido: `pedido-${r.idPedido}`,
-        fechaPedido: r.fechaCreacion,
-        fechaLimitePago: r.fechaCreacion,
-        estado: r.estado,
-        total: Number(r.totalPedido),
-        tieneComprobante: Boolean(r.comprobanteUrl),
-        fechaComprobante: r.fechaCreacion,
-        motivoRechazo: null,
-        idVenta: null,
-        fechaRevision: null,
-      }));
-    }
-    const pedidos = await prisma.pedidoCliente.findMany({
-      where: { idCliente },
-      orderBy: [{ fechaPedido: 'desc' }, { idPedido: 'desc' }],
-    });
-    return pedidos.map(normalizarPedido);
+    const rows = await this.pedidoRepo.listPedidosCliente(idCliente);
+    return rows.map((r: any) => ({
+      id: encodeId(r.idPedido),
+      folio: folioPedido(r.idPedido),
+      uuidPedido: `pedido-${r.idPedido}`,
+      fechaPedido: r.fechaCreacion,
+      fechaLimitePago: r.fechaLimitePago || r.fechaCreacion,
+      estado: r.estado,
+      total: Number(r.totalPedido),
+      tieneComprobante: Boolean(r.comprobanteUrl),
+      fechaComprobante: r.fechaCreacion,
+      motivoRechazo: null,
+      idVenta: r.idVenta ? encodeId(r.idVenta) : null,
+      fechaRevision: null,
+    }));
   }
 
   async listarPedidosAdmin(idSuc: number) {
-    if (process.env.DYNAMODB_TABLE) {
-      const rows = await this.pedidoRepo.listPedidosAdmin(idSuc);
-      return rows.map((r: any) => ({
+    const rows = await this.pedidoRepo.listPedidosAdmin(idSuc);
+    const clienteIds = [...new Set<number>(rows.map((r: any) => Number(r.idCliente)).filter(Boolean))];
+    const clientesMap = new Map<number, any>();
+    await Promise.all(
+      clienteIds.map(async (id: number) => {
+        try {
+          const c = await this.authRepo.findClienteById(id);
+          if (c) clientesMap.set(id, c);
+        } catch {}
+      }),
+    );
+
+    return rows.map((r: any) => {
+      const cli = clientesMap.get(r.idCliente);
+      const nombreCli = cli
+        ? [cli.nombreCliente, cli.apellidoPatCliente, cli.apellidoMatCliente].filter(Boolean).join(' ')
+        : r.clienteNombre || 'Cliente';
+      const correoCli = cli?.correoCliente || r.clienteCorreo || '';
+      const fotoCli = cli?.fotoPerfil || null;
+
+      return {
         id: encodeId(r.idPedido),
         folio: folioPedido(r.idPedido),
         uuidPedido: `pedido-${r.idPedido}`,
         fechaPedido: r.fechaCreacion,
-        fechaLimitePago: r.fechaCreacion,
+        fechaLimitePago: r.fechaLimitePago || r.fechaCreacion,
         estado: r.estado,
         total: Number(r.totalPedido),
         tieneComprobante: Boolean(r.comprobanteUrl),
         fechaComprobante: r.fechaCreacion,
         motivoRechazo: null,
-        idVenta: null,
+        idVenta: r.idVenta ? encodeId(r.idVenta) : null,
         fechaRevision: null,
         cliente: {
           id: encodeId(r.idCliente),
-          nombre: r.clienteNombre || 'Cliente',
-          correo: r.clienteCorreo || '',
-          foto: null,
+          nombre: nombreCli,
+          correo: correoCli,
+          foto: fotoCli,
         },
-      }));
-    }
-    const pedidos = await prisma.pedidoCliente.findMany({
-      where: { idSuc },
-      orderBy: [{ fechaPedido: 'desc' }, { idPedido: 'desc' }],
-      include: {
-        cliente: true,
-        empleadoRevisa: true,
-      },
+      };
     });
-    return pedidos.map(normalizarPedidoAdmin);
   }
 }
 
 export const pedidosService = new PedidosService();
-
-
-
-
-

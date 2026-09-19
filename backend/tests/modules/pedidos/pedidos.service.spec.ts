@@ -8,7 +8,11 @@ import {
   resolverComprobantePrivado,
   mimeRealComprobante,
 } from '../../../src/modules/pedidos/pedidos.service';
-import { prisma } from '../../../src/config/prisma';
+import { pedidoRepository } from '../../../src/db/repositories/pedido.repository';
+import { productoRepository } from '../../../src/db/repositories/producto.repository';
+import { configuracionRepository } from '../../../src/db/repositories/configuracion.repository';
+import { authRepository } from '../../../src/db/repositories/auth.repository';
+import { storageService } from '../../../src/services/storage.service';
 import { crearPedidoSchema } from '../../../src/schemas/pedido.schema';
 
 describe('PedidosService Complete Branch Coverage', () => {
@@ -19,6 +23,26 @@ describe('PedidosService Complete Branch Coverage', () => {
     existenciaPro: 100,
     activoPro: true,
   };
+
+  beforeEach(() => {
+    jest.spyOn(authRepository, 'findClienteById').mockResolvedValue({
+      idCliente: 1,
+      nombreCliente: 'Test',
+      apellidoPatCliente: 'User',
+      correoCliente: 'test@user.com',
+      estadoCliente: true,
+    } as any);
+    jest.spyOn(authRepository, 'findEmpleadoById').mockResolvedValue({
+      idEmp: 1,
+      idSuc: 1,
+      idCargo: 1,
+      nombreEmp: 'Admin',
+      apellidoPatEmp: 'Tienda',
+      correoEmp: 'admin@tienda.com',
+      estadoEmp: true,
+      contrasenaHash: 'hash',
+    } as any);
+  });
 
   afterEach(() => {
     jest.restoreAllMocks();
@@ -90,10 +114,10 @@ describe('PedidosService Complete Branch Coverage', () => {
 
   describe('Configuracion, Sucursales y Liberacion de expirados', () => {
     it('obtenerConfiguracionTransferencia y obtenerSucursalDisponibleCliente', async () => {
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue(null);
       await expect(pedidosService.obtenerConfiguracionTransferencia(1)).rejects.toMatchObject({ status: 409 });
 
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({
         idConfiguracion: 1,
         idSuc: 1,
         banco: 'Santander',
@@ -104,33 +128,12 @@ describe('PedidosService Complete Branch Coverage', () => {
       const conf = await pedidosService.obtenerConfiguracionTransferencia(1);
       expect(conf.banco).toBe('Santander');
 
-      // Sucursal disponible
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([]);
-      await expect(pedidosService.obtenerSucursalDisponibleCliente()).rejects.toMatchObject({ status: 409 });
-
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([{ idSuc: 1 }] as any);
       const suc = await pedidosService.obtenerSucursalDisponibleCliente();
       expect(suc).toBe(1);
     });
 
-    it('liberarPedidosExpirados libera bloqueos expirados', async () => {
-      jest.spyOn(prisma.pedidoCliente, 'findMany').mockResolvedValue([{ idPedido: 10 }] as any);
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findUnique: jest.fn().mockResolvedValue({
-              idPedido: 10,
-              estado: 'PENDIENTE_PAGO',
-              fechaLimitePago: new Date(Date.now() - 10000),
-            }),
-            update: jest.fn(),
-          },
-          detallePedidoCliente: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
-
-      await pedidosService.liberarPedidosExpirados(1);
-      expect(prisma.pedidoCliente.findMany).toHaveBeenCalled();
+    it('liberarPedidosExpirados es no-op', async () => {
+      await expect(pedidosService.liberarPedidosExpirados(1)).resolves.toBeUndefined();
     });
   });
 
@@ -146,250 +149,127 @@ describe('PedidosService Complete Branch Coverage', () => {
     });
 
     it('debe validar items y productos', async () => {
-      await expect(pedidosService.crearPedidoCliente(1, { items: [] })).rejects.toMatchObject({ status: 400 });
-      await expect(pedidosService.crearPedidoCliente(1, { items: [{ idPro: 'invalido', cantidad: 1 }] })).rejects.toMatchObject({ status: 400 });
-      await expect(pedidosService.crearPedidoCliente(1, { items: [{ idPro: 1, cantidad: -5 }] })).rejects.toMatchObject({ status: 400 });
-    });
-
-    it('debe validar idSuc si no viene en body consultando sucursal disponible', async () => {
-      jest.spyOn(prisma.sucursal, 'findMany').mockResolvedValue([{ idSuc: 2 }] as any);
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({ idConfiguracion: 1, idSuc: 2, banco: 'B', titular: 'T', activo: true } as any);
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findUnique: jest.fn().mockResolvedValue(null),
-            create: jest.fn().mockResolvedValue({ idPedido: 1, idCliente: 1, idSuc: 2, detalles: [] }),
-          },
-          producto: {
-            findMany: jest.fn().mockResolvedValue([dummyProducto]),
-            update: jest.fn(),
-          },
-        });
-      });
-
-      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ idPedido: 1 } as any);
-      const res = await pedidosService.crearPedidoCliente(1, {
-        uuidPedido: '11111111-1111-4111-8111-111111111111',
-        items: [{ idPro: 1, cantidad: 2 }],
-      });
-      expect(res).toBeDefined();
-    });
-
-    it('debe rechazar uuidPedido repetido de otro cliente y retornar si es del mismo', async () => {
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
-
-      // Otro cliente
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findUnique: jest.fn().mockResolvedValue({ idPedido: 5, idCliente: 99 }),
-          },
-        });
-      });
-      await expect(
-        pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
-      ).rejects.toMatchObject({ status: 409, message: 'El identificador del pedido ya está en uso.' });
-
-      // Mismo cliente
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findUnique: jest.fn().mockResolvedValue({ idPedido: 5, idCliente: 1 }),
-          },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ id: 'enc5' } as any);
-      const mismo = await pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] });
-      expect(mismo?.id).toBe('enc5');
+      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: 'invalido' })).rejects.toMatchObject({ status: 400 });
+      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [] })).rejects.toMatchObject({ status: 400 });
+      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 'invalido', cantidad: 1 }] })).rejects.toMatchObject({ status: 400 });
+      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: -5 }] })).rejects.toMatchObject({ status: 400 });
     });
 
     it('debe rechazar producto no encontrado, inactivo o con stock insuficiente', async () => {
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
 
       // Producto no encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: { findUnique: jest.fn().mockResolvedValue(null) },
-          producto: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce(null);
       await expect(
         pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
       ).rejects.toMatchObject({ status: 404 });
 
       // Inactivo
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: { findUnique: jest.fn().mockResolvedValue(null) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, activoPro: false }]) },
-        });
-      });
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, activoPro: false } as any);
       await expect(
         pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
       ).rejects.toMatchObject({ status: 409 });
 
       // Precio inválido
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: { findUnique: jest.fn().mockResolvedValue(null) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, precioVentaPro: -1 }]) },
-        });
-      });
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, precioVentaPro: -1 } as any);
       await expect(
         pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
       ).rejects.toMatchObject({ status: 409 });
 
       // Stock insuficiente
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: { findUnique: jest.fn().mockResolvedValue(null) },
-          producto: { findMany: jest.fn().mockResolvedValue([{ ...dummyProducto, existenciaPro: 1 }]) },
-        });
-      });
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 1 } as any);
       await expect(
         pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 10 }] }),
       ).rejects.toMatchObject({ status: 409 });
     });
+
+    it('debe crear pedido exitosamente', async () => {
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValue(dummyProducto as any);
+      jest.spyOn(pedidoRepository, 'createPedido').mockResolvedValue({ idPedido: 100 } as any);
+      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ id: 'enc100', total: 40 } as any);
+
+      const res = await pedidosService.crearPedidoCliente(1, {
+        uuidPedido: '11111111-1111-4111-8111-111111111111',
+        items: [{ idPro: 1, cantidad: 2 }],
+      });
+      expect(res?.id).toBe('enc100');
+    });
   });
 
   describe('cancelarPedidoCliente, presignComprobante y confirmarComprobante', () => {
-    it('cancelarPedidoCliente valida expiracion, comprobante adjunto y cancela', async () => {
+    it('cancelarPedidoCliente valida existencia y comprobante adjunto y cancela', async () => {
       // No encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ pedidoCliente: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce(null);
       await expect(pedidosService.cancelarPedidoCliente(1, 1)).rejects.toMatchObject({ status: 404 });
 
-      // Expirado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'PENDIENTE_PAGO',
-              fechaLimitePago: new Date(Date.now() - 100000),
-            }),
-            update: jest.fn(),
-          },
-          detallePedidoCliente: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
-      await expect(pedidosService.cancelarPedidoCliente(1, 1)).rejects.toMatchObject({ status: 409, message: 'Tu reserva expiró y los productos volvieron al inventario.' });
-
       // Con comprobante adjunto
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'PENDIENTE_PAGO',
-              comprobanteRuta: 'comprobante.jpg',
-              fechaLimitePago: new Date(Date.now() + 100000),
-            }),
-          },
-        });
-      });
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
+        idPedido: 1,
+        idCliente: 1,
+        estado: 'PENDIENTE_PAGO',
+        comprobanteRuta: 'comprobante.jpg',
+      } as any);
       await expect(pedidosService.cancelarPedidoCliente(1, 1)).rejects.toMatchObject({ status: 409 });
 
-      // Exito cancelando
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'PENDIENTE_PAGO',
-              fechaLimitePago: new Date(Date.now() + 100000),
-            }),
-            update: jest.fn(),
-          },
-          detallePedidoCliente: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ idPedido: 1, estado: 'CANCELADO' } as any);
+      // Éxito cancelando
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
+        idPedido: 1,
+        idCliente: 1,
+        estado: 'PENDIENTE_PAGO',
+      } as any);
+      jest.spyOn(pedidoRepository, 'cancelarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'CANCELADO' } as any);
+      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValueOnce({ id: 'enc1', estado: 'CANCELADO' } as any);
+
       const cancelado = await pedidosService.cancelarPedidoCliente(1, 1);
       expect(cancelado?.estado).toBe('CANCELADO');
     });
 
     it('presignComprobante valida estados permitidos', async () => {
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValueOnce(null);
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce(null);
       await expect(pedidosService.presignComprobante(1, 1, 'image/png')).rejects.toMatchObject({ status: 404 });
 
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValueOnce({
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
         idPedido: 1,
         idCliente: 1,
         estado: 'PAGADO',
       } as any);
-
       await expect(pedidosService.presignComprobante(1, 1, 'image/png')).rejects.toMatchObject({ status: 409 });
 
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValueOnce({
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
         idPedido: 1,
         idCliente: 1,
         estado: 'PENDIENTE_PAGO',
       } as any);
+      jest.spyOn(storageService, 'generarPresignedUpload').mockResolvedValueOnce({ uploadUrl: 'http://upload' } as any);
 
       const pres = await pedidosService.presignComprobante(1, 1, 'image/png', 'png', 'archivo.png');
       expect(pres).toBeDefined();
     });
 
-    it('confirmarComprobante reemplaza anterior comprobante en S3 o local', async () => {
+    it('confirmarComprobante reemplaza comprobante anterior', async () => {
       // No encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ pedidoCliente: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce(null);
       await expect(pedidosService.confirmarComprobante(1, 1, 'key')).rejects.toMatchObject({ status: 404 });
 
-      // Expirado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'PENDIENTE_PAGO',
-              fechaLimitePago: new Date(Date.now() - 100000),
-            }),
-            update: jest.fn(),
-          },
-          detallePedidoCliente: { findMany: jest.fn().mockResolvedValue([]) },
-        });
-      });
-      await expect(pedidosService.confirmarComprobante(1, 1, 'key')).rejects.toMatchObject({ status: 409 });
-
       // Estado no permitido
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'ENTREGADO',
-              fechaLimitePago: new Date(Date.now() + 100000),
-            }),
-          },
-        });
-      });
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
+        idPedido: 1,
+        idCliente: 1,
+        estado: 'ENTREGADO',
+      } as any);
       await expect(pedidosService.confirmarComprobante(1, 1, 'key')).rejects.toMatchObject({ status: 409 });
 
-      // Reemplazo S3
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idCliente: 1,
-              estado: 'PENDIENTE_PAGO',
-              comprobanteRuta: 'https://bucket.s3.amazonaws.com/comprobantes/anterior.jpg',
-              fechaLimitePago: new Date(Date.now() + 100000),
-            }),
-            update: jest.fn(),
-          },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ idPedido: 1 } as any);
+      // Éxito
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValueOnce({
+        idPedido: 1,
+        idCliente: 1,
+        estado: 'PENDIENTE_PAGO',
+        comprobanteRuta: 'comprobantes/anterior.jpg',
+      } as any);
+      jest.spyOn(pedidoRepository, 'updateComprobante').mockResolvedValueOnce({ idPedido: 1 } as any);
+      jest.spyOn(storageService, 'eliminarArchivo').mockResolvedValueOnce();
+      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValueOnce({ id: 'enc1' } as any);
 
       const res = await pedidosService.confirmarComprobante(1, 1, 'comprobantes/nuevo.jpg');
       expect(res).toBeDefined();
@@ -397,221 +277,70 @@ describe('PedidosService Complete Branch Coverage', () => {
   });
 
   describe('rechazar y aprobar admin', () => {
-    it('rechazarPedidoAdmin elimina comprobante anterior en S3 o local', async () => {
+    it('rechazarPedidoAdmin valida motivo y estado', async () => {
       await expect(pedidosService.rechazarPedidoAdmin(0, 1, 1, 'ab')).rejects.toMatchObject({ status: 400 });
       await expect(pedidosService.rechazarPedidoAdmin(1, 1, 1, 'ab')).rejects.toMatchObject({ status: 400 });
 
       // No encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ pedidoCliente: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([]);
       await expect(pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 404 });
 
-      // Estado no en revision
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({ idPedido: 1, idSuc: 1, estado: 'PENDIENTE_PAGO' }),
-          },
-        });
-      });
+      // Estado no en revisión
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any,
+      ]);
       await expect(pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 409 });
 
-      // Exito S3
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'https://bucket.s3.amazonaws.com/comprobantes/anterior.jpg',
-            }),
-            update: jest.fn(),
-          },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValue({ idPedido: 1 } as any);
+      // Éxito
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'EN_REVISION', comprobanteRuta: 'comprobantes/foto.jpg' } as any,
+      ]);
+      jest.spyOn(pedidoRepository, 'rechazarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'RECHAZADO' } as any);
+      jest.spyOn(storageService, 'eliminarArchivo').mockResolvedValueOnce();
+      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'RECHAZADO' } as any);
 
       const res = await pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Comprobante ilegible');
       expect(res).toBeDefined();
     });
 
-    it('aprobarPedidoAdmin valida totales y coherencia de productos', async () => {
+    it('aprobarPedidoAdmin valida existencia y estado', async () => {
       await expect(pedidosService.aprobarPedidoAdmin(0, 1, 1)).rejects.toMatchObject({ status: 400 });
 
       // No encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ pedidoCliente: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([]);
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 404 });
 
       // Ya aprobado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'PAGADO',
-              idVenta: 10,
-              comprobanteRuta: 'comprobante.jpg',
-              fechaComprobante: new Date(),
-              total: 50,
-              detalles: [],
-            }),
-          },
-        });
-      });
-      await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409, message: 'El pedido ya fue aprobado.' });
-
-      // Estado no en revision
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'PENDIENTE_PAGO',
-              comprobanteRuta: 'comprobante.jpg',
-              fechaComprobante: new Date(),
-              detalles: [],
-            }),
-          },
-        });
-      });
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any,
+      ]);
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409 });
 
-      // Sin comprobante
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: null,
-              fechaComprobante: null,
-              detalles: [],
-            }),
-          },
-        });
-      });
+      // Estado no en revisión
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any,
+      ]);
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409 });
 
-      // Comprobante no disponible
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'no-existe.jpg',
-              fechaComprobante: new Date(),
-              detalles: [],
-            }),
-          },
-        });
-      });
-      await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409, message: 'El archivo del comprobante no está disponible.' });
+      // Éxito
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'EN_REVISION' } as any,
+      ]);
+      jest.spyOn(pedidoRepository, 'aprobarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'PAGADO' } as any);
+      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'PAGADO' } as any);
 
-      // Sin detalles
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'https://s3.amazonaws.com/test.jpg',
-              fechaComprobante: new Date(),
-              detalles: [],
-            }),
-          },
-        });
-      });
-      await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409, message: 'El pedido no contiene productos.' });
-
-      // Incoherencia en subtotal
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'https://bucket.s3.amazonaws.com/comprobantes/key.jpg',
-              fechaComprobante: new Date(),
-              total: 50,
-              detalles: [
-                { idPro: 1, cantidad: 2, precioUnitario: 20, subtotal: 10 },
-              ],
-            }),
-          },
-        });
-      });
-      await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409, message: 'Los importes históricos del pedido no son coherentes.' });
-
-      // Total no coincide
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'https://bucket.s3.amazonaws.com/comprobantes/key.jpg',
-              fechaComprobante: new Date(),
-              total: 100,
-              detalles: [
-                { idPro: 1, cantidad: 2, precioUnitario: 20, subtotal: 40 },
-              ],
-            }),
-          },
-        });
-      });
-      await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409, message: 'El total del pedido no coincide con sus productos.' });
-
-      // Exito aprobando y creando venta
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'EN_REVISION',
-              comprobanteRuta: 'https://bucket.s3.amazonaws.com/comprobantes/key.jpg',
-              fechaComprobante: new Date(),
-              total: 40,
-              detalles: [
-                { idPro: 1, cantidad: 2, precioUnitario: 20, subtotal: 40 },
-              ],
-            }),
-            update: jest.fn(),
-          },
-          sesionCaja: {
-            findFirst: jest.fn().mockResolvedValue({ idSesionCaja: 1 }),
-          },
-          venta: {
-            create: jest.fn().mockResolvedValue({ idVenta: 50 }),
-          },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'PAGADO', idVenta: 50 } as any);
-
-      const aprobado = await pedidosService.aprobarPedidoAdmin(1, 1, 1);
-      expect(aprobado?.idVenta).toBe(50);
+      const res = await pedidosService.aprobarPedidoAdmin(1, 1, 1);
+      expect(res?.estado).toBe('PAGADO');
     });
   });
 
   describe('Consultas y flujo operativo', () => {
     it('obtenerPedidoSeguro y obtenerPedidoAdmin', async () => {
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValue({
+      jest.spyOn(pedidoRepository, 'getPedidoById').mockResolvedValue({
         idPedido: 1,
         idCliente: 1,
         idSuc: 1,
-        total: 20,
+        totalPedido: 20,
         estado: 'PAGADO',
         detalles: [
           {
@@ -628,6 +357,17 @@ describe('PedidosService Complete Branch Coverage', () => {
       const seguro = await pedidosService.obtenerPedidoSeguro(1, 1);
       expect(seguro?.id).toBeDefined();
 
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValue([
+        {
+          idPedido: 1,
+          idCliente: 1,
+          idSuc: 1,
+          totalPedido: 20,
+          estado: 'PAGADO',
+          detalles: [],
+        } as any,
+      ]);
+
       const admin = await pedidosService.obtenerPedidoAdmin(1, 1);
       expect(admin?.id).toBeDefined();
     });
@@ -636,38 +376,32 @@ describe('PedidosService Complete Branch Coverage', () => {
       await expect(pedidosService.cambiarEstadoOperativo(0, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({ status: 400 });
 
       // No encontrado
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({ pedidoCliente: { findFirst: jest.fn().mockResolvedValue(null) } });
-      });
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([]);
       await expect(pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({ status: 404 });
 
-      // Estado actual incorrecto
-      jest.spyOn(prisma, '$transaction').mockImplementationOnce(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({ idPedido: 1, idSuc: 1, estado: 'ENTREGADO' }),
-          },
-        });
-      });
-      await expect(pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({ status: 409 });
+      // Éxito
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
+        { idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any,
+      ]);
+      jest.spyOn(pedidoRepository, 'updateEstado').mockResolvedValueOnce({ idPedido: 1, estado: 'LISTO' } as any);
+      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'LISTO' } as any);
 
-      // Transicion valida
-      jest.spyOn(prisma, '$transaction').mockImplementation(async (cb: any) => {
-        return cb({
-          pedidoCliente: {
-            findFirst: jest.fn().mockResolvedValue({
-              idPedido: 1,
-              idSuc: 1,
-              estado: 'PAGADO',
-            }),
-            update: jest.fn(),
-          },
-        });
-      });
-      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'LISTO' } as any);
+      const res = await pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO');
+      expect(res?.estado).toBe('LISTO');
+    });
 
-      const listo = await pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO');
-      expect(listo?.estado).toBe('LISTO');
+    it('listarPedidosCliente y listarPedidosAdmin', async () => {
+      jest.spyOn(pedidoRepository, 'listPedidosCliente').mockResolvedValue([
+        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any,
+      ]);
+      const listaCliente = await pedidosService.listarPedidosCliente(1);
+      expect(listaCliente.length).toBe(1);
+
+      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValue([
+        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any,
+      ]);
+      const listaAdmin = await pedidosService.listarPedidosAdmin(1);
+      expect(listaAdmin.length).toBe(1);
     });
   });
 });

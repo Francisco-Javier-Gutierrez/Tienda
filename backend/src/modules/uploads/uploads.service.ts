@@ -1,4 +1,3 @@
-import { prisma } from '../../config/prisma';
 import { authRepository } from '../../db/repositories/auth.repository';
 import { idValido, texto, errorFuncional } from '../../utils/formatters';
 import { storageService, IStorageService } from '../../services/storage.service';
@@ -55,20 +54,8 @@ export class UploadsService implements IUploadsService {
         throw errorFuncional('No autorizado', 403);
       }
       const idEmp = idValido(payload.sub);
-      let esAdmin = false;
-
-      if (process.env.DYNAMODB_TABLE) {
-        const emp = idEmp ? await this.authRepo.findEmpleadoById(idEmp) : null;
-        esAdmin = Boolean(emp && emp.estadoEmp && (emp.cargoNombre === 'ADMINISTRADOR' || emp.cargo === 'ADMINISTRADOR'));
-      } else {
-        const emp = idEmp
-          ? await prisma.empleado.findUnique({
-              where: { idEmp },
-              include: { cargo: true },
-            })
-          : null;
-        esAdmin = Boolean(emp && emp.estadoEmp && emp.cargo?.nombreCargo === 'ADMINISTRADOR');
-      }
+      const emp = idEmp ? await this.authRepo.findEmpleadoById(idEmp) : null;
+      const esAdmin = Boolean(emp && emp.estadoEmp && (emp.cargoNombre === 'ADMINISTRADOR' || emp.cargo === 'ADMINISTRADOR'));
 
       if (!esAdmin) {
         throw errorFuncional('Solo los administradores pueden subir imágenes de productos o tienda', 403);

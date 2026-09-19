@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { Request, Response } from 'express';
 import {
   mimeRealComprobante,
@@ -9,7 +10,6 @@ import {
   resolverComprobantePrivado,
 } from './pedidos.service';
 import { idValido, texto } from '../../utils/formatters';
-import { prisma } from '../../config/prisma';
 import {
   esUrlS3,
   extraerKeyS3,
@@ -127,9 +127,17 @@ export class PedidosController {
       res.status(401).json({ message: 'Sesión no válida' });
       return;
     }
-    const mimeType = texto(req.body?.mimeType).toLowerCase();
+    let mimeType = texto(req.body?.mimeType).toLowerCase();
     const extension = texto(req.body?.extension).toLowerCase();
     const filename = texto(req.body?.filename || req.body?.nombreOriginal);
+
+    if (!extensionesComprobante.has(mimeType)) {
+      const ext = (extension || (filename ? path.extname(filename) : '')).toLowerCase();
+      if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+      else if (ext === '.png') mimeType = 'image/png';
+      else if (ext === '.webp') mimeType = 'image/webp';
+      else if (ext === '.pdf') mimeType = 'application/pdf';
+    }
 
     if (!extensionesComprobante.has(mimeType)) {
       res.status(400).json({ message: 'Solo se permiten imágenes JPEG, PNG, WEBP o documentos PDF.' });
@@ -185,48 +193,35 @@ export class PedidosController {
       res.status(401).json({ message: 'Sesión no válida' });
       return;
     }
-    const pedido = await prisma.pedidoCliente.findFirst({
-              where: {
-                idPedido,
-                idCliente: req.cliente.idCliente,
-                comprobanteRuta: { not: null },
-              },
-              select: {
-                comprobanteRuta: true,
-                comprobanteMime: true,
-                comprobanteNombre: true,
-              },
-            });
-      if (!pedido || !pedido.comprobanteRuta) {
-              res.status(404).json({ message: 'Comprobante no encontrado.' });
-              return;
-            }
-      if (esUrlS3(pedido.comprobanteRuta)) {
-              const key = extraerKeyS3(pedido.comprobanteRuta) || pedido.comprobanteRuta;
-              const downloadUrl = await generarPresignedDownload(key, pedido.comprobanteNombre, pedido.comprobanteMime);
-              if (req.query.json === 'true') {
-                res.json({
-                  downloadUrl,
-                  key,
-                  mime: pedido.comprobanteMime,
-                  nombre: pedido.comprobanteNombre,
-                });
-                return;
-              }
-              res.redirect(downloadUrl);
-              return;
-            }
-      const rutaFisica = resolverComprobantePrivado(pedido.comprobanteRuta);
-      if (!rutaFisica) {
-              res.status(404).json({ message: 'Comprobante no encontrado.' });
-              return;
-            }
-      res.type(pedido.comprobanteMime || 'application/octet-stream');
-      res.setHeader(
-              'Content-Disposition',
-              `inline; filename*=UTF-8''${encodeURIComponent(pedido.comprobanteNombre || 'comprobante')}`,
-            );
-      res.sendFile(rutaFisica);
+    const pedido = await this.service.obtenerPedidoSeguro(idPedido, req.cliente.idCliente);
+    if (!pedido || !pedido.tieneComprobante) {
+      res.status(404).json({ message: 'Comprobante no encontrado.' });
+      return;
+    }
+    if (pedido.comprobanteUrl) {
+      if (req.query.json === 'true') {
+        res.json({
+          downloadUrl: pedido.comprobanteUrl,
+          key: pedido.comprobante?.url,
+          mime: pedido.comprobante?.mime,
+          nombre: pedido.comprobante?.nombre,
+        });
+        return;
+      }
+      res.redirect(pedido.comprobanteUrl);
+      return;
+    }
+    const rutaFisica = resolverComprobantePrivado(pedido.comprobante?.nombre);
+    if (!rutaFisica) {
+      res.status(404).json({ message: 'Comprobante no encontrado.' });
+      return;
+    }
+    res.type(pedido.comprobante?.mime || 'application/octet-stream');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename*=UTF-8''${encodeURIComponent(pedido.comprobante?.nombre || 'comprobante')}`,
+    );
+    res.sendFile(rutaFisica);
   }
 
   // ADMIN
@@ -271,46 +266,33 @@ export class PedidosController {
       res.status(409).json({ message: 'El administrador no tiene una sucursal asignada.' });
       return;
     }
-    const pedido = await prisma.pedidoCliente.findFirst({
-      where: {
-        idPedido,
-        idSuc,
-        comprobanteRuta: { not: null },
-      },
-      select: {
-        comprobanteRuta: true,
-        comprobanteMime: true,
-        comprobanteNombre: true,
-      },
-    });
-    if (!pedido || !pedido.comprobanteRuta) {
+    const pedido = await this.service.obtenerPedidoAdmin(idPedido, idSuc);
+    if (!pedido || !pedido.tieneComprobante) {
       res.status(404).json({ message: 'Comprobante no encontrado.' });
       return;
     }
-    if (esUrlS3(pedido.comprobanteRuta)) {
-      const key = extraerKeyS3(pedido.comprobanteRuta) || pedido.comprobanteRuta;
-      const downloadUrl = await generarPresignedDownload(key, pedido.comprobanteNombre, pedido.comprobanteMime);
+    if (pedido.comprobanteUrl) {
       if (req.query.json === 'true') {
         res.json({
-          downloadUrl,
-          key,
-          mime: pedido.comprobanteMime,
-          nombre: pedido.comprobanteNombre,
+          downloadUrl: pedido.comprobanteUrl,
+          key: pedido.comprobante?.url,
+          mime: pedido.comprobante?.mime,
+          nombre: pedido.comprobante?.nombre,
         });
         return;
       }
-      res.redirect(downloadUrl);
+      res.redirect(pedido.comprobanteUrl);
       return;
     }
-    const rutaFisica = resolverComprobantePrivado(pedido.comprobanteRuta);
+    const rutaFisica = resolverComprobantePrivado(pedido.comprobante?.nombre);
     if (!rutaFisica) {
       res.status(404).json({ message: 'Comprobante no encontrado.' });
       return;
     }
-    res.type(pedido.comprobanteMime || 'application/octet-stream');
+    res.type(pedido.comprobante?.mime || 'application/octet-stream');
     res.setHeader(
       'Content-Disposition',
-      `inline; filename*=UTF-8''${encodeURIComponent(pedido.comprobanteNombre || 'comprobante')}`,
+      `inline; filename*=UTF-8''${encodeURIComponent(pedido.comprobante?.nombre || 'comprobante')}`,
     );
     res.sendFile(rutaFisica);
   }

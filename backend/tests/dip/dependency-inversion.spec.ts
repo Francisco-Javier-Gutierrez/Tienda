@@ -258,7 +258,7 @@ describe('Dependency Inversion Principle (DIP) - Container & Constructor Injecti
         const service = new CajaService(mockCajaRepo, {} as any);
         const caja = await service.obtenerCajaActual(3);
 
-        expect(mockCajaRepo.getSesionAbierta).toHaveBeenCalledWith(1);
+        expect(mockCajaRepo.getSesionAbierta).toHaveBeenCalledWith(1, 3);
         expect(caja?.estado).toBe('ABIERTA');
       } finally {
         if (originalTable) {

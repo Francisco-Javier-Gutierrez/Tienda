@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { pedidosController } from '../../../src/modules/pedidos/pedidos.controller';
 import * as pedidosModule from '../../../src/modules/pedidos/pedidos.service';
-import { prisma } from '../../../src/config/prisma';
 
 describe('PedidosController Comprehensive Suite', () => {
   let mockReq: Partial<Request>;
@@ -46,8 +45,7 @@ describe('PedidosController Comprehensive Suite', () => {
 
       mockReq.cliente = { idCliente: 1 } as any;
       jest.spyOn(pedidosModule.pedidosService, 'liberarPedidosExpirados').mockResolvedValue(undefined as any);
-      jest.spyOn(prisma.pedidoCliente, 'findMany').mockResolvedValue([{ idPedido: 10 }] as any);
-      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ idPedido: 10 } as any);
+      jest.spyOn(pedidosModule.pedidosService, 'listarPedidosCliente').mockResolvedValue([{ idPedido: 10 }] as any);
       await pedidosController.listarPedidosCliente(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
     });
@@ -178,15 +176,19 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
 
       mockReq.cliente = { idCliente: 1 } as any;
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValueOnce(null);
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoSeguro').mockResolvedValueOnce(null as any);
       await pedidosController.verComprobanteCliente(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(404);
 
       // S3 con json y con redirect
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValue({
-        comprobanteRuta: 'https://bucket.s3.amazonaws.com/key.jpg',
-        comprobanteMime: 'image/jpeg',
-        comprobanteNombre: 'comprobante.jpg',
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({
+        tieneComprobante: true,
+        comprobanteUrl: 'https://bucket.s3.amazonaws.com/key.jpg',
+        comprobante: {
+          url: 'https://bucket.s3.amazonaws.com/key.jpg',
+          mime: 'image/jpeg',
+          nombre: 'comprobante.jpg',
+        },
       } as any);
       mockReq.query = { json: 'true' };
       await pedidosController.verComprobanteCliente(mockReq as Request, mockRes as Response);
@@ -197,10 +199,14 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.redirect).toHaveBeenCalled();
 
       // Local encontrado y no encontrado
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValue({
-        comprobanteRuta: 'local-file.jpg',
-        comprobanteMime: 'image/jpeg',
-        comprobanteNombre: 'comprobante.jpg',
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({
+        tieneComprobante: true,
+        comprobanteUrl: null,
+        comprobante: {
+          url: 'local-file.jpg',
+          mime: 'image/jpeg',
+          nombre: 'local-file.jpg',
+        },
       } as any);
       jest.spyOn(pedidosModule, 'resolverComprobantePrivado').mockReturnValueOnce(null);
       await pedidosController.verComprobanteCliente(mockReq as Request, mockRes as Response);
@@ -220,7 +226,7 @@ describe('PedidosController Comprehensive Suite', () => {
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
       jest.spyOn(pedidosModule.pedidosService, 'liberarPedidosExpirados').mockResolvedValue(undefined as any);
-      jest.spyOn(prisma.pedidoCliente, 'findMany').mockResolvedValue([]);
+      jest.spyOn(pedidosModule.pedidosService, 'listarPedidosAdmin').mockResolvedValue([]);
       await pedidosController.listarPedidosAdmin(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
 
@@ -255,14 +261,18 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValueOnce(null);
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce(null);
       await pedidosController.verComprobanteAdmin(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(404);
 
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValue({
-        comprobanteRuta: 'https://bucket.s3.amazonaws.com/key.jpg',
-        comprobanteMime: 'image/jpeg',
-        comprobanteNombre: 'comprobante.jpg',
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoAdmin').mockResolvedValue({
+        tieneComprobante: true,
+        comprobanteUrl: 'https://bucket.s3.amazonaws.com/key.jpg',
+        comprobante: {
+          url: 'https://bucket.s3.amazonaws.com/key.jpg',
+          mime: 'image/jpeg',
+          nombre: 'comprobante.jpg',
+        },
       } as any);
       mockReq.query = { json: 'true' };
       await pedidosController.verComprobanteAdmin(mockReq as Request, mockRes as Response);
@@ -273,10 +283,14 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.redirect).toHaveBeenCalled();
 
       // Local
-      jest.spyOn(prisma.pedidoCliente, 'findFirst').mockResolvedValue({
-        comprobanteRuta: 'local-file.jpg',
-        comprobanteMime: 'image/jpeg',
-        comprobanteNombre: 'comprobante.jpg',
+      jest.spyOn(pedidosModule.pedidosService, 'obtenerPedidoAdmin').mockResolvedValue({
+        tieneComprobante: true,
+        comprobanteUrl: null,
+        comprobante: {
+          url: 'local-file.jpg',
+          mime: 'image/jpeg',
+          nombre: 'local-file.jpg',
+        },
       } as any);
       jest.spyOn(pedidosModule, 'resolverComprobantePrivado').mockReturnValueOnce(null);
       await pedidosController.verComprobanteAdmin(mockReq as Request, mockRes as Response);

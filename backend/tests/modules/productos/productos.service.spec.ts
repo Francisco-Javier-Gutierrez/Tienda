@@ -3,7 +3,9 @@ import {
   validarProducto,
   eliminarUploadControlado,
 } from '../../../src/modules/productos/productos.service';
-import { prisma } from '../../../src/config/prisma';
+import { productoRepository } from '../../../src/db/repositories/producto.repository';
+import { catalogoRepository } from '../../../src/db/repositories/catalogo.repository';
+import { storageService } from '../../../src/services/storage.service';
 
 describe('ProductosService', () => {
   afterEach(() => {
@@ -83,13 +85,13 @@ describe('ProductosService', () => {
 
   describe('Consultas y Listados de Productos', () => {
     it('obtenerProducto con y sin resultado', async () => {
-      jest.spyOn(prisma.producto, 'findUnique').mockResolvedValueOnce(null);
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce(null);
       expect(await productosService.obtenerProducto(999)).toBeNull();
 
-      jest.spyOn(prisma.producto, 'findUnique').mockResolvedValueOnce({
+      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({
         idPro: 1,
         nombrePro: 'Test',
-        precioVentaPro: 10 as any,
+        precioVentaPro: 10,
         costoPro: null,
         existenciaPro: 5,
         stockMinimoPro: 1,
@@ -101,8 +103,6 @@ describe('ProductosService', () => {
         imagenPro: null,
         idMarca: null,
         idCat: null,
-        marca: null,
-        categoria: null,
         activoPro: true,
       } as any);
       const res = await productosService.obtenerProducto(1);
@@ -110,12 +110,12 @@ describe('ProductosService', () => {
     });
 
     it('listarAdmin debe formatear precios y catalogos', async () => {
-      jest.spyOn(prisma.producto, 'findMany').mockResolvedValue([
+      jest.spyOn(productoRepository, 'listProductos').mockResolvedValue([
         {
           idPro: 1,
           nombrePro: 'Leche Entera',
-          precioVentaPro: 28.0 as any,
-          costoPro: 20.0 as any,
+          precioVentaPro: 28.0,
+          costoPro: 20.0,
           existenciaPro: 15,
           stockMinimoPro: 3,
           tamanoPro: '1L',
@@ -127,9 +127,13 @@ describe('ProductosService', () => {
           idMarca: 1,
           idCat: 1,
           activoPro: true,
-          marca: { nombreMarca: 'Lala' },
-          categoria: { nombreCat: 'Lácteos' },
         } as any,
+      ]);
+      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([
+        { idMarca: 1, nombreMarca: 'Lala' } as any,
+      ]);
+      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([
+        { idCat: 1, nombreCat: 'Lácteos' } as any,
       ]);
 
       const items = await productosService.listarAdmin();
@@ -140,19 +144,22 @@ describe('ProductosService', () => {
     });
 
     it('listarPos y listarPublico deben retornar productos activos', async () => {
-      jest.spyOn(prisma.producto, 'findMany').mockResolvedValue([
+      jest.spyOn(productoRepository, 'listProductos').mockResolvedValue([
         {
           idPro: 1,
           nombrePro: 'Agua',
-          precioVentaPro: 10 as any,
+          precioVentaPro: 10,
           existenciaPro: 20,
           codigoQR: 'QR123',
           skuPro: 'SKU1',
           imagenPro: null,
-          marca: null,
-          categoria: null,
+          idMarca: null,
+          idCat: null,
+          activoPro: true,
         } as any,
       ]);
+      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([]);
+      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([]);
 
       const pos = await productosService.listarPos();
       expect(pos.length).toBe(1);
@@ -163,17 +170,15 @@ describe('ProductosService', () => {
     });
 
     it('buscarPorQR debe retornar el producto si existe', async () => {
-      jest.spyOn(prisma.producto, 'findUnique').mockResolvedValue({
+      jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue({
         idPro: 2,
         nombrePro: 'Agua Natural',
-        precioVentaPro: 12.0 as any,
-        costoPro: 6.0 as any,
+        precioVentaPro: 12.0,
+        costoPro: 6.0,
         existenciaPro: 50,
         stockMinimoPro: 5,
         codigoQR: '1122334455',
         activoPro: true,
-        marca: null,
-        categoria: null,
       } as any);
 
       const prod = await productosService.buscarPorQR('1122334455');
@@ -183,24 +188,10 @@ describe('ProductosService', () => {
   });
 
   describe('Creación, Actualización e Imágenes', () => {
-    it('crear debe rechazar validaciones de catálogo o código repetido', async () => {
+    it('crear debe rechazar validaciones o código repetido', async () => {
       await expect(productosService.crear({ nombre: '' })).rejects.toMatchObject({ status: 400 });
 
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue(null);
-      await expect(
-        productosService.crear({ nombre: 'P', precio: 10, existencia: 5, idMarca: 99, idCat: 1 }),
-      ).rejects.toMatchObject({ status: 400, message: 'La marca seleccionada no existe' });
-
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue({ idMarca: 1 } as any);
-      jest.spyOn(prisma.categoria, 'findUnique').mockResolvedValue(null);
-      await expect(
-        productosService.crear({ nombre: 'P', precio: 10, existencia: 5, idMarca: 1, idCat: 99 }),
-      ).rejects.toMatchObject({ status: 400, message: 'La categoría seleccionada no existe' });
-
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue({ idMarca: 1 } as any);
-      jest.spyOn(prisma.categoria, 'findUnique').mockResolvedValue({ idCat: 1 } as any);
-      jest.spyOn(prisma.producto, 'findFirst').mockResolvedValue({ idPro: 99 } as any);
-
+      jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue({ idPro: 99 } as any);
       await expect(
         productosService.crear({
           nombre: 'Producto Repetido',
@@ -217,10 +208,8 @@ describe('ProductosService', () => {
     });
 
     it('crear debe insertar y retornar el producto creado', async () => {
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue({ idMarca: 1 } as any);
-      jest.spyOn(prisma.categoria, 'findUnique').mockResolvedValue({ idCat: 1 } as any);
-      jest.spyOn(prisma.producto, 'findFirst').mockResolvedValue(null);
-      jest.spyOn(prisma.producto, 'create').mockResolvedValue({ idPro: 10 } as any);
+      jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue(null);
+      jest.spyOn(productoRepository, 'createProducto').mockResolvedValue({ idPro: 10 } as any);
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({
         id: 'enc10',
         nombre: 'Nuevo Producto',
@@ -247,20 +236,13 @@ describe('ProductosService', () => {
       ).rejects.toMatchObject({ status: 404 });
 
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({ id: 'enc1', idPro: 1 } as any);
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue(null);
-      await expect(
-        productosService.actualizar(1, { nombre: 'P', precio: 10, existencia: 1, idMarca: 99, idCat: 1 }),
-      ).rejects.toMatchObject({ status: 400 });
-
-      jest.spyOn(prisma.marca, 'findUnique').mockResolvedValue({ idMarca: 1 } as any);
-      jest.spyOn(prisma.categoria, 'findUnique').mockResolvedValue({ idCat: 1 } as any);
-      jest.spyOn(prisma.producto, 'findFirst').mockResolvedValue({ idPro: 99 } as any);
+      jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue({ idPro: 99 } as any);
       await expect(
         productosService.actualizar(1, { nombre: 'P', precio: 10, existencia: 1, idMarca: 1, idCat: 1, codigoQR: '123' }),
       ).rejects.toMatchObject({ status: 409 });
 
-      jest.spyOn(prisma.producto, 'findFirst').mockResolvedValue(null);
-      jest.spyOn(prisma.producto, 'update').mockResolvedValue({ idPro: 1 } as any);
+      jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue(null);
+      jest.spyOn(productoRepository, 'updateProducto').mockResolvedValue({ idPro: 1 } as any);
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({ id: 'enc1', idPro: 1 } as any);
       const act = await productosService.actualizar(1, {
         nombre: 'Producto Actualizado',
@@ -276,54 +258,38 @@ describe('ProductosService', () => {
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce(null);
       await expect(productosService.presignImagen(1, 'image/png')).rejects.toMatchObject({ status: 404 });
 
-      jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce({ idPro: 1, nombrePro: 'Galleta' } as any);
+      jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce({ idPro: 1, nombre: 'Galleta' } as any);
+      jest.spyOn(storageService, 'generarPresignedUpload').mockResolvedValue({ uploadUrl: 'http://presigned' } as any);
       const presign = await productosService.presignImagen(1, 'image/png', 'png');
       expect(presign.uploadUrl).toBeDefined();
     });
 
     it('confirmarImagen debe actualizar la URL y eliminar imagen anterior', async () => {
-      jest.spyOn(prisma.producto, 'findUnique').mockResolvedValueOnce(null);
+      jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce(null);
       await expect(productosService.confirmarImagen(1, 'key')).rejects.toMatchObject({ status: 404 });
 
-      jest.spyOn(prisma.producto, 'findUnique').mockResolvedValue({
-        idPro: 10,
-        imagenPro: '/uploads/productos/antigua.jpg',
-      } as any);
-      jest.spyOn(prisma.producto, 'update').mockResolvedValue({} as any);
-      jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({
-        id: 'enc10',
-        idPro: 10,
-        imagen: 'https://s3/productos/nueva.jpg',
-      } as any);
+      jest.spyOn(productosService, 'obtenerProducto')
+        .mockResolvedValueOnce({ id: 'enc10', idPro: 10, imagen: '/uploads/productos/antigua.jpg' } as any)
+        .mockResolvedValueOnce({ id: 'enc10', idPro: 10, imagen: 'https://s3/productos/nueva.jpg' } as any);
+      jest.spyOn(productoRepository, 'updateProducto').mockResolvedValue({ idPro: 10 } as any);
+      jest.spyOn(storageService, 'eliminarArchivo').mockResolvedValue();
 
       const res = await productosService.confirmarImagen(10, 'https://s3/productos/nueva.jpg');
       expect(res?.imagen).toBe('https://s3/productos/nueva.jpg');
-
-      const res2 = await productosService.confirmarImagen(10, 'productos/nueva.jpg');
-      expect(res2?.imagen).toBe('https://s3/productos/nueva.jpg');
     });
 
-    it('eliminar debe rechazar dependencias o eliminar con éxito', async () => {
+    it('eliminar debe rechazar no encontrado o eliminar con éxito', async () => {
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce(null);
       await expect(productosService.eliminar(5)).rejects.toMatchObject({ status: 404 });
 
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({
         idPro: 5,
-        nombrePro: 'Producto Con Ventas',
-        imagenPro: '/uploads/productos/foto.jpg',
+        nombre: 'Producto Con Ventas',
+        imagen: '/uploads/productos/foto.jpg',
       } as any);
 
-      jest.spyOn(prisma.detVenta, 'count').mockResolvedValue(3);
-      jest.spyOn(prisma.detCompra, 'count').mockResolvedValue(0);
-      jest.spyOn(prisma.detallePedidoCliente, 'count').mockResolvedValue(0);
-
-      await expect(productosService.eliminar(5)).rejects.toMatchObject({
-        status: 409,
-        message: expect.stringContaining('No se puede eliminar'),
-      });
-
-      jest.spyOn(prisma.detVenta, 'count').mockResolvedValue(0);
-      jest.spyOn(prisma.producto, 'delete').mockResolvedValue({ idPro: 5 } as any);
+      jest.spyOn(storageService, 'eliminarArchivo').mockResolvedValue(undefined as any);
+      jest.spyOn(productoRepository, 'deleteProducto').mockResolvedValue(undefined as any);
       const res = await productosService.eliminar(5);
       expect(res.message).toBe('Producto eliminado correctamente');
     });

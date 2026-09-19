@@ -2,6 +2,7 @@ import { errorFuncional } from '../../utils/formatters';
 
 export type EstadoPedido =
   | 'PENDIENTE_PAGO'
+  | 'PENDIENTE'
   | 'EN_REVISION'
   | 'PAGADO'
   | 'RECHAZADO'
@@ -26,7 +27,7 @@ export class OrderStateMachine {
   constructor() {
     this.registrarTransicion({
       accion: 'SUBIR_COMPROBANTE',
-      origenesPermitidos: new Set(['PENDIENTE_PAGO', 'EN_REVISION', 'RECHAZADO']),
+      origenesPermitidos: new Set(['PENDIENTE_PAGO', 'PENDIENTE', 'EN_REVISION', 'RECHAZADO']),
       destino: 'EN_REVISION',
       mensajeError: (actual) => `No se puede adjuntar comprobante a un pedido en estado ${actual}.`,
     });
@@ -54,7 +55,7 @@ export class OrderStateMachine {
 
     this.registrarTransicion({
       accion: 'CANCELAR',
-      origenesPermitidos: new Set(['PENDIENTE_PAGO', 'EN_REVISION', 'RECHAZADO', 'PAGADO']),
+      origenesPermitidos: new Set(['PENDIENTE_PAGO', 'PENDIENTE', 'EN_REVISION', 'RECHAZADO', 'PAGADO']),
       destino: 'CANCELADO',
       mensajeError: (actual) => `No se puede cancelar un pedido en estado ${actual}.`,
     });

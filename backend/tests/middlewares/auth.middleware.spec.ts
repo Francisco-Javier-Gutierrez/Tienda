@@ -6,7 +6,7 @@ import {
   rolesPos,
   soloAdministrador,
 } from '../../src/middlewares/auth.middleware';
-import { prisma } from '../../src/config/prisma';
+import { authRepository } from '../../src/db/repositories/auth.repository';
 import { emitirSesionCliente, emitirSesionEmpleado } from '../../src/utils/security';
 
 describe('Auth & Authorization Middlewares', () => {
@@ -45,7 +45,7 @@ describe('Auth & Authorization Middlewares', () => {
       const token = emitirSesionEmpleado({ idEmp: 999 });
       mockReq.headers = { authorization: `Bearer ${token}` };
 
-      jest.spyOn(prisma.empleado, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(authRepository, 'findEmpleadoById').mockResolvedValue(null);
 
       await autenticar(mockReq as Request, mockRes as Response, mockNext);
       expect(mockRes.status).toHaveBeenCalledWith(401);
@@ -56,36 +56,22 @@ describe('Auth & Authorization Middlewares', () => {
       const token = emitirSesionEmpleado({ idEmp: 1 });
       mockReq.headers = { authorization: `Bearer ${token}` };
 
-      jest.spyOn(prisma.empleado, 'findUnique').mockResolvedValue({
+      jest.spyOn(authRepository, 'findEmpleadoById').mockResolvedValue({
         idEmp: 1,
+        idSuc: 1,
+        idCargo: 1,
         nombreEmp: 'Admin',
         apellidoPatEmp: 'Principal',
         apellidoMatEmp: null,
         correoEmp: 'admin@tienda.com',
         contrasenaHash: 'hash',
         telefono: '123',
-        fechaIngreso: new Date(),
         fotoPerfil: null,
-        idCargo: 1,
+        cargoNombre: 'ADMINISTRADOR',
+        cargo: 'ADMINISTRADOR',
+        nombreSuc: 'Doña paty',
         estadoEmp: true,
-        googleSub: null,
-        cargo: {
-          idCargo: 1,
-          nombreCargo: 'ADMINISTRADOR',
-          idSuc: 1,
-          sucursal: {
-            idSuc: 1,
-            nombreSuc: 'Principal',
-            descripcionSuc: null,
-            telefonoSuc: null,
-            correoSuc: null,
-            paginaWebSuc: null,
-            redSocialSuc: null,
-            logoSuc: null,
-            idDir: null,
-          },
-        },
-      } as any);
+      });
 
       await autenticar(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();
@@ -104,7 +90,7 @@ describe('Auth & Authorization Middlewares', () => {
       const token = emitirSesionCliente({ idCliente: 5 });
       mockReq.headers = { authorization: `Bearer ${token}` };
 
-      jest.spyOn(prisma.cliente, 'findUnique').mockResolvedValue({
+      jest.spyOn(authRepository, 'findClienteById').mockResolvedValue({
         idCliente: 5,
         nombreCliente: 'Inactivo',
         apellidoPatCliente: null,
@@ -112,10 +98,8 @@ describe('Auth & Authorization Middlewares', () => {
         correoCliente: 'inactivo@tienda.com',
         fotoPerfil: null,
         estadoCliente: false,
-        fechaRegistro: new Date(),
-        ultimoAcceso: new Date(),
         googleSub: 'sub',
-      } as any);
+      });
 
       await autenticarCliente(mockReq as Request, mockRes as Response, mockNext);
       expect(mockRes.status).toHaveBeenCalledWith(401);
@@ -126,7 +110,7 @@ describe('Auth & Authorization Middlewares', () => {
       const token = emitirSesionCliente({ idCliente: 5 });
       mockReq.headers = { authorization: `Bearer ${token}` };
 
-      jest.spyOn(prisma.cliente, 'findUnique').mockResolvedValue({
+      jest.spyOn(authRepository, 'findClienteById').mockResolvedValue({
         idCliente: 5,
         nombreCliente: 'Cliente Activo',
         apellidoPatCliente: null,
@@ -134,10 +118,8 @@ describe('Auth & Authorization Middlewares', () => {
         correoCliente: 'activo@tienda.com',
         fotoPerfil: null,
         estadoCliente: true,
-        fechaRegistro: new Date(),
-        ultimoAcceso: new Date(),
         googleSub: 'sub',
-      } as any);
+      });
 
       await autenticarCliente(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();

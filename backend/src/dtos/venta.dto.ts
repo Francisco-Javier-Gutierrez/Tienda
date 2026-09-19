@@ -34,22 +34,22 @@ export const toVentaRegistradaDto = (v: any, empleado?: any) => {
       id: encodeId(Number(v.idEmp)), 
       nombre: empleado ? empleadoSeguro(empleado).nombre : (v.empleado ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ') : null)
     },
-    items: v.detalles?.map(normalizarDetalleVenta) || [],
+    items: (v.detalles || v.items)?.map(normalizarDetalleVenta) || [],
   };
 };
 
 export const toVentaListDto = (v: any) => {
   if (!v) return null;
+  const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || null);
-  const origen = v.pedidos && v.pedidos.length > 0 ? 'ONLINE' : 'POS';
+    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
 
   const ventaId = encodeId(v.idVenta);
   return {
     id: ventaId,
     uuid: v.uuidVenta || `venta-${v.idVenta}`,
-    sesionCajaId: encodeId(v.idSesionCaja),
+    sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
     total: Number(v.total ?? v.totalVenta ?? 0),
@@ -63,19 +63,19 @@ export const toVentaListDto = (v: any) => {
 export const toVentaDetalleDto = (v: any) => {
   if (!v) return null;
   
+  const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || null);
+    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
   const canceladorStr = v.empleadoCancela
     ? [v.empleadoCancela.nombreEmp, v.empleadoCancela.apellidoPatEmp, v.empleadoCancela.apellidoMatEmp].filter(Boolean).join(' ')
     : null;
-  const origen = v.pedidos && v.pedidos.length > 0 ? 'ONLINE' : 'POS';
 
   const ventaId = encodeId(v.idVenta);
   return {
     id: ventaId,
     uuid: v.uuidVenta || `venta-${v.idVenta}`,
-    sesionCajaId: encodeId(v.idSesionCaja),
+    sesionCajaId: v.idSesionCaja ? encodeId(v.idSesionCaja) : null,
     fecha: formatearFechaVenta(v.fechaVenta),
     hora: formatearHoraVenta(v.horaVenta || v.fechaVenta),
     total: Number(v.total ?? v.totalVenta ?? 0),
@@ -89,6 +89,6 @@ export const toVentaDetalleDto = (v: any) => {
     sucursal: v.sucursal?.nombreSuc || v.nombreSuc || 'Doña paty',
     origen,
     cajero: { id: encodeId(Number(v.idEmp)), nombre: cajeroStr },
-    items: v.detalles?.map(normalizarDetalleVenta) || [],
+    items: (v.detalles || v.items)?.map(normalizarDetalleVenta) || [],
   };
 };

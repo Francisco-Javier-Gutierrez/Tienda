@@ -16,13 +16,16 @@ export function normalizarCaja(caja: any) {
   ];
   const resultado: any = {
     id: encodeId(caja.idSesionCaja),
+    uuidSesionCaja: caja.uuidSesionCaja || caja.uuid || null,
     empleadoId: encodeId(caja.idEmp),
     sucursalId: encodeId(caja.idSuc),
+    fechaHoraApertura: caja.fechaHoraApertura || caja.fechaApertura || null,
+    fechaHoraCierre: caja.fechaHoraCierre || caja.fechaCierre || null,
     ...caja,
     empleado: caja.empleadoNombre || (caja.empleado
       ? [caja.empleado.nombreEmp, caja.empleado.apellidoPatEmp, caja.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-      : null),
-    nombreSuc: caja.sucursal?.nombreSuc || 'Doña paty',
+      : null) || 'Cajero',
+    nombreSuc: caja.sucursal?.nombreSuc || caja.nombreSuc || 'Doña paty',
   };
   for (const campo of campos) {
     resultado[campo] = resultado[campo] === null || resultado[campo] === undefined ? null : Number(resultado[campo]);

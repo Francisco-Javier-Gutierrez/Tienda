@@ -15,6 +15,7 @@ export class CajaController {
       req.empleado.idSuc,
       req.body?.uuidSesionCaja,
       req.body?.fondoInicial,
+      req.empleado.nombre,
     );
     res.status(201).json(caja);
   }

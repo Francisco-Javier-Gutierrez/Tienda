@@ -2,8 +2,7 @@ import {
   configuracionService,
   validarConfiguracionTransferencia,
 } from '../../../src/modules/configuracion/configuracion.service';
-import { pedidosService } from '../../../src/modules/pedidos/pedidos.service';
-import { prisma } from '../../../src/config/prisma';
+import { configuracionRepository } from '../../../src/db/repositories/configuracion.repository';
 
 describe('ConfiguracionService', () => {
   afterEach(() => {
@@ -56,8 +55,7 @@ describe('ConfiguracionService', () => {
 
   describe('Consultas y Actualización', () => {
     it('obtenerAdmin debe retornar configuración formateada', async () => {
-      jest.spyOn(prisma.configuracionTransferencia, 'findUnique').mockResolvedValue({
-        idConfiguracion: 1,
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({
         idSuc: 1,
         banco: 'BBVA',
         titular: 'Admin Tienda',
@@ -65,21 +63,19 @@ describe('ConfiguracionService', () => {
         numeroCuenta: null,
         instrucciones: 'Instrucciones',
         activo: true,
-        fechaActualizacion: new Date(),
-      });
+      } as any);
 
       const conf = await configuracionService.obtenerAdmin(1);
       expect((conf as any)?.banco).toBe('BBVA');
       expect((conf as any)?.activo).toBe(true);
     });
 
-    it('actualizarAdmin debe rechazar error de validación o hacer upsert', async () => {
+    it('actualizarAdmin debe rechazar error de validación o hacer update', async () => {
       await expect(configuracionService.actualizarAdmin(1, { activo: 'invalido' })).rejects.toMatchObject({
         status: 400,
       });
 
-      jest.spyOn(prisma.configuracionTransferencia, 'upsert').mockResolvedValue({
-        idConfiguracion: 1,
+      jest.spyOn(configuracionRepository, 'updateConfiguracion').mockResolvedValue({
         idSuc: 1,
         banco: 'Santander',
         titular: 'Tienda',
@@ -87,8 +83,7 @@ describe('ConfiguracionService', () => {
         numeroCuenta: null,
         instrucciones: null,
         activo: true,
-        fechaActualizacion: new Date(),
-      });
+      } as any);
 
       const res = await configuracionService.actualizarAdmin(1, {
         activo: true,
@@ -99,10 +94,8 @@ describe('ConfiguracionService', () => {
       expect((res as any)?.banco).toBe('Santander');
     });
 
-    it('obtenerCliente debe consultar sucursal y configuracion activa', async () => {
-      jest.spyOn(pedidosService, 'obtenerSucursalDisponibleCliente').mockResolvedValue(1);
-      jest.spyOn(pedidosService, 'obtenerConfiguracionTransferencia').mockResolvedValue({
-        idConfiguracion: 1,
+    it('obtenerCliente debe consultar configuracion activa', async () => {
+      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({
         idSuc: 1,
         banco: 'BBVA',
         titular: 'Tienda',
