@@ -15,6 +15,7 @@ export type AdminSection =
   | 'empleados'
   | 'cajero'
   | 'ventas'
+  | 'cortes'
   | 'pedidos-online'
   | 'configuracion'
   | 'catalogo';
@@ -50,7 +51,7 @@ export class AdminShellComponent implements OnInit {
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
         this.cerrarSidebar();
