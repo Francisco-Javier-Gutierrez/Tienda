@@ -166,6 +166,44 @@
             </div>
           </div>
 
+          <!-- Métricas de Ganancia y Margen -->
+          <div *ngIf="v.ganancia !== undefined && v.ganancia !== null" class="grid grid-cols-2 gap-3">
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">trending_up</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Ganancia esperada</span>
+                <strong class="font-heading font-bold text-sm md:text-base text-tertiary block truncate">
+                  +{{ v.ganancia | currency:'MXN' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-xl">percent</span>
+              </div>
+              <div class="min-w-0">
+                <span class="font-sans text-[11px] text-on-surface-variant block truncate">Margen comercial</span>
+                <strong class="font-heading font-bold text-sm md:text-base text-secondary block truncate">
+                  {{ v.margenPorcentaje }}%
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nota Adicional / Extras -->
+          <div *ngIf="v.nota" class="bg-primary/5 border border-primary/20 rounded-[20px] p-4 text-xs font-sans text-on-surface flex items-start gap-3 shadow-sm">
+            <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-[18px]">sticky_note_2</span>
+            </div>
+            <div>
+              <span class="font-bold text-primary block text-xs uppercase tracking-wider mb-0.5">Nota adicional / Extras</span>
+              <p class="text-on-surface text-sm">{{ v.nota }}</p>
+            </div>
+          </div>
+
           <!-- Artículos Vendidos -->
           <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
             <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
@@ -336,6 +374,11 @@
     <ng-container *ngIf="v.metodoPago === 'EFECTIVO'">
       <p>Recibido: {{ v.montoRecibido | currency:'MXN' }}</p>
       <p>Cambio: {{ v.cambio | currency:'MXN' }}</p>
+    </ng-container>
+
+    <ng-container *ngIf="v.nota">
+      <div class="ticket-divider"></div>
+      <p style="font-size: 11px; font-style: italic;">Nota: {{ v.nota }}</p>
     </ng-container>
 
     <div class="ticket-divider"></div>

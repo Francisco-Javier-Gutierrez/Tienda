@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -28,7 +28,7 @@ import { DialogService } from '../services/dialog.service';
   styleUrls: ['./cajero.page.scss'],
   standalone: false,
 })
-export class CajeroPage implements OnInit {
+export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   /* =========================================
      REFERENCIAS
   ========================================= */
@@ -52,6 +52,7 @@ export class CajeroPage implements OnInit {
   private readonly scanFeedback = inject(ScanFeedbackService);
   private readonly toast = inject(ToastController);
   private readonly dialog = inject(DialogService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /* =========================================
      DATOS GENERALES
@@ -62,6 +63,12 @@ export class CajeroPage implements OnInit {
   productos: ProductoPos[] = [];
 
   carrito: ItemVenta[] = [];
+
+  notaAdicional = '';
+
+  ticketVisible = false;
+
+  private observerTicket?: IntersectionObserver;
 
   busqueda = '';
 
@@ -147,6 +154,36 @@ export class CajeroPage implements OnInit {
 
   ionViewWillEnter(): void {
     void this.iniciar();
+    this.iniciarObservadorTicket();
+  }
+
+  ngAfterViewInit(): void {
+    this.iniciarObservadorTicket();
+  }
+
+  ngOnDestroy(): void {
+    this.observerTicket?.disconnect();
+  }
+
+  iniciarObservadorTicket(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+    this.observerTicket?.disconnect();
+
+    setTimeout(() => {
+      const ticketEl = document.getElementById('resumenVenta');
+      if (ticketEl) {
+        this.observerTicket = new IntersectionObserver(
+          (entries) => {
+            const entry = entries[0];
+            // Si el ticket es visible en el viewport (al menos un 10%), ocultamos la barra flotante "Ver Ticket"
+            this.ticketVisible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio > 0.05);
+            this.cdr.markForCheck();
+          },
+          { threshold: [0, 0.05, 0.1, 0.25, 0.5] },
+        );
+        this.observerTicket.observe(ticketEl);
+      }
+    }, 400);
   }
 
   private async iniciar(): Promise<void> {
@@ -681,6 +718,7 @@ export class CajeroPage implements OnInit {
       this.mostrarModalCobro = true;
       this.metodoPago = 'EFECTIVO';
       this.montoRecibido = null;
+      this.ticketVisible = true;
     }
   }
 
@@ -708,6 +746,8 @@ export class CajeroPage implements OnInit {
       metodoPago: this.metodoPago,
 
       montoRecibido: this.metodoPago === 'EFECTIVO' ? Number(this.montoRecibido) : null,
+
+      nota: this.notaAdicional.trim() || null,
     };
 
     try {
@@ -787,8 +827,10 @@ export class CajeroPage implements OnInit {
 
     this.mostrarModalCobro = false;
     this.carrito = [];
+    this.notaAdicional = '';
     this.montoRecibido = null;
     this.metodoPago = 'EFECTIVO';
+    this.ticketVisible = false;
 
     /*
      * Refrescar catálogo.
@@ -1082,9 +1124,9 @@ export class CajeroPage implements OnInit {
   ========================================= */
 
   irAlResumen(): void {
+    this.ticketVisible = true;
     document.getElementById('resumenVenta')?.scrollIntoView({
       behavior: 'smooth',
-
       block: 'start',
     });
   }

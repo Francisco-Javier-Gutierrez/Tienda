@@ -31,7 +31,12 @@ export interface VentaResumen {
   sesionCajaId: string;
   fecha: string;
   hora: string;
+  fechaIso?: string;
   total: number;
+  costoTotal?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
+  nota?: string | null;
   metodoPago: MetodoPago;
   estado: EstadoVenta;
   origen: 'ONLINE' | 'POS';
@@ -44,7 +49,12 @@ export interface VentaDetalle {
   sesionCajaId: string;
   fecha: string;
   hora: string;
+  fechaIso?: string;
   total: number;
+  costoTotal?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
+  nota?: string | null;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
@@ -73,6 +83,9 @@ export interface DetalleVentaItem {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  costoUnitario?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
 }
 
 export interface VentaRegistrada {
@@ -82,6 +95,10 @@ export interface VentaRegistrada {
   fecha: string;
   hora: string;
   total: number;
+  costoTotal?: number;
+  ganancia?: number;
+  margenPorcentaje?: number;
+  nota?: string | null;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
@@ -100,6 +117,7 @@ export interface CrearVentaDto {
   items: CrearVentaItem[];
   metodoPago: MetodoPago;
   montoRecibido: number | null;
+  nota?: string | null;
 }
 
 export interface VentaCancelada {
