@@ -194,13 +194,18 @@
           </div>
 
           <!-- Nota Adicional / Extras -->
-          <div *ngIf="v.nota" class="bg-primary/5 border border-primary/20 rounded-[20px] p-4 text-xs font-sans text-on-surface flex items-start gap-3 shadow-sm">
-            <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-              <span class="material-symbols-outlined text-[18px]">sticky_note_2</span>
+          <div *ngIf="v.nota || (v.montoNota && v.montoNota > 0)" class="bg-primary/5 border border-primary/20 rounded-[20px] p-4 text-xs font-sans text-on-surface flex items-start justify-between gap-3 shadow-sm">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                <span class="material-symbols-outlined text-[18px]">sticky_note_2</span>
+              </div>
+              <div>
+                <span class="font-bold text-primary block text-xs uppercase tracking-wider mb-0.5">Nota adicional / Extras sin código</span>
+                <p class="text-on-surface text-sm">{{ v.nota || 'Artículo adicional' }}</p>
+              </div>
             </div>
-            <div>
-              <span class="font-bold text-primary block text-xs uppercase tracking-wider mb-0.5">Nota adicional / Extras</span>
-              <p class="text-on-surface text-sm">{{ v.nota }}</p>
+            <div class="text-right shrink-0" *ngIf="v.montoNota && v.montoNota > 0">
+              <span class="font-bold text-primary text-base">+{{ v.montoNota | currency:'MXN' }}</span>
             </div>
           </div>
 
@@ -376,9 +381,12 @@
       <p>Cambio: {{ v.cambio | currency:'MXN' }}</p>
     </ng-container>
 
-    <ng-container *ngIf="v.nota">
+    <ng-container *ngIf="v.nota || (v.montoNota && v.montoNota > 0)">
       <div class="ticket-divider"></div>
-      <p style="font-size: 11px; font-style: italic;">Nota: {{ v.nota }}</p>
+      <p style="font-size: 11px; font-style: italic;">
+        Extra: {{ v.nota || 'Artículo adicional sin código' }}
+        <span *ngIf="v.montoNota && v.montoNota > 0"> ({{ v.montoNota | currency:'MXN' }})</span>
+      </p>
     </ng-container>
 
     <div class="ticket-divider"></div>

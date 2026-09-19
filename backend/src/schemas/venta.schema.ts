@@ -21,12 +21,18 @@ export const itemVentaSchema = z.preprocess(
   })
 );
 
-export const crearVentaSchema = z.object({
-  uuidVenta: z.string().min(10, { message: 'El identificador uuidVenta no es válido' }),
-  metodoPago: z.enum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA'], {
-    message: 'Método de pago debe ser EFECTIVO, TARJETA o TRANSFERENCIA',
-  }),
-  montoRecibido: z.union([z.number(), z.string()]).optional().nullable(),
-  items: z.array(itemVentaSchema).min(1, { message: 'La venta debe contener al menos un producto' }),
-  nota: z.string().max(500).optional().nullable(),
-});
+export const crearVentaSchema = z
+  .object({
+    uuidVenta: z.string().min(10, { message: 'El identificador uuidVenta no es válido' }),
+    metodoPago: z.enum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA'], {
+      message: 'Método de pago debe ser EFECTIVO, TARJETA o TRANSFERENCIA',
+    }),
+    montoRecibido: z.union([z.number(), z.string()]).optional().nullable(),
+    items: z.array(itemVentaSchema).default([]),
+    nota: z.string().max(500).optional().nullable(),
+    montoNota: z.union([z.number(), z.string()]).optional().nullable(),
+  })
+  .refine(
+    (data) => (Array.isArray(data.items) && data.items.length > 0) || Number(data.montoNota || 0) > 0,
+    { message: 'La venta debe contener al menos un producto o un importe adicional' }
+  );

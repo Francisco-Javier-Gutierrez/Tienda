@@ -37,6 +37,7 @@ export interface VentaResumen {
   ganancia?: number;
   margenPorcentaje?: number;
   nota?: string | null;
+  montoNota?: number | null;
   metodoPago: MetodoPago;
   estado: EstadoVenta;
   origen: 'ONLINE' | 'POS';
@@ -55,6 +56,7 @@ export interface VentaDetalle {
   ganancia?: number;
   margenPorcentaje?: number;
   nota?: string | null;
+  montoNota?: number | null;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
@@ -99,6 +101,7 @@ export interface VentaRegistrada {
   ganancia?: number;
   margenPorcentaje?: number;
   nota?: string | null;
+  montoNota?: number | null;
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   cambio: number;
@@ -118,6 +121,7 @@ export interface CrearVentaDto {
   metodoPago: MetodoPago;
   montoRecibido: number | null;
   nota?: string | null;
+  montoNota?: number | null;
 }
 
 export interface VentaCancelada {
