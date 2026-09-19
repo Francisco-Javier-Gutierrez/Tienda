@@ -1,79 +1,264 @@
-<app-admin-shell menuId="admin-ventas-menu" contentId="admin-ventas-content" [activeSection]="'ventas'">
+<app-admin-shell
+  menuId="admin-ventas-menu"
+  contentId="admin-ventas-content"
+  [activeSection]="pestanaActiva === 'cortes' ? 'cortes' : 'ventas'"
+>
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24">
-      
-      <!-- Header -->
-      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Historial</span>
-          <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary">{{ auth.tieneRol('CAJERO') ? 'Mis ventas' : 'Ventas de la sucursal' }}</h1>
-          <p class="font-sans text-sm text-on-surface-variant">Consulta cobros registrados, utilidades obtenidas y márgenes por día.</p>
-        </div>
-        <button routerLink="/cajero" class="flex items-center gap-2 bg-primary text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all active:scale-95 self-start sm:self-auto">
-          <span class="material-symbols-outlined text-lg">add_circle</span>
-          Nueva venta
-        </button>
-      </header>
+    <!-- Header Principal -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">
+          Auditoría y Ventas
+        </span>
+        <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary">
+          {{ pestanaActiva === 'cortes' ? 'Cortes de Caja y Arqueos' : (auth.tieneRol('CAJERO') ? 'Mis ventas' :
+          'Historial de Ventas') }}
+        </h1>
+        <p class="font-sans text-sm text-on-surface-variant">
+          {{ pestanaActiva === 'cortes' ? 'Consulta sesiones de caja, arqueos físicos de efectivo y diferencias por
+          turno.' : 'Consulta tickets cobrados, utilidades y filtra por día o por corte específico.' }}
+        </p>
+      </div>
+      <button
+        routerLink="/cajero"
+        class="flex items-center gap-2 bg-primary text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all active:scale-95 self-start sm:self-auto"
+      >
+        <span class="material-symbols-outlined text-lg">point_of_sale</span>
+        Ir a Punto de Venta
+      </button>
+    </header>
 
-      <!-- Summary Stats Cards -->
+    <!-- Selector de Pestañas (Tickets vs Cortes) -->
+    <nav
+      class="flex items-center gap-2 border-b border-surface-variant/30 pb-3 overflow-x-auto"
+      aria-label="Secciones de ventas"
+    >
+      <button
+        type="button"
+        (click)="cambiarPestana('tickets')"
+        [ngClass]="pestanaActiva === 'tickets' 
+            ? 'bg-primary text-on-primary shadow-sm font-bold' 
+            : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-medium'"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs md:text-sm font-sans transition-all active:scale-95 shrink-0"
+      >
+        <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+        <span>Tickets de Venta ({{ ventasFiltradas.length }})</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="cambiarPestana('cortes')"
+        [ngClass]="pestanaActiva === 'cortes' 
+            ? 'bg-primary text-on-primary shadow-sm font-bold' 
+            : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container font-medium'"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs md:text-sm font-sans transition-all active:scale-95 shrink-0"
+      >
+        <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+        <span>Cortes de Caja ({{ cortesFiltrados.length }})</span>
+      </button>
+    </nav>
+
+    <!-- ========================================================================= -->
+    <!-- PESTAÑA 1: TICKETS DE VENTA                                              -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="pestanaActiva === 'tickets'">
+      <!-- Barra Centralizada de Filtros: Por Día y Por Corte -->
+      <section
+        class="bg-surface-container-lowest rounded-[24px] p-4 md:p-5 shadow-sm border border-surface-variant/30 space-y-3"
+      >
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
+          <div class="flex flex-col sm:flex-row sm:items-end gap-3 flex-1">
+            <!-- Filtro por Día (Datepicker) -->
+            <div class="w-full sm:w-60">
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">
+                Filtrar por día específico
+              </label>
+              <app-custom-datepicker
+                [(ngModel)]="fechaFiltroPicker"
+                (dateChange)="alCambiarFechaPicker($event)"
+                placeholder="Todas las fechas"
+                title="Seleccionar día de venta"
+              ></app-custom-datepicker>
+            </div>
+
+            <!-- Filtro por Corte de Caja (Select) -->
+            <div class="w-full sm:flex-1 sm:min-w-[240px]">
+              <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">
+                Filtrar por corte de caja
+              </label>
+              <app-custom-select
+                [(ngModel)]="filtroCorte"
+                [options]="opcionesCortes"
+                (ngModelChange)="seleccionarCorte($event)"
+                placeholder="Todos los cortes de caja"
+              ></app-custom-select>
+            </div>
+          </div>
+
+          <!-- Botones de Acción Rápida / Reset -->
+          <div class="flex items-center gap-2 self-end lg:self-auto shrink-0 pt-1 lg:pt-0">
+            <button
+              *ngIf="hayFiltrosTicketsActivos"
+              (click)="limpiarTodosFiltros()"
+              class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-secondary hover:bg-surface-container transition-colors"
+              title="Quitar todos los filtros"
+            >
+              <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+              <span>Limpiar filtros</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner Informativo cuando un Corte está seleccionado -->
+        <div
+          *ngIf="corteActivo"
+          class="bg-primary/5 border border-primary/20 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn mt-2"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <strong class="font-heading font-bold text-sm text-primary">
+                  Mostrando ventas del Corte #{{ formatearFolio(corteActivo.id) }}
+                </strong>
+                <span
+                  class="bg-primary-container/30 text-primary text-[10px] font-sans font-bold px-2 py-0.5 rounded-full"
+                >
+                  {{ corteActivo.estado }}
+                </span>
+              </div>
+              <p class="font-sans text-xs text-on-surface-variant truncate mt-0.5">
+                Cajero: <strong>{{ corteActivo.empleado }}</strong> · {{ corteActivo.numeroVentas }} ventas · Facturado:
+                {{ corteActivo.totalVentas | currency:'MXN' }}
+              </p>
+            </div>
+          </div>
+
+          <button
+            (click)="limpiarFiltroCorte()"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-xs font-semibold text-primary hover:bg-surface-container transition-colors self-start sm:self-auto"
+          >
+            <span class="material-symbols-outlined text-sm">close</span>
+            Ver todos los cortes
+          </button>
+        </div>
+
+        <!-- Banner informativo cuando hay un día específico seleccionado -->
+        <div
+          *ngIf="filtroDia !== 'TODOS' && !corteActivo"
+          class="bg-secondary-container/20 border border-secondary-container/40 rounded-2xl p-3 flex items-center justify-between gap-2 animate-fadeIn"
+        >
+          <div class="flex items-center gap-2 min-w-0 text-xs font-sans text-on-secondary-container">
+            <span class="material-symbols-outlined text-base text-secondary shrink-0">calendar_today</span>
+            <span
+              >Filtrando por día: <strong>{{ filtroDia }}</strong> ({{ ventasFiltradas.length }} ventas
+              encontradas)</span
+            >
+          </div>
+          <button
+            (click)="limpiarFiltroDia()"
+            class="text-xs font-sans text-secondary font-semibold hover:underline flex items-center gap-1 shrink-0"
+          >
+            <span>Ver todas las fechas</span>
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Métricas Dinámicas (Recalculadas para las ventas mostradas) -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" *ngIf="!cargando">
-        
-        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div
+            class="w-11 h-11 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0"
+          >
             <span class="material-symbols-outlined text-2xl">receipt_long</span>
           </div>
           <div class="min-w-0">
-            <span class="font-sans text-xs text-on-surface-variant block truncate">Registradas</span>
-            <strong class="font-heading font-bold text-xl md:text-2xl text-on-surface leading-tight">{{ ventas.length }}</strong>
+            <span class="font-sans text-xs text-on-surface-variant block truncate">
+              {{ hayFiltrosTicketsActivos ? 'Filtradas' : 'Registradas' }}
+            </span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-on-surface leading-tight">
+              {{ ventasFiltradas.length }}
+            </strong>
           </div>
         </article>
 
-        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
           <div class="w-11 h-11 rounded-2xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined text-2xl">check_circle</span>
           </div>
           <div class="min-w-0">
             <span class="font-sans text-xs text-on-surface-variant block truncate">Completadas</span>
-            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">{{ ventasCompletadas }}</strong>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">
+              {{ ventasCompletadas }}
+            </strong>
           </div>
         </article>
 
-        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0">
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div
+            class="w-11 h-11 rounded-2xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0"
+          >
             <span class="material-symbols-outlined text-2xl">trending_up</span>
           </div>
           <div class="min-w-0">
             <span class="font-sans text-xs text-on-surface-variant block truncate">Ganancia esperada</span>
-            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">{{ totalGanancias | currency:'MXN' }}</strong>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">
+              {{ totalGanancias | currency:'MXN' }}
+            </strong>
           </div>
         </article>
 
-        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div
+            class="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm"
+          >
             <span class="material-symbols-outlined text-2xl">payments</span>
           </div>
           <div class="min-w-0">
-            <span class="font-sans text-xs text-on-surface-variant block truncate">Total vendido</span>
-            <strong class="font-heading font-bold text-xl md:text-2xl text-primary leading-tight">{{ totalVendido | currency:'MXN' }}</strong>
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Total facturado</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-primary leading-tight">
+              {{ totalVendido | currency:'MXN' }}
+            </strong>
           </div>
         </article>
-
       </section>
 
-      <!-- Panel de Ganancias Obtenidas por Día -->
-      <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4" *ngIf="!cargando && gananciasPorDia.length">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-variant/20 pb-3">
+      <!-- Panel de Ganancias Obtenidas por Día (visible cuando no se filtra por corte) -->
+      <section
+        class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+        *ngIf="!cargando && gananciasPorDia.length && !corteActivo"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-variant/20 pb-3"
+        >
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-tertiary-container/20 text-tertiary flex items-center justify-center">
               <span class="material-symbols-outlined text-xl">query_stats</span>
             </div>
             <div>
               <h2 class="font-heading font-bold text-base md:text-lg text-primary">Ganancias obtenidas por día</h2>
-              <p class="font-sans text-xs text-on-surface-variant">Margen y utilidad neta calculados según el costo unitario de los productos vendidos.</p>
+              <p class="font-sans text-xs text-on-surface-variant">
+                Haz clic en cualquier tarjeta para filtrar las ventas de ese día específico.
+              </p>
             </div>
           </div>
           <div class="flex items-center gap-2 self-start sm:self-auto" *ngIf="filtroDia !== 'TODOS'">
             <span class="text-xs font-sans text-primary font-semibold">Filtro activo</span>
-            <button (click)="filtroDia = 'TODOS'" class="text-xs font-sans text-secondary underline hover:text-primary transition-colors">
+            <button
+              (click)="limpiarFiltroDia()"
+              class="text-xs font-sans text-secondary underline hover:text-primary transition-colors"
+            >
               Mostrar todas las fechas
             </button>
           </div>
@@ -91,10 +276,20 @@
                 <div class="flex items-center gap-2">
                   <span class="material-symbols-outlined text-[18px] text-primary">event</span>
                   <strong class="font-heading font-bold text-sm text-on-surface">{{ dia.fechaLegible }}</strong>
-                  <span *ngIf="dia.esHoy" class="bg-primary text-on-primary text-[10px] font-sans font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Hoy</span>
-                  <span *ngIf="dia.esAyer" class="bg-surface-variant text-on-surface-variant text-[10px] font-sans font-medium px-2 py-0.5 rounded-full uppercase tracking-wider">Ayer</span>
+                  <span
+                    *ngIf="dia.esHoy"
+                    class="bg-primary text-on-primary text-[10px] font-sans font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    >Hoy</span
+                  >
+                  <span
+                    *ngIf="dia.esAyer"
+                    class="bg-surface-variant text-on-surface-variant text-[10px] font-sans font-medium px-2 py-0.5 rounded-full uppercase tracking-wider"
+                    >Ayer</span
+                  >
                 </div>
-                <span class="text-xs font-sans font-medium text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded-full">
+                <span
+                  class="text-xs font-sans font-medium text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded-full"
+                >
                   {{ dia.totalVentas }} {{ dia.totalVentas === 1 ? 'venta' : 'ventas' }}
                 </span>
               </div>
@@ -113,7 +308,9 @@
                     <span class="material-symbols-outlined text-sm">trending_up</span>
                     Ganancia esperada:
                   </span>
-                  <span class="font-heading font-bold text-base text-tertiary">+{{ dia.gananciaEsperada | currency:'MXN' }}</span>
+                  <span class="font-heading font-bold text-base text-tertiary"
+                    >+{{ dia.gananciaEsperada | currency:'MXN' }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -121,8 +318,10 @@
             <!-- Footer con margen comercial -->
             <div class="mt-3 pt-2.5 border-t border-surface-variant/20 flex items-center justify-between text-xs">
               <span class="font-sans text-[11px] text-on-surface-variant">Margen esperado:</span>
-              <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-0.5 rounded-full"
-                    [ngClass]="dia.margenPorcentaje >= 30 ? 'bg-tertiary-fixed text-tertiary' : (dia.margenPorcentaje >= 15 ? 'bg-amber-100 text-amber-800' : 'bg-surface-variant text-on-surface')">
+              <span
+                class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-0.5 rounded-full"
+                [ngClass]="dia.margenPorcentaje >= 30 ? 'bg-tertiary-fixed text-tertiary' : (dia.margenPorcentaje >= 15 ? 'bg-amber-100 text-amber-800' : 'bg-surface-variant text-on-surface')"
+              >
                 {{ dia.margenPorcentaje }}% margen
               </span>
             </div>
@@ -130,9 +329,12 @@
         </div>
       </section>
 
-      <!-- Loading Skeletons -->
+      <!-- Esqueletos de Carga -->
       <div class="space-y-3" *ngIf="cargando">
-        <div *ngFor="let i of [1,2,3,4,5]" class="bg-surface-container-lowest rounded-[20px] p-4 md:p-5 shadow-sm border border-surface-variant/30 animate-pulse space-y-3">
+        <div
+          *ngFor="let i of [1,2,3,4,5]"
+          class="bg-surface-container-lowest rounded-[20px] p-4 md:p-5 shadow-sm border border-surface-variant/30 animate-pulse space-y-3"
+        >
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-2xl bg-surface-variant/60"></div>
@@ -146,38 +348,58 @@
         </div>
       </div>
 
-      <!-- Sales Cards List -->
+      <!-- Lista Centralizada de Tickets de Venta -->
       <section class="space-y-4" *ngIf="!cargando">
-        
         <div class="flex items-center justify-between" *ngIf="ventasFiltradas.length">
           <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">
-            {{ filtroDia === 'TODOS' ? 'Movimientos registrados' : 'Ventas del día seleccionado' }}
+            {{ corteActivo ? 'Ventas correspondientes al corte #' + formatearFolio(corteActivo.id) : (filtroDia ===
+            'TODOS' ? 'Tickets registrados' : 'Tickets del día ' + filtroDia) }}
           </span>
           <span class="font-sans text-xs text-on-surface-variant">
-            {{ ventasFiltradas.length }} {{ ventasFiltradas.length === 1 ? 'venta' : 'ventas' }}
+            {{ ventasFiltradas.length }} {{ ventasFiltradas.length === 1 ? 'ticket' : 'tickets' }}
           </span>
         </div>
 
         <div class="space-y-3" *ngIf="ventasFiltradas.length">
-          <a *ngFor="let venta of ventasFiltradas"
-             [routerLink]="['/ventas', venta.id]"
-             class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 hover:shadow-md hover:border-primary/30 transition-all duration-200 block group active:scale-[0.99]">
-            
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-variant/20">
-              <!-- Left: Receipt icon + Folio + Badges + Date -->
+          <a
+            *ngFor="let venta of ventasFiltradas"
+            [routerLink]="['/ventas', venta.id]"
+            class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 hover:shadow-md hover:border-primary/30 transition-all duration-200 block group active:scale-[0.99]"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-variant/20"
+            >
+              <!-- Izquierda: Folio + Badges + Fecha -->
               <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <div
+                  class="w-10 h-10 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
+                >
                   <span class="material-symbols-outlined text-[20px]">receipt_long</span>
                 </div>
-                
+
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-mono font-bold text-xs text-primary bg-primary-container/20 px-2.5 py-1 rounded-lg border border-primary/15 tracking-wider truncate max-w-[150px] sm:max-w-none" [title]="'ID completo: ' + venta.id">
+                    <span
+                      class="font-mono font-bold text-xs text-primary bg-primary-container/20 px-2.5 py-1 rounded-lg border border-primary/15 tracking-wider truncate max-w-[150px] sm:max-w-none"
+                      [title]="'ID: ' + venta.id"
+                    >
                       #{{ formatearFolio(venta.id) }}
                     </span>
-                    <span class="text-[10px] font-sans font-bold uppercase px-2 py-0.5 rounded-full"
-                          [ngClass]="venta.origen === 'ONLINE' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant'">
+                    <span
+                      class="text-[10px] font-sans font-bold uppercase px-2 py-0.5 rounded-full"
+                      [ngClass]="venta.origen === 'ONLINE' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant'"
+                    >
                       {{ venta.origen === 'ONLINE' ? 'Online' : 'Punto de venta' }}
+                    </span>
+
+                    <!-- Badge de Corte si está asociado -->
+                    <span
+                      *ngIf="venta.sesionCajaId"
+                      (click)="$event.stopPropagation(); seleccionarCorte(venta.sesionCajaId)"
+                      class="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full bg-surface-container hover:bg-primary/10 text-primary border border-primary/10 transition-colors cursor-pointer"
+                      title="Ver todas las ventas de este corte"
+                    >
+                      Corte #{{ formatearFolio(venta.sesionCajaId) }}
                     </span>
                   </div>
 
@@ -195,28 +417,41 @@
                 </div>
               </div>
 
-              <!-- Right: Total y Ganancia -->
-              <div class="text-left sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end pt-1 sm:pt-0 border-t sm:border-t-0 border-surface-variant/20">
+              <!-- Derecha: Total y Ganancia -->
+              <div
+                class="text-left sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end pt-1 sm:pt-0 border-t sm:border-t-0 border-surface-variant/20"
+              >
                 <span class="font-sans text-[11px] text-outline sm:block hidden">Total</span>
                 <span class="font-heading font-bold text-lg md:text-xl text-primary leading-tight">
                   {{ venta.total | currency:'MXN' }}
                 </span>
-                <span *ngIf="venta.ganancia !== undefined && venta.ganancia !== null" class="font-sans text-[11px] text-tertiary font-semibold">
+                <span
+                  *ngIf="venta.ganancia !== undefined && venta.ganancia !== null"
+                  class="font-sans text-[11px] text-tertiary font-semibold"
+                >
                   +{{ venta.ganancia | currency:'MXN' }} ({{ venta.margenPorcentaje }}% marg.)
                 </span>
               </div>
             </div>
 
             <!-- Fila de Nota Adicional / Extra si existe -->
-            <div *ngIf="venta.nota || (venta.montoNota && venta.montoNota > 0)" class="mt-2.5 bg-primary/5 border border-primary/15 rounded-xl px-3 py-1.5 flex items-start justify-between gap-1.5 text-xs font-sans text-on-surface">
+            <div
+              *ngIf="venta.nota || (venta.montoNota && venta.montoNota > 0)"
+              class="mt-2.5 bg-primary/5 border border-primary/15 rounded-xl px-3 py-1.5 flex items-start justify-between gap-1.5 text-xs font-sans text-on-surface"
+            >
               <div class="flex items-start gap-1.5 min-w-0">
                 <span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">sticky_note_2</span>
-                <span class="truncate"><strong class="font-semibold text-primary">Extra:</strong> {{ venta.nota || 'Artículo adicional sin código' }}</span>
+                <span class="truncate"
+                  ><strong class="font-semibold text-primary">Extra:</strong> {{ venta.nota || 'Artículo adicional sin
+                  código' }}</span
+                >
               </div>
-              <span class="font-bold text-primary shrink-0 ml-2" *ngIf="venta.montoNota && venta.montoNota > 0">+{{ venta.montoNota | currency:'MXN' }}</span>
+              <span class="font-bold text-primary shrink-0 ml-2" *ngIf="venta.montoNota && venta.montoNota > 0"
+                >+{{ venta.montoNota | currency:'MXN' }}</span
+              >
             </div>
 
-            <!-- Footer / Metadata row -->
+            <!-- Footer de la Tarjeta de Ticket -->
             <div class="pt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
               <div class="flex items-center gap-3 md:gap-4 flex-wrap">
                 <!-- Cajero -->
@@ -226,52 +461,372 @@
                 </span>
 
                 <!-- Método de pago -->
-                <span class="inline-flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded-full text-on-surface font-medium">
+                <span
+                  class="inline-flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded-full text-on-surface font-medium"
+                >
                   <span class="material-symbols-outlined text-[15px] text-primary">
-                    {{ venta.metodoPago === 'EFECTIVO' ? 'payments' : (venta.metodoPago === 'TARJETA' ? 'credit_card' : 'smartphone') }}
+                    {{ venta.metodoPago === 'EFECTIVO' ? 'payments' : (venta.metodoPago === 'TARJETA' ? 'credit_card' :
+                    'smartphone') }}
                   </span>
                   <span>{{ venta.metodoPago }}</span>
                 </span>
               </div>
 
-              <!-- Estado & Chevron -->
+              <!-- Estado & Flecha -->
               <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-                      [ngClass]="{
-                        'bg-error-container text-on-error-container border border-error/20': venta.estado === 'CANCELADA',
-                        'bg-amber-100 text-amber-800 border border-amber-300/60': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
-                        'bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary/20': venta.estado === 'COMPLETADA' || (!venta.estado)
-                      }">
-                  <span class="w-1.5 h-1.5 rounded-full"
-                        [ngClass]="{
-                          'bg-error': venta.estado === 'CANCELADA',
-                          'bg-amber-600': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
-                          'bg-tertiary': venta.estado === 'COMPLETADA' || (!venta.estado)
-                        }"></span>
-                  <span>{{ venta.estado === 'CANCELADA' ? 'Cancelada' : (venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' ? 'Pendiente' : (venta.estado === 'EN_REVISION' ? 'En revisión' : 'Completada')) }}</span>
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                  [ngClass]="{
+                          'bg-error-container text-on-error-container border border-error/20': venta.estado === 'CANCELADA',
+                          'bg-amber-100 text-amber-800 border border-amber-300/60': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
+                          'bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary/20': venta.estado === 'COMPLETADA' || (!venta.estado)
+                        }"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    [ngClass]="{
+                            'bg-error': venta.estado === 'CANCELADA',
+                            'bg-amber-600': venta.estado === 'PENDIENTE' || venta.estado === 'PENDIENTE_PAGO' || venta.estado === 'EN_REVISION',
+                            'bg-tertiary': venta.estado === 'COMPLETADA' || (!venta.estado)
+                          }"
+                  ></span>
+                  <span
+                    >{{ venta.estado === 'CANCELADA' ? 'Cancelada' : (venta.estado === 'PENDIENTE' || venta.estado ===
+                    'PENDIENTE_PAGO' ? 'Pendiente' : (venta.estado === 'EN_REVISION' ? 'En revisión' : 'Completada'))
+                    }}</span
+                  >
                 </span>
-                
-                <span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all text-[18px]">
+
+                <span
+                  class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-0.5 transition-all text-[18px]"
+                >
                   arrow_forward
                 </span>
               </div>
             </div>
-
           </a>
         </div>
 
-        <!-- Empty State -->
-        <div *ngIf="!ventas.length" class="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm p-6">
+        <!-- Empty State si no hay tickets que coincidan -->
+        <div
+          *ngIf="!ventasFiltradas.length"
+          class="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm p-6"
+        >
           <div class="w-14 h-14 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mb-3">
             <span class="material-symbols-outlined text-3xl">receipt_long</span>
           </div>
-          <h3 class="font-heading text-lg font-bold text-on-surface">Aún no hay ventas registradas</h3>
-          <p class="font-sans text-sm mt-1 mb-4 text-on-surface-variant max-w-sm">Las ventas registradas desde el punto de venta o pedidos online aparecerán aquí.</p>
-          <button routerLink="/cajero" class="bg-primary text-on-primary font-sans font-semibold text-sm px-6 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all">
-            Ir al punto de venta
+          <h3 class="font-heading text-lg font-bold text-on-surface">No se encontraron ventas para este filtro</h3>
+          <p class="font-sans text-sm mt-1 mb-4 text-on-surface-variant max-w-sm">
+            {{ hayFiltrosTicketsActivos ? 'Prueba cambiando la fecha o el corte seleccionado para consultar otros
+            movimientos.' : 'Las ventas registradas desde el punto de venta aparecerán aquí.' }}
+          </p>
+          <button
+            *ngIf="hayFiltrosTicketsActivos"
+            (click)="limpiarTodosFiltros()"
+            class="bg-primary text-on-primary font-sans font-semibold text-sm px-6 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all"
+          >
+            Mostrar todas las ventas
           </button>
         </div>
-
       </section>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- PESTAÑA 2: CORTES DE CAJA (AUDITORÍA Y ARQUEOS)                          -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="pestanaActiva === 'cortes'">
+      <!-- Resumen de Auditoría de Cortes -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" *ngIf="!cargandoCortes">
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div
+            class="w-11 h-11 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0"
+          >
+            <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Cortes listados</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-on-surface leading-tight">
+              {{ cortesFiltrados.length }}
+            </strong>
+          </div>
+        </article>
+
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">check_circle</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Cajas cuadradas</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-emerald-800 leading-tight">
+              {{ cortesCuadrados }}
+            </strong>
+          </div>
+        </article>
+
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">rule</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Con diferencias</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-amber-800 leading-tight">
+              {{ cortesConDiferencia }}
+            </strong>
+          </div>
+        </article>
+
+        <article
+          class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5"
+        >
+          <div
+            class="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm"
+          >
+            <span class="material-symbols-outlined text-2xl">payments</span>
+          </div>
+          <div class="min-w-0">
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Total auditado</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-primary leading-tight">
+              {{ totalVendidoCortes | currency:'MXN' }}
+            </strong>
+          </div>
+        </article>
+      </section>
+
+      <!-- Filtros para Cortes -->
+      <section
+        class="bg-surface-container-lowest rounded-[24px] p-4 md:p-5 shadow-sm border border-surface-variant/30 flex flex-col sm:flex-row items-end gap-3"
+      >
+        <div class="w-full sm:w-56">
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1"
+            >Filtrar por fecha de apertura</label
+          >
+          <app-custom-datepicker
+            [(ngModel)]="fechaFiltroCortes"
+            placeholder="Todas las fechas"
+            title="Filtrar cortes por fecha"
+          ></app-custom-datepicker>
+        </div>
+
+        <div class="w-full sm:w-52">
+          <label class="block font-sans font-semibold text-xs text-on-surface-variant mb-1">Estado de caja</label>
+          <app-custom-select
+            [(ngModel)]="filtroEstadoCorte"
+            [options]="opcionesEstadoCorte"
+            placeholder="Todos los estados"
+          ></app-custom-select>
+        </div>
+
+        <button
+          *ngIf="filtroEstadoCorte || fechaFiltroCortes"
+          (click)="filtroEstadoCorte = ''; fechaFiltroCortes = ''"
+          class="px-3 py-2 text-xs font-semibold text-secondary hover:underline flex items-center gap-1 self-end sm:self-center"
+        >
+          <span class="material-symbols-outlined text-sm">close</span>
+          Limpiar filtros
+        </button>
+      </section>
+
+      <!-- Lista de Tarjetas de Cortes de Caja -->
+      <section class="space-y-4" *ngIf="!cargandoCortes">
+        <div class="flex items-center justify-between" *ngIf="cortesFiltrados.length">
+          <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">
+            Historial de turnos y arqueos
+          </span>
+          <span class="font-sans text-xs text-on-surface-variant">
+            {{ cortesFiltrados.length }} {{ cortesFiltrados.length === 1 ? 'corte' : 'cortes' }}
+          </span>
+        </div>
+
+        <div class="space-y-4" *ngIf="cortesFiltrados.length">
+          <article
+            *ngFor="let c of cortesFiltrados"
+            class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 relative overflow-hidden transition-all duration-200 hover:shadow-md"
+          >
+            <!-- Franja indicadora de estado en el borde izquierdo -->
+            <div
+              class="absolute left-0 top-0 bottom-0 w-1.5"
+              [ngClass]="c.estado === 'ABIERTA' ? 'bg-primary animate-pulse' : (interpretarDiferencia(c.diferencia).clase.includes('emerald') ? 'bg-emerald-500' : 'bg-amber-500')"
+            ></div>
+
+            <!-- Cabecera del Corte -->
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-surface-variant/20"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div
+                  class="w-11 h-11 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0"
+                >
+                  <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-heading font-bold text-base md:text-lg text-primary">
+                      Corte #{{ formatearFolio(c.id) }}
+                    </h3>
+
+                    <!-- Badge Estado -->
+                    <span
+                      class="text-[11px] font-sans font-bold uppercase px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+                      [ngClass]="c.estado === 'ABIERTA' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-surface-container-high text-on-surface-variant'"
+                    >
+                      <span
+                        *ngIf="c.estado === 'ABIERTA'"
+                        class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping"
+                      ></span>
+                      {{ c.estado === 'ABIERTA' ? 'Abierta (En curso)' : 'Cerrada' }}
+                    </span>
+                  </div>
+
+                  <p class="font-sans text-xs text-on-surface-variant mt-1 flex items-center gap-2 flex-wrap">
+                    <span class="flex items-center gap-1 font-medium text-on-surface">
+                      <span class="material-symbols-outlined text-sm text-outline">person</span>
+                      {{ c.empleado }}
+                    </span>
+                    <span>•</span>
+                    <span class="text-on-surface-variant">{{ c.nombreSuc }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Total Vendido en el Turno -->
+              <div class="text-left sm:text-right">
+                <span class="font-sans text-[11px] text-outline block">Total vendido en el turno</span>
+                <span class="font-heading font-bold text-xl md:text-2xl text-primary leading-tight">
+                  {{ c.totalVentas | currency:'MXN' }}
+                </span>
+                <span class="font-sans text-xs text-on-surface-variant block">
+                  {{ c.numeroVentas }} {{ c.numeroVentas === 1 ? 'venta realizada' : 'ventas realizadas' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Tiempos de Apertura y Cierre -->
+            <div
+              class="py-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-on-surface-variant border-b border-surface-variant/20"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-outline">login</span>
+                <span>Apertura: <strong>{{ formatearFechaHora(c.fechaHoraApertura) }}</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-outline">logout</span>
+                <span
+                  >Cierre:
+                  <strong
+                    >{{ c.fechaHoraCierre ? formatearFechaHora(c.fechaHoraCierre) : 'Turno aún abierto en caja'
+                    }}</strong
+                  ></span
+                >
+              </div>
+            </div>
+
+            <!-- Desglose por Método de Pago -->
+            <div class="py-3 grid grid-cols-3 gap-2 text-xs font-sans border-b border-surface-variant/20">
+              <div class="bg-surface-container-low rounded-xl p-2.5 text-center">
+                <span class="text-outline text-[11px] block">Efectivo</span>
+                <strong class="text-on-surface text-sm font-semibold">{{ c.totalEfectivo | currency:'MXN' }}</strong>
+              </div>
+              <div class="bg-surface-container-low rounded-xl p-2.5 text-center">
+                <span class="text-outline text-[11px] block">Tarjeta</span>
+                <strong class="text-on-surface text-sm font-semibold">{{ c.totalTarjeta | currency:'MXN' }}</strong>
+              </div>
+              <div class="bg-surface-container-low rounded-xl p-2.5 text-center">
+                <span class="text-outline text-[11px] block">Transferencia</span>
+                <strong class="text-on-surface text-sm font-semibold"
+                  >{{ c.totalTransferencia | currency:'MXN' }}</strong
+                >
+              </div>
+            </div>
+
+            <!-- Arqueo de Caja y Diferencia (Solo si cerrada o resumen) -->
+            <div class="py-3 text-xs font-sans space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
+                <span>Fondo inicial: <strong>{{ c.fondoInicial | currency:'MXN' }}</strong></span>
+                <span>Ingresos extras: <strong>+{{ c.totalIngresos | currency:'MXN' }}</strong></span>
+                <span>Retiros: <strong>-{{ c.totalRetiros | currency:'MXN' }}</strong></span>
+              </div>
+
+              <div
+                *ngIf="c.estado === 'CERRADA'"
+                class="bg-surface-container p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2 text-on-surface-variant">
+                    <span
+                      >Efectivo esperado:
+                      <strong class="text-on-surface">{{ c.efectivoEsperado | currency:'MXN' }}</strong></span
+                    >
+                    <span>•</span>
+                    <span
+                      >Efectivo contado:
+                      <strong class="text-on-surface">{{ c.efectivoContado | currency:'MXN' }}</strong></span
+                    >
+                  </div>
+                </div>
+
+                <!-- Badge de Diferencia -->
+                <div class="flex items-center gap-1.5 self-start sm:self-auto">
+                  <span
+                    class="px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5"
+                    [ngClass]="interpretarDiferencia(c.diferencia).clase"
+                  >
+                    <span class="material-symbols-outlined text-base">
+                      {{ interpretarDiferencia(c.diferencia).icono }}
+                    </span>
+                    <span>{{ interpretarDiferencia(c.diferencia).texto }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Observaciones del Cajero -->
+              <div
+                *ngIf="c.observaciones"
+                class="bg-primary/5 border border-primary/15 rounded-xl px-3 py-2 flex items-start gap-2 text-xs font-sans text-on-surface"
+              >
+                <span class="material-symbols-outlined text-base text-primary shrink-0 mt-0.5">comment</span>
+                <span><strong class="font-semibold text-primary">Observaciones:</strong> {{ c.observaciones }}</span>
+              </div>
+            </div>
+
+            <!-- Botón de Acción: Ver ventas de este corte -->
+            <div class="pt-3 border-t border-surface-variant/20 flex items-center justify-between flex-wrap gap-2">
+              <span class="text-xs font-sans text-on-surface-variant">
+                {{ c.numeroVentas }} {{ c.numeroVentas === 1 ? 'ticket asociado' : 'tickets asociados' }} a este turno
+              </span>
+
+              <button
+                type="button"
+                (click)="verVentasDeCorte(c)"
+                class="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-on-primary font-sans font-semibold text-xs shadow-sm hover:bg-primary-container transition-all active:scale-95"
+              >
+                <span class="material-symbols-outlined text-base">receipt_long</span>
+                <span>Ver tickets de este corte</span>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <!-- Empty State Cortes -->
+        <div
+          *ngIf="!cortesFiltrados.length"
+          class="flex flex-col items-center justify-center py-16 text-on-surface-variant bg-surface-container-lowest rounded-2xl border border-outline-variant/30 text-center shadow-sm p-6"
+        >
+          <div class="w-14 h-14 rounded-2xl bg-primary-container/20 text-primary flex items-center justify-center mb-3">
+            <span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+          </div>
+          <h3 class="font-heading text-lg font-bold text-on-surface">No se encontraron cortes de caja</h3>
+          <p class="font-sans text-sm mt-1 mb-4 text-on-surface-variant max-w-sm">
+            {{ filtroEstadoCorte || fechaFiltroCortes ? 'Prueba ajustando los filtros de fecha o estado.' : 'Los cortes
+            realizados desde el punto de venta aparecerán aquí.' }}
+          </p>
+        </div>
+      </section>
+    </ng-container>
   </div>
 </app-admin-shell>

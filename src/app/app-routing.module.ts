@@ -53,6 +53,12 @@ const routes: Routes = [
     loadChildren: () => import('./ventas/ventas.module').then((m) => m.VentasPageModule),
   },
   {
+    path: 'caja',
+    canActivate: [RoleGuard],
+    data: { roles: ['ADMINISTRADOR', 'CAJERO'] },
+    loadChildren: () => import('./caja/caja.module').then((m) => m.CajaPageModule),
+  },
+  {
     path: 'pedidos-online',
     canActivate: [RoleGuard],
     data: { roles: ['ADMINISTRADOR'] },
