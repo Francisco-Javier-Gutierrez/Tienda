@@ -22,6 +22,9 @@
             <button class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroStock === 'bajo' ? 'bg-error-container text-on-error-container border-transparent shadow-sm' : 'bg-transparent text-secondary border-outline-variant hover:bg-surface-variant'" (click)="filtroStock = 'bajo'">
               ⚠️ Stock Bajo ({{ totalStockBajoInventario }})
             </button>
+            <button *ngIf="totalSinStock > 0" class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroStock === 'sin-stock' ? 'bg-error text-white border-transparent shadow-sm' : 'bg-transparent text-error border-error/40 hover:bg-error-container/20'" (click)="filtroStock = 'sin-stock'">
+              🚫 Agotados ({{ totalSinStock }})
+            </button>
             <button *ngFor="let c of categorias" class="whitespace-nowrap px-4 py-2 rounded-full font-sans font-semibold text-sm transition-colors border" [ngClass]="filtroCategoria == c.id ? 'bg-primary-container text-white border-transparent shadow-sm' : 'bg-transparent text-primary border-outline-variant hover:bg-surface-variant'" (click)="filtroCategoria = c.id">
               {{ c.nombre }}
             </button>

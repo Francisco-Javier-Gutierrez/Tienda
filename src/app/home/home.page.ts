@@ -57,6 +57,23 @@ export class HomePage implements OnInit {
       .slice(0, 6);
   }
 
+  nombreMarca(producto: Producto): string {
+    if (!producto) return 'Sin marca';
+    const marcaRaw = producto.marca as any;
+    if (typeof marcaRaw === 'string' && marcaRaw.trim()) {
+      return marcaRaw.trim();
+    }
+    if (marcaRaw && typeof marcaRaw === 'object' && marcaRaw.nombre && typeof marcaRaw.nombre === 'string' && marcaRaw.nombre.trim()) {
+      return marcaRaw.nombre.trim();
+    }
+    const idMarca = marcaRaw?.id || producto.idMarca;
+    if (idMarca && this.marcas.length) {
+      const encontrada = this.marcas.find((m) => String(m.id) === String(idMarca));
+      if (encontrada?.nombre?.trim()) return encontrada.nombre.trim();
+    }
+    return 'Sin marca';
+  }
+
   get nombreTienda(): string {
     return this.sucursalActual?.nombreSuc?.trim() || 'Mi tienda';
   }

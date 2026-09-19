@@ -31,13 +31,13 @@
       </div>
       
       <!-- Stock Bajo -->
-      <div class="bg-secondary-fixed/40 rounded-[20px] p-5 shadow-sm border border-secondary/20 flex flex-col group hover:shadow-md transition-shadow">
+      <a routerLink="/productos" [queryParams]="{ stock: 'bajo' }" class="bg-secondary-fixed/40 rounded-[20px] p-5 shadow-sm border border-secondary/20 flex flex-col group hover:shadow-md transition-shadow cursor-pointer">
         <div class="flex items-center justify-between mb-4">
           <span class="font-sans font-medium text-sm text-secondary">Con stock bajo</span>
           <span class="material-symbols-outlined text-secondary bg-secondary/10 p-2 rounded-xl group-hover:scale-110 transition-transform">warning</span>
         </div>
         <div class="font-heading font-bold text-3xl text-secondary">{{ totalStockBajo }}</div>
-      </div>
+      </a>
       
       <!-- Categorías -->
       <div class="bg-surface-container-lowest rounded-[20px] p-5 shadow-sm border border-surface-variant/30 flex flex-col group hover:shadow-md transition-shadow">
@@ -68,7 +68,7 @@
             <span class="font-sans font-semibold text-xs text-secondary uppercase tracking-wider block mb-1">Atención</span>
             <h2 class="font-heading font-bold text-xl text-primary">Productos con stock bajo</h2>
           </div>
-          <button routerLink="/productos" class="font-sans font-semibold text-sm text-secondary hover:bg-secondary/10 px-4 py-2 rounded-full transition-colors hidden sm:block">Ver todos</button>
+          <button routerLink="/productos" [queryParams]="{ stock: 'bajo' }" class="font-sans font-semibold text-sm text-secondary hover:bg-secondary/10 px-4 py-2 rounded-full transition-colors hidden sm:block">Ver todos</button>
         </div>
         
         <div class="flex-1 p-6">
@@ -89,14 +89,14 @@
               <div *ngFor="let producto of productosStockBajo" class="flex justify-between items-center py-3 border-b border-surface-variant border-dashed last:border-0">
                 <div class="flex flex-col">
                   <span class="font-sans font-semibold text-sm text-on-surface">{{ producto.nombre }}</span>
-                  <span class="font-sans text-xs text-on-surface-variant mt-0.5">{{ producto.marca || 'Sin marca' }}</span>
+                  <span class="font-sans text-xs text-on-surface-variant mt-0.5">{{ nombreMarca(producto) }}</span>
                 </div>
                 <div class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-sans font-bold text-xs flex items-center gap-1">
                   <span class="material-symbols-outlined text-[14px]">trending_down</span>
                   {{ producto.existencia }} / min {{ producto.stockMinimo }}
                 </div>
               </div>
-              <button routerLink="/productos" class="w-full mt-4 sm:hidden font-sans font-semibold text-sm text-secondary border border-secondary/30 rounded-xl py-2.5">Ver todos</button>
+              <button routerLink="/productos" [queryParams]="{ stock: 'bajo' }" class="w-full mt-4 sm:hidden font-sans font-semibold text-sm text-secondary border border-secondary/30 rounded-xl py-2.5">Ver todos</button>
             </div>
             
             <ng-template #stockEmpty>
