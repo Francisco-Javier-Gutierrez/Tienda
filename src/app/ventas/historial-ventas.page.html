@@ -6,7 +6,7 @@
         <div>
           <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">Historial</span>
           <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary">{{ auth.tieneRol('CAJERO') ? 'Mis ventas' : 'Ventas de la sucursal' }}</h1>
-          <p class="font-sans text-sm text-on-surface-variant">Consulta los cobros registrados y el estado de cada transacción.</p>
+          <p class="font-sans text-sm text-on-surface-variant">Consulta cobros registrados, utilidades obtenidas y márgenes por día.</p>
         </div>
         <button routerLink="/cajero" class="flex items-center gap-2 bg-primary text-on-primary font-sans font-semibold text-sm px-5 py-2.5 rounded-full shadow-sm hover:bg-primary-container transition-all active:scale-95 self-start sm:self-auto">
           <span class="material-symbols-outlined text-lg">add_circle</span>
@@ -38,16 +38,16 @@
         </article>
 
         <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-2xl bg-error-container text-error flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-2xl">cancel</span>
+          <div class="w-11 h-11 rounded-2xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">trending_up</span>
           </div>
           <div class="min-w-0">
-            <span class="font-sans text-xs text-on-surface-variant block truncate">Canceladas</span>
-            <strong class="font-heading font-bold text-xl md:text-2xl text-error leading-tight">{{ ventasCanceladas }}</strong>
+            <span class="font-sans text-xs text-on-surface-variant block truncate">Ganancia esperada</span>
+            <strong class="font-heading font-bold text-xl md:text-2xl text-tertiary leading-tight">{{ totalGanancias | currency:'MXN' }}</strong>
           </div>
         </article>
 
-        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5 col-span-2 lg:col-span-1">
+        <article class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3.5">
           <div class="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
             <span class="material-symbols-outlined text-2xl">payments</span>
           </div>
@@ -57,6 +57,77 @@
           </div>
         </article>
 
+      </section>
+
+      <!-- Panel de Ganancias Obtenidas por Día -->
+      <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4" *ngIf="!cargando && gananciasPorDia.length">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-variant/20 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-tertiary-container/20 text-tertiary flex items-center justify-center">
+              <span class="material-symbols-outlined text-xl">query_stats</span>
+            </div>
+            <div>
+              <h2 class="font-heading font-bold text-base md:text-lg text-primary">Ganancias obtenidas por día</h2>
+              <p class="font-sans text-xs text-on-surface-variant">Margen y utilidad neta calculados según el costo unitario de los productos vendidos.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-auto" *ngIf="filtroDia !== 'TODOS'">
+            <span class="text-xs font-sans text-primary font-semibold">Filtro activo</span>
+            <button (click)="filtroDia = 'TODOS'" class="text-xs font-sans text-secondary underline hover:text-primary transition-colors">
+              Mostrar todas las fechas
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+          <div
+            *ngFor="let dia of gananciasPorDia"
+            (click)="seleccionarFiltroDia(dia.fechaKey)"
+            class="rounded-2xl p-4 border transition-all cursor-pointer active:scale-[0.99] relative overflow-hidden flex flex-col justify-between"
+            [ngClass]="filtroDia === dia.fechaKey ? 'bg-primary/5 border-primary shadow-sm ring-1 ring-primary' : 'bg-surface-container-low border-surface-variant/40 hover:bg-surface-container hover:border-primary/40'"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px] text-primary">event</span>
+                  <strong class="font-heading font-bold text-sm text-on-surface">{{ dia.fechaLegible }}</strong>
+                  <span *ngIf="dia.esHoy" class="bg-primary text-on-primary text-[10px] font-sans font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Hoy</span>
+                  <span *ngIf="dia.esAyer" class="bg-surface-variant text-on-surface-variant text-[10px] font-sans font-medium px-2 py-0.5 rounded-full uppercase tracking-wider">Ayer</span>
+                </div>
+                <span class="text-xs font-sans font-medium text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded-full">
+                  {{ dia.totalVentas }} {{ dia.totalVentas === 1 ? 'venta' : 'ventas' }}
+                </span>
+              </div>
+
+              <div class="space-y-1.5 font-sans text-xs">
+                <div class="flex justify-between items-center text-on-surface-variant">
+                  <span>Ingreso bruto:</span>
+                  <span class="font-semibold text-on-surface">{{ dia.totalVendido | currency:'MXN' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-on-surface-variant">
+                  <span>Costo mercancía:</span>
+                  <span>{{ dia.costoTotal | currency:'MXN' }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-surface-variant/30 font-semibold">
+                  <span class="text-tertiary flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">trending_up</span>
+                    Ganancia esperada:
+                  </span>
+                  <span class="font-heading font-bold text-base text-tertiary">+{{ dia.gananciaEsperada | currency:'MXN' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer con margen comercial -->
+            <div class="mt-3 pt-2.5 border-t border-surface-variant/20 flex items-center justify-between text-xs">
+              <span class="font-sans text-[11px] text-on-surface-variant">Margen esperado:</span>
+              <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-0.5 rounded-full"
+                    [ngClass]="dia.margenPorcentaje >= 30 ? 'bg-tertiary-fixed text-tertiary' : (dia.margenPorcentaje >= 15 ? 'bg-amber-100 text-amber-800' : 'bg-surface-variant text-on-surface')">
+                {{ dia.margenPorcentaje }}% margen
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Loading Skeletons -->
@@ -78,13 +149,17 @@
       <!-- Sales Cards List -->
       <section class="space-y-4" *ngIf="!cargando">
         
-        <div class="flex items-center justify-between" *ngIf="ventas.length">
-          <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">Movimientos recientes</span>
-          <span class="font-sans text-xs text-on-surface-variant">{{ ventas.length }} {{ ventas.length === 1 ? 'venta' : 'ventas' }}</span>
+        <div class="flex items-center justify-between" *ngIf="ventasFiltradas.length">
+          <span class="font-sans font-semibold text-xs text-outline uppercase tracking-wider">
+            {{ filtroDia === 'TODOS' ? 'Movimientos registrados' : 'Ventas del día seleccionado' }}
+          </span>
+          <span class="font-sans text-xs text-on-surface-variant">
+            {{ ventasFiltradas.length }} {{ ventasFiltradas.length === 1 ? 'venta' : 'ventas' }}
+          </span>
         </div>
 
-        <div class="space-y-3" *ngIf="ventas.length">
-          <a *ngFor="let venta of ventas"
+        <div class="space-y-3" *ngIf="ventasFiltradas.length">
+          <a *ngFor="let venta of ventasFiltradas"
              [routerLink]="['/ventas', venta.id]"
              class="bg-surface-container-lowest rounded-[22px] p-4 md:p-5 shadow-sm border border-surface-variant/30 hover:shadow-md hover:border-primary/30 transition-all duration-200 block group active:scale-[0.99]">
             
@@ -120,13 +195,22 @@
                 </div>
               </div>
 
-              <!-- Right: Total -->
+              <!-- Right: Total y Ganancia -->
               <div class="text-left sm:text-right flex sm:flex-col justify-between sm:justify-center items-center sm:items-end pt-1 sm:pt-0 border-t sm:border-t-0 border-surface-variant/20">
                 <span class="font-sans text-[11px] text-outline sm:block hidden">Total</span>
                 <span class="font-heading font-bold text-lg md:text-xl text-primary leading-tight">
                   {{ venta.total | currency:'MXN' }}
                 </span>
+                <span *ngIf="venta.ganancia !== undefined && venta.ganancia !== null" class="font-sans text-[11px] text-tertiary font-semibold">
+                  +{{ venta.ganancia | currency:'MXN' }} ({{ venta.margenPorcentaje }}% marg.)
+                </span>
               </div>
+            </div>
+
+            <!-- Fila de Nota Adicional si existe -->
+            <div *ngIf="venta.nota" class="mt-2.5 bg-primary/5 border border-primary/15 rounded-xl px-3 py-1.5 flex items-start gap-1.5 text-xs font-sans text-on-surface">
+              <span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">sticky_note_2</span>
+              <span><strong class="font-semibold text-primary">Nota adicional:</strong> {{ venta.nota }}</span>
             </div>
 
             <!-- Footer / Metadata row -->
@@ -188,4 +272,3 @@
       </section>
   </div>
 </app-admin-shell>
-
