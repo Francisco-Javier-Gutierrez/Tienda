@@ -145,8 +145,13 @@ export class CajeroPage implements OnInit {
     void this.iniciar();
   }
 
+  ionViewWillEnter(): void {
+    void this.iniciar();
+  }
+
   private async iniciar(): Promise<void> {
     this.cargando = true;
+    this.ultimaCaja = null;
 
     try {
       const respuesta = await firstValueFrom(this.cajas.actual());
@@ -155,10 +160,14 @@ export class CajeroPage implements OnInit {
 
       /*
        * Si la caja existe en servidor,
-       * guardamos/actualizamos la copia local.
+       * guardamos/actualizamos la copia local de forma segura.
        */
       if (this.caja && this.sqlite.disponible) {
-        await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        } catch (err) {
+          console.warn('[Cajero] No se pudo guardar caja local en SQLite:', err);
+        }
       }
     } catch {
       /*
@@ -266,16 +275,42 @@ export class CajeroPage implements OnInit {
 
     try {
       this.caja = await firstValueFrom(this.cajas.abrir(uuidSesionCaja, Number(this.fondoInicial)));
+      if (this.caja) {
+        this.caja.uuidSesionCaja = this.caja.uuidSesionCaja || uuidSesionCaja;
+      }
 
-      if (this.sqlite.disponible) {
-        await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+      if (this.caja && this.sqlite.disponible) {
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'SINCRONIZADA');
+        } catch (err) {
+          console.warn('[Cajero] Advertencia guardando caja local en SQLite:', err);
+        }
       }
     } catch (error) {
+      /*
+       * Si el servidor reporta que ya existe una caja abierta (409),
+       * recuperamos la sesión abierta automáticamente sin bloquear al usuario.
+       */
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        try {
+          const resp = await firstValueFrom(this.cajas.actual());
+          if (resp.caja) {
+            this.caja = resp.caja;
+            this.caja.uuidSesionCaja = this.caja.uuidSesionCaja || uuidSesionCaja;
+            await Promise.all([this.cargarProductos(), this.cargarMovimientos()]);
+            this.enfocar();
+            this.abriendo = false;
+            return;
+          }
+        } catch {
+          // Continúa al manejo estándar de error
+        }
+      }
+
       /*
        * Si NO es un error de conexión,
        * mostramos el error del backend.
        */
-
       if (!(error instanceof HttpErrorResponse && error.status === 0 && this.sqlite.disponible && empleado)) {
         await this.error(error, 'No fue posible abrir la caja.');
 
@@ -332,7 +367,13 @@ export class CajeroPage implements OnInit {
         nombreSuc: empleado.nombreSuc || '',
       };
 
-      if (this.caja) { await this.sqlite.guardarCajaLocal(this.caja, 'PENDIENTE'); }
+      if (this.caja) {
+        try {
+          await this.sqlite.guardarCajaLocal(this.caja, 'PENDIENTE');
+        } catch (err) {
+          console.warn('[Cajero] Advertencia guardando apertura offline en SQLite:', err);
+        }
+      }
 
       await this.sqlite.encolar(
         'APERTURA',
@@ -368,7 +409,9 @@ export class CajeroPage implements OnInit {
       this.productos = productos;
 
       if (this.sqlite.disponible) {
-        await this.sqlite.sincronizarCatalogo(this.productos);
+        void this.sqlite.sincronizarCatalogo(this.productos).catch((err) => {
+          console.warn('[Cajero] Advertencia sincronizando catálogo local:', err);
+        });
       }
     } catch {
       if (this.sqlite.disponible) {

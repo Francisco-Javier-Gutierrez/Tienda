@@ -13,7 +13,8 @@
         class="w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-transform"
         [ngClass]="{
           'bg-error-container text-error': state.type === 'danger',
-          'bg-tertiary-fixed text-tertiary': state.type === 'warning' || state.type === 'success',
+          'bg-tertiary-fixed text-tertiary': state.type === 'warning',
+          'bg-emerald-100 text-emerald-800': state.type === 'success',
           'bg-primary-container/20 text-primary': state.type === 'info'
         }"
       >
@@ -80,7 +81,7 @@
           [disabled]="!isValid(state)"
           [ngClass]="{
             'bg-error hover:bg-error/90 text-on-error': state.type === 'danger',
-            'bg-tertiary hover:bg-tertiary/90 text-on-tertiary': state.type === 'success',
+            'bg-emerald-700 hover:bg-emerald-800 text-white': state.type === 'success',
             'bg-secondary hover:bg-secondary/90 text-on-secondary': state.type === 'warning',
             'bg-primary-container hover:bg-primary text-on-primary': state.type === 'info'
           }"

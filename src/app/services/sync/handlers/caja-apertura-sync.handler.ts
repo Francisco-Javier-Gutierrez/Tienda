@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CajaService } from '../../caja.service';
@@ -19,6 +20,14 @@ export class CajaAperturaSyncHandler implements SyncOperationHandler {
   private readonly cajas = inject(CajaService);
 
   async ejecutar(op: ItemColaSync, payload: any): Promise<void> {
-    await firstValueFrom(this.cajas.abrir(payload.uuidSesionCaja, payload.fondoInicial));
+    try {
+      await firstValueFrom(this.cajas.abrir(payload.uuidSesionCaja, payload.fondoInicial));
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        // La caja ya fue abierta en el servidor (idempotencia)
+        return;
+      }
+      throw error;
+    }
   }
 }

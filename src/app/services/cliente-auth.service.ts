@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import { ClienteAuthSession, ClienteSesion } from '../models/cliente-auth';
 import { ClienteSessionStore } from './cliente-session.service';
 import { GoogleIdentityService } from './google-identity.service';
+import { PushNotificationService } from './push-notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteAuthService {
@@ -13,6 +14,7 @@ export class ClienteAuthService {
   private readonly router = inject(Router);
   private readonly store = inject(ClienteSessionStore);
   private readonly google = inject(GoogleIdentityService);
+  private readonly pushService = inject(PushNotificationService);
   readonly sesion$ = this.store.sesion$;
 
   get sesion(): ClienteAuthSession | null {
@@ -34,6 +36,7 @@ export class ClienteAuthService {
 
   guardarSesion(sesion: ClienteAuthSession): void {
     this.store.guardar(sesion);
+    void this.pushService.sincronizarTokenConBackend();
   }
   limpiarSesion(): void {
     this.store.limpiar();
@@ -53,6 +56,7 @@ export class ClienteAuthService {
   }
 
   async logout(): Promise<void> {
+    await this.pushService.desregistrarToken();
     this.store.limpiar();
     await this.google.logout();
     await this.router.navigateByUrl('/login', { replaceUrl: true });

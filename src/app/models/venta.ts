@@ -1,5 +1,5 @@
 export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
-export type EstadoVenta = 'COMPLETADA' | 'CANCELADA';
+export type EstadoVenta = 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE' | 'PENDIENTE_PAGO' | 'EN_REVISION';
 
 export interface ProductoPos {
   id: string;

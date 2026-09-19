@@ -131,8 +131,16 @@ export class ProductosPage implements OnInit {
         [producto.nombre, producto.codigoQR, producto.sku].some((valor) =>
           (valor || '').toLowerCase().includes(termino),
         );
-      const coincideCategoria = !this.filtroCategoria || Number(producto.categoria?.id) === this.filtroCategoria;
-      const coincideMarca = !this.filtroMarca || Number(producto.marca?.id) === this.filtroMarca;
+      const coincideCategoria =
+        !this.filtroCategoria ||
+        this.filtroCategoria === 0 ||
+        String(producto.categoria?.id) === String(this.filtroCategoria) ||
+        String(producto.idCat) === String(this.filtroCategoria);
+      const coincideMarca =
+        !this.filtroMarca ||
+        this.filtroMarca === 0 ||
+        String(producto.marca?.id) === String(this.filtroMarca) ||
+        String(producto.idMarca) === String(this.filtroMarca);
       const coincideStock = this.filtroStock === 'todos' || this.estadoStock(producto) === this.filtroStock;
       return coincideTexto && coincideCategoria && coincideMarca && coincideStock;
     });

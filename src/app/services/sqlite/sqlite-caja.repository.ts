@@ -30,40 +30,46 @@ export class SqliteCajaRepository {
 
   async guardarCajaLocal(
     caja: {
-      uuidSesionCaja: string;
+      uuidSesionCaja?: string;
       id?: string;
-      empleadoId: string;
-      sucursalId: string;
-      fechaHoraApertura: string;
-      fondoInicial: number;
-      estado: string;
+      empleadoId?: string;
+      sucursalId?: string;
+      fechaHoraApertura?: string;
+      fondoInicial?: number;
+      estado?: string;
     },
     estadoSync: string,
   ): Promise<void> {
     if (!this.disponible) return;
     const db = await this.dbService.getDB();
+    const uuid = caja.uuidSesionCaja || caja.id || `caja-${Date.now()}`;
+    const fecha = caja.fechaHoraApertura || (caja as any).fechaApertura || new Date().toISOString();
     await db.run(
       `INSERT INTO sesiones_caja_local(uuidSesionCaja,idSesionCaja,idEmp,idSuc,fechaHoraApertura,fondoInicial,estado,estadoSync) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(uuidSesionCaja) DO UPDATE SET idSesionCaja=excluded.idSesionCaja,estado=excluded.estado,estadoSync=excluded.estadoSync`,
       [
-        caja.uuidSesionCaja,
+        uuid,
         caja.id || null,
-        caja.empleadoId,
-        caja.sucursalId,
-        caja.fechaHoraApertura,
-        caja.fondoInicial,
-        caja.estado,
+        caja.empleadoId || '',
+        caja.sucursalId || '',
+        fecha,
+        Number(caja.fondoInicial) || 0,
+        caja.estado || 'ABIERTA',
         estadoSync,
       ],
     );
   }
 
-  async cajaLocalAbierta(idEmp: string): Promise<Record<string, unknown> | null> {
+  async cajaLocalAbierta(idEmp?: string): Promise<Record<string, unknown> | null> {
     if (!this.disponible) return null;
     const db = await this.dbService.getDB();
-    const r = await db.query(
-      `SELECT * FROM sesiones_caja_local WHERE idEmp=? AND estado='ABIERTA' ORDER BY fechaHoraApertura DESC LIMIT 1`,
-      [idEmp],
-    );
+    const r = idEmp
+      ? await db.query(
+          `SELECT * FROM sesiones_caja_local WHERE (idEmp=? OR idEmp IS NOT NULL) AND estado='ABIERTA' ORDER BY fechaHoraApertura DESC LIMIT 1`,
+          [idEmp],
+        )
+      : await db.query(
+          `SELECT * FROM sesiones_caja_local WHERE estado='ABIERTA' ORDER BY fechaHoraApertura DESC LIMIT 1`,
+        );
     return r.values?.[0] || null;
   }
 
