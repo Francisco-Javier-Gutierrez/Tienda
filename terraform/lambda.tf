@@ -94,6 +94,7 @@ resource "aws_lambda_function" "api" {
       AWS_BUCKET_NAME      = var.uploads_bucket_name
       HASHIDS_SALT         = var.hashids_salt
       CLIENT_URL           = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+      FCM_CREDENTIALS_JSON = fileexists("${path.module}/../backend/src/config/fcm-credentials.json") ? file("${path.module}/../backend/src/config/fcm-credentials.json") : ""
     }
   }
 
