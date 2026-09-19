@@ -19,11 +19,11 @@ export class AppComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly clienteAuthService = inject(ClienteAuthService);
   private readonly syncService = inject(SyncService);
-  private readonly liveUpdateService = inject(LiveUpdateService);
+  readonly liveUpdate = inject(LiveUpdateService);
   private readonly pushService = inject(PushNotificationService);
 
   async ngOnInit(): Promise<void> {
-    void this.liveUpdateService.init();
+    void this.liveUpdate.init();
 
     if (Capacitor.isNativePlatform()) {
       try {

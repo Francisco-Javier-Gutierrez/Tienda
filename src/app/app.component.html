@@ -1,4 +1,147 @@
 <ion-app>
   <ion-router-outlet></ion-router-outlet>
   <app-confirm-dialog></app-confirm-dialog>
+
+  <!-- Live Update Banner / Card -->
+  <ng-container *ngIf="liveUpdate.estado$ | async as estado">
+    <aside
+      *ngIf="estado.disponible && !estado.descartado"
+      class="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:w-96 z-[99990] bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant/30 p-4 transition-all duration-300 animate-fadeIn"
+      role="alert"
+      aria-live="polite"
+    >
+      <!-- Web Update Banner -->
+      <div *ngIf="estado.esWeb" class="flex flex-col gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-heading font-bold text-sm text-on-surface">Nueva versión disponible</h4>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+              Hay cambios y mejoras listos para usar (v{{ estado.version || 'reciente' }}).
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="liveUpdate.descartarAviso()"
+            class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg transition-colors"
+            title="Descartar por ahora"
+            aria-label="Cerrar notificación"
+          >
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-1 border-t border-outline-variant/20">
+          <button
+            type="button"
+            (click)="liveUpdate.descartarAviso()"
+            class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            Más tarde
+          </button>
+          <button
+            type="button"
+            (click)="liveUpdate.aplicarActualizacion()"
+            class="px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
+          >
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            <span>Actualizar ahora</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Native App: Descargando con progreso real -->
+      <div *ngIf="!estado.esWeb && estado.descargando" class="flex flex-col gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl animate-spin">sync</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h4 class="font-heading font-bold text-sm text-on-surface">Descargando actualización</h4>
+              <span class="font-sans text-xs font-bold text-primary">{{ estado.progreso }}%</span>
+            </div>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+              Instalando v{{ estado.version || '...' }} en segundo plano
+            </p>
+          </div>
+        </div>
+
+        <!-- Barra de progreso real -->
+        <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden relative">
+          <div
+            class="bg-primary h-full rounded-full transition-all duration-300 ease-out"
+            [style.width.%]="estado.progreso"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Native App: Completada lista para reiniciar -->
+      <div *ngIf="!estado.esWeb && estado.completada && !estado.descargando" class="flex flex-col gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-heading font-bold text-sm text-on-surface">¡Actualización lista!</h4>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+              La versión {{ estado.version }} se descargó con éxito.
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="liveUpdate.descartarAviso()"
+            class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg transition-colors"
+            title="Descartar por ahora"
+            aria-label="Cerrar notificación"
+          >
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-1 border-t border-outline-variant/20">
+          <button
+            type="button"
+            (click)="liveUpdate.descartarAviso()"
+            class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+          >
+            Más tarde
+          </button>
+          <button
+            type="button"
+            (click)="liveUpdate.aplicarActualizacion()"
+            class="px-3 py-1.5 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
+          >
+            <span class="material-symbols-outlined text-sm">restart_alt</span>
+            <span>Reiniciar app</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Native App: Error o descarga interrumpida -->
+      <div *ngIf="!estado.esWeb && estado.error && !estado.descargando && !estado.completada" class="flex flex-col gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-2xl">wifi_off</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-heading font-bold text-sm text-on-surface">Actualización pendiente</h4>
+            <p class="font-sans text-xs text-on-surface-variant mt-0.5">
+              {{ estado.error }}
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="liveUpdate.descartarAviso()"
+            class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg transition-colors"
+            aria-label="Cerrar notificación"
+          >
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </ng-container>
 </ion-app>
