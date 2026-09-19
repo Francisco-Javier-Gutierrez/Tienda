@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
@@ -108,6 +109,7 @@ export class ProductosPage implements OnInit {
     BarcodeFormat.Itf,
     BarcodeFormat.QrCode,
   ];
+  private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ProductosService);
   private readonly catalogosApi = inject(CatalogosService);
   private readonly sqlite = inject(SqliteService);
@@ -118,6 +120,13 @@ export class ProductosPage implements OnInit {
   readonly sync = inject(SyncService);
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      if (params['stock'] === 'bajo') {
+        this.filtroStock = 'bajo';
+      } else if (params['stock'] === 'sin-stock') {
+        this.filtroStock = 'sin-stock';
+      }
+    });
     this.cargarProductos();
     this.cargarMarcas();
     this.cargarCategorias();
@@ -141,7 +150,13 @@ export class ProductosPage implements OnInit {
         this.filtroMarca === 0 ||
         String(producto.marca?.id) === String(this.filtroMarca) ||
         String(producto.idMarca) === String(this.filtroMarca);
-      const coincideStock = this.filtroStock === 'todos' || this.estadoStock(producto) === this.filtroStock;
+      const coincideStock =
+        this.filtroStock === 'todos' ||
+        (this.filtroStock === 'bajo'
+          ? (producto.stockMinimo !== null &&
+             producto.existencia !== null &&
+             Number(producto.existencia) <= Number(producto.stockMinimo))
+          : this.estadoStock(producto) === this.filtroStock);
       return coincideTexto && coincideCategoria && coincideMarca && coincideStock;
     });
   }
@@ -150,7 +165,12 @@ export class ProductosPage implements OnInit {
     return this.productos.filter((p) => this.estadoStock(p) === 'disponible').length;
   }
   get totalStockBajoInventario(): number {
-    return this.productos.filter((p) => this.estadoStock(p) === 'bajo').length;
+    return this.productos.filter(
+      (p) =>
+        p.stockMinimo !== null &&
+        p.existencia !== null &&
+        Number(p.existencia) <= Number(p.stockMinimo),
+    ).length;
   }
   get totalSinStock(): number {
     return this.productos.filter((p) => this.estadoStock(p) === 'sin-stock').length;
