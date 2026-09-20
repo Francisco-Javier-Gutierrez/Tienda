@@ -21,6 +21,7 @@ export class FiadosPage implements OnInit {
   resumen: FiadoResumen | null = null;
   cargando = true;
   filtroBusqueda = '';
+  filtroEstado: 'TODOS' | 'CON_DEUDA' | 'AL_CORRIENTE' = 'TODOS';
 
   // Modal Abono
   mostrarModalAbono = false;
@@ -66,11 +67,27 @@ export class FiadosPage implements OnInit {
     }
   }
 
-  get deudoresFiltrados(): ClienteDeudor[] {
-    const termino = this.filtroBusqueda.trim().toLowerCase();
-    if (!termino) return this.deudores;
+  get totalConDeuda(): number {
+    return this.deudores.filter((d) => d.saldoDeudor > 0).length;
+  }
 
-    return this.deudores.filter((d) => {
+  get totalAlCorriente(): number {
+    return this.deudores.filter((d) => d.saldoDeudor <= 0).length;
+  }
+
+  get deudoresFiltrados(): ClienteDeudor[] {
+    let lista = this.deudores;
+
+    if (this.filtroEstado === 'CON_DEUDA') {
+      lista = lista.filter((d) => d.saldoDeudor > 0);
+    } else if (this.filtroEstado === 'AL_CORRIENTE') {
+      lista = lista.filter((d) => d.saldoDeudor <= 0);
+    }
+
+    const termino = this.filtroBusqueda.trim().toLowerCase();
+    if (!termino) return lista;
+
+    return lista.filter((d) => {
       const nombre = (d.nombreCompleto || d.nombre || '').toLowerCase();
       const telefono = (d.telefono || '').toLowerCase();
       return nombre.includes(termino) || telefono.includes(termino);

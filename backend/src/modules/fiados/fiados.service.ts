@@ -37,18 +37,19 @@ export class FiadosService implements IFiadosService {
   }
 
   async obtenerResumen(idSuc = 1): Promise<any> {
-    const deudores = await this.fiadoRepo.listClientesDeudores(idSuc);
+    const clientes = await this.fiadoRepo.listClientesDeudores(idSuc);
+    const deudoresConSaldo = clientes.filter((d: any) => Number(d.saldoDeudor || 0) > 0);
 
     let totalDeuda = 0;
-    for (const d of deudores) {
+    for (const d of deudoresConSaldo) {
       totalDeuda += Number(d.saldoDeudor || 0);
     }
     totalDeuda = Math.round(totalDeuda * 100) / 100;
 
-    const totalDeudores = deudores.length;
+    const totalDeudores = deudoresConSaldo.length;
     const promedio = totalDeudores > 0 ? Math.round((totalDeuda / totalDeudores) * 100) / 100 : 0;
 
-    const topDeudores = normalizarClientesDeudores(deudores.slice(0, 5));
+    const topDeudores = normalizarClientesDeudores(deudoresConSaldo.slice(0, 5));
 
     return {
       totalDeuda,
