@@ -24,9 +24,15 @@ export interface IFiadosService {
     telefono: string;
     correoCliente?: string;
     limiteCredito?: number | null;
+    deudaInicial?: number | null;
     direccion?: string;
     notas?: string;
   }): Promise<any>;
+  registrarCargo(
+    empleado: { idEmp: number; idSuc: number; nombre: string },
+    idClienteInput: string | number,
+    data: { monto: number | string; concepto: string },
+  ): Promise<any>;
 }
 
 export class FiadosService implements IFiadosService {
@@ -141,11 +147,51 @@ export class FiadosService implements IFiadosService {
     telefono: string;
     correoCliente?: string;
     limiteCredito?: number | null;
+    deudaInicial?: number | null;
     direccion?: string;
     notas?: string;
   }): Promise<any> {
     const nuevo = await this.fiadoRepo.crearClienteRapido(data);
     return normalizarClienteDeudor(nuevo);
+  }
+
+  async registrarCargo(
+    empleado: { idEmp: number; idSuc: number; nombre: string },
+    idClienteInput: string | number,
+    data: {
+      monto: number | string;
+      concepto: string;
+    },
+  ): Promise<any> {
+    const idCliente = idValido(idClienteInput);
+    if (!idCliente) {
+      throw errorFuncional('Identificador de cliente no válido', 400);
+    }
+
+    const monto = Number(data.monto);
+    if (isNaN(monto) || monto <= 0) {
+      throw errorFuncional('El monto del cargo debe ser mayor a cero', 400);
+    }
+
+    const cliente = await this.fiadoRepo.getClienteById(idCliente);
+    if (!cliente) {
+      throw errorFuncional('Cliente no encontrado', 404);
+    }
+
+    const mov = await this.fiadoRepo.registrarCargo({
+      idCliente,
+      idSuc: empleado.idSuc || 1,
+      idEmp: empleado.idEmp,
+      empleadoNombre: empleado.nombre || 'Personal',
+      monto,
+      concepto: data.concepto || 'Cargo manual a cuenta',
+    });
+
+    return {
+      cargo: normalizarMovimientoCuenta(mov),
+      nuevoSaldo: mov.saldoNuevo,
+      mensaje: `Cargo de $${monto.toFixed(2)} registrado correctamente. Nuevo saldo: $${mov.saldoNuevo.toFixed(2)}`,
+    };
   }
 }
 

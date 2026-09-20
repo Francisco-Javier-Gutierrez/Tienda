@@ -59,6 +59,12 @@ export interface CrearClienteRapidoDto {
   correoCliente?: string;
   telefono: string;
   limiteCredito?: number | null;
+  deudaInicial?: number | null;
   direccion?: string;
   notas?: string;
+}
+
+export interface RegistrarCargoDto {
+  monto: number;
+  concepto: string;
 }

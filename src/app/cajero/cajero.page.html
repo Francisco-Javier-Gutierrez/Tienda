@@ -315,6 +315,16 @@
               </div>
             </div>
 
+            <button
+              *ngIf="clienteFiadoSeleccionado.saldoDeudor > 0"
+              type="button"
+              (click)="abrirModalAbono(clienteFiadoSeleccionado)"
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-[16px]">payments</span>
+              <span>Abonar a cuenta / Pagar deuda</span>
+            </button>
+
             <div class="flex items-center justify-between pt-1">
               <label class="text-xs font-semibold text-on-surface flex items-center gap-1.5 cursor-pointer">
                 <input
@@ -622,6 +632,16 @@
             </p>
           </div>
         </div>
+
+        <button
+          *ngIf="clienteFiadoSeleccionado && clienteFiadoSeleccionado.saldoDeudor > 0"
+          type="button"
+          (click)="abrirModalAbono(clienteFiadoSeleccionado)"
+          class="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+        >
+          <span class="material-symbols-outlined text-[18px]">payments</span>
+          <span>Abonar a su Deuda ({{ clienteFiadoSeleccionado.saldoDeudor | currency:'MXN' }})</span>
+        </button>
 
         <p *ngIf="!clienteFiadoSeleccionado" class="text-xs text-amber-700 dark:text-amber-400 font-medium mt-2 px-1">
           * Selecciona un cliente para poder registrar la cuenta fiada.
@@ -1242,3 +1262,145 @@
   (saved)="guardarClienteRapido($event)"
   (cancelled)="cancelarModalClienteRapido()"
 ></app-cliente-modal>
+
+<!-- MODAL REGISTRAR ABONO EN POS -->
+<app-modal-shell
+  [isOpen]="mostrarModalAbono && !!clienteAbono"
+  title="Registrar Abono a Deuda"
+  [subtitle]="clienteAbono?.nombreCompleto || clienteAbono?.nombre || ''"
+  [size]="'sm'"
+  [backdropDismiss]="false"
+  [showFooter]="true"
+  closeButtonPosition="end"
+  (closed)="cerrarModalAbono()"
+>
+  <div class="p-4 space-y-4" *ngIf="clienteAbono">
+    <!-- Deuda actual info card -->
+    <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between">
+      <div>
+        <p class="text-xs text-on-surface-variant font-medium">Deuda acumulada:</p>
+        <p class="font-heading font-extrabold text-xl text-error leading-tight">
+          {{ clienteAbono.saldoDeudor | currency:'MXN' }}
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="setMontoAbonoTotalPos()"
+        class="bg-amber-600 hover:bg-amber-700 text-white font-sans font-bold text-xs px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
+      >
+        Liquidar Total
+      </button>
+    </div>
+
+    <!-- Monto a abonar -->
+    <div>
+      <label class="block font-sans font-semibold text-xs text-on-surface mb-1 ml-1"> Monto a abonar ($ MXN) * </label>
+      <div class="relative">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-on-surface-variant">$</span>
+        <input
+          type="number"
+          min="1"
+          step="10"
+          placeholder="0.00"
+          [(ngModel)]="montoAbono"
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-8 pr-4 font-sans text-lg font-bold text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+        />
+      </div>
+
+      <!-- Quick chips de montos comunes -->
+      <div class="flex flex-wrap gap-1.5 mt-2">
+        <button
+          *ngFor="let m of [50, 100, 200, 500]"
+          type="button"
+          (click)="setMontoAbonoPos(m)"
+          class="text-xs px-2.5 py-1 rounded-lg bg-surface-container-high hover:bg-emerald-100 hover:text-emerald-800 text-on-surface-variant font-medium transition-colors cursor-pointer"
+        >
+          ${{ m }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Método de pago del abono -->
+    <div>
+      <label class="block font-sans font-semibold text-xs text-on-surface mb-1 ml-1"> Método de Pago * </label>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          (click)="metodoPagoAbono = 'EFECTIVO'"
+          class="py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer"
+          [ngClass]="metodoPagoAbono === 'EFECTIVO' ? 'border-primary bg-primary/10 text-primary' : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container'"
+        >
+          <span class="material-symbols-outlined text-base">payments</span>
+          <span>Efectivo</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="metodoPagoAbono = 'TARJETA'"
+          class="py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer"
+          [ngClass]="metodoPagoAbono === 'TARJETA' ? 'border-primary bg-primary/10 text-primary' : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container'"
+        >
+          <span class="material-symbols-outlined text-base">credit_card</span>
+          <span>Tarjeta</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="metodoPagoAbono = 'TRANSFERENCIA'"
+          class="py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer"
+          [ngClass]="metodoPagoAbono === 'TRANSFERENCIA' ? 'border-primary bg-primary/10 text-primary' : 'border-outline-variant/30 text-on-surface-variant hover:bg-surface-container'"
+        >
+          <span class="material-symbols-outlined text-base">account_balance</span>
+          <span>Transf.</span>
+        </button>
+      </div>
+      <p class="text-[11px] text-on-surface-variant/70 mt-1 ml-1" *ngIf="metodoPagoAbono === 'EFECTIVO'">
+        💵 Ingresará automáticamente al corte de caja activo.
+      </p>
+    </div>
+
+    <!-- Concepto -->
+    <div>
+      <label class="block font-sans font-semibold text-xs text-on-surface mb-1 ml-1">
+        Concepto / Referencia (opcional)
+      </label>
+      <input
+        type="text"
+        [(ngModel)]="conceptoAbono"
+        placeholder="Ej: Abono de Don Pedro en mostrador"
+        class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+      />
+    </div>
+
+    <!-- Previsualización nuevo saldo -->
+    <div
+      *ngIf="montoAbono && montoAbono > 0"
+      class="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs"
+    >
+      <span class="text-emerald-900 dark:text-emerald-200 font-semibold">Saldo restante tras abono:</span>
+      <span class="font-heading font-bold text-sm text-emerald-700 dark:text-emerald-300">
+        {{ (clienteAbono.saldoDeudor - montoAbono > 0 ? clienteAbono.saldoDeudor - montoAbono : 0) | currency:'MXN' }}
+      </span>
+    </div>
+  </div>
+
+  <div footer class="p-4 flex gap-3 w-full">
+    <button
+      type="button"
+      (click)="cerrarModalAbono()"
+      [disabled]="guardandoAbono"
+      class="flex-1 py-3 px-4 rounded-xl border border-outline-variant/30 font-sans font-medium text-sm text-on-surface-variant hover:bg-surface transition-all active:scale-95 cursor-pointer"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      (click)="guardarAbonoPos()"
+      [disabled]="guardandoAbono || !montoAbono || montoAbono <= 0"
+      class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-sm py-3.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
+    >
+      <ion-spinner *ngIf="guardandoAbono" name="crescent" class="w-4 h-4"></ion-spinner>
+      <span>{{ guardandoAbono ? 'Registrando...' : 'Confirmar Abono' }}</span>
+    </button>
+  </div>
+</app-modal-shell>

@@ -24,6 +24,7 @@ export class ClienteModalComponent implements OnChanges {
     telefono: '',
     correoCliente: '',
     limiteCredito: null,
+    deudaInicial: null,
     direccion: '',
     notas: '',
   };
@@ -63,6 +64,7 @@ export class ClienteModalComponent implements OnChanges {
       telefono: '',
       correoCliente: '',
       limiteCredito: null,
+      deudaInicial: null,
       direccion: '',
       notas: '',
     };
@@ -100,6 +102,8 @@ export class ClienteModalComponent implements OnChanges {
 
     if (!valido) return;
 
+    const deudaIniNum = Number(this.form.deudaInicial);
+
     this.saved.emit({
       nombreCliente: nombreLimpio,
       apellidoPatCliente: (this.form.apellidoPatCliente || '').trim() || undefined,
@@ -107,6 +111,7 @@ export class ClienteModalComponent implements OnChanges {
       telefono: telLimpio,
       correoCliente: (this.form.correoCliente || '').trim() || undefined,
       limiteCredito: this.form.limiteCredito ? Number(this.form.limiteCredito) : undefined,
+      deudaInicial: !isNaN(deudaIniNum) && deudaIniNum > 0 ? deudaIniNum : undefined,
       direccion: (this.form.direccion || '').trim() || undefined,
       notas: (this.form.notas || '').trim() || undefined,
     });
