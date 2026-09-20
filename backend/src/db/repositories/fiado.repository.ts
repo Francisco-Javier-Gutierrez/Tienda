@@ -63,9 +63,16 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
   async listClientesDeudores(_idSuc = 1): Promise<any[]> {
     const clientes = await this.queryItems('GSI1PK = :pk', { ':pk': 'CLIENTES' }, { indexName: 'GSI1' });
 
-    return (clientes || [])
-      .filter((c) => Number(c.saldoDeudor || 0) > 0)
-      .sort((a, b) => Number(b.saldoDeudor || 0) - Number(a.saldoDeudor || 0));
+    return (clientes || []).sort((a, b) => {
+      const saldoA = Number(a.saldoDeudor || 0);
+      const saldoB = Number(b.saldoDeudor || 0);
+      if (saldoB !== saldoA) {
+        return saldoB - saldoA;
+      }
+      const nombreA = `${a.nombreCliente || ''} ${a.apellidoPatCliente || ''}`.trim();
+      const nombreB = `${b.nombreCliente || ''} ${b.apellidoPatCliente || ''}`.trim();
+      return nombreA.localeCompare(nombreB);
+    });
   }
 
   async getClienteById(idCliente: number): Promise<any | null> {

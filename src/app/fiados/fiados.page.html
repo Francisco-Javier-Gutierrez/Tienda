@@ -82,6 +82,51 @@
       </div>
     </div>
 
+    <!-- PESTAÑAS DE FILTRO DE ESTADO -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1" *ngIf="!cargando && deudores.length > 0">
+      <button
+        type="button"
+        (click)="filtroEstado = 'TODOS'"
+        class="px-4 py-2 rounded-xl text-xs font-semibold font-sans transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+        [ngClass]="filtroEstado === 'TODOS' ? 'bg-primary text-on-primary shadow-xs' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container border border-surface-variant/30'"
+      >
+        <span>Todos</span>
+        <span
+          class="px-1.5 py-0.5 rounded-full text-[10px]"
+          [ngClass]="filtroEstado === 'TODOS' ? 'bg-white/20 text-white' : 'bg-surface-container-high text-on-surface-variant'"
+          >{{ deudores.length }}</span
+        >
+      </button>
+
+      <button
+        type="button"
+        (click)="filtroEstado = 'CON_DEUDA'"
+        class="px-4 py-2 rounded-xl text-xs font-semibold font-sans transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+        [ngClass]="filtroEstado === 'CON_DEUDA' ? 'bg-rose-600 text-white shadow-xs' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container border border-surface-variant/30'"
+      >
+        <span>Con Deuda</span>
+        <span
+          class="px-1.5 py-0.5 rounded-full text-[10px]"
+          [ngClass]="filtroEstado === 'CON_DEUDA' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'"
+          >{{ totalConDeuda }}</span
+        >
+      </button>
+
+      <button
+        type="button"
+        (click)="filtroEstado = 'AL_CORRIENTE'"
+        class="px-4 py-2 rounded-xl text-xs font-semibold font-sans transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+        [ngClass]="filtroEstado === 'AL_CORRIENTE' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container border border-surface-variant/30'"
+      >
+        <span>Al Corriente</span>
+        <span
+          class="px-1.5 py-0.5 rounded-full text-[10px]"
+          [ngClass]="filtroEstado === 'AL_CORRIENTE' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'"
+          >{{ totalAlCorriente }}</span
+        >
+      </button>
+    </div>
+
     <!-- SKELETON LOADER -->
     <div class="flex flex-col gap-3" *ngIf="cargando">
       <article
@@ -111,8 +156,8 @@
         {{ deudores.length ? 'No encontramos coincidencias' : '¡La libreta está limpia!' }}
       </h2>
       <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-md mx-auto">
-        {{ deudores.length ? 'Intenta con otro nombre o teléfono.' : 'No hay vecinos con deudas pendientes de cobro en
-        este momento.' }}
+        {{ deudores.length ? 'Intenta con otro nombre o teléfono.' : 'No hay cuentas registradas en este momento. Puedes
+        agregar un cliente con el botón "Nuevo Vecino / Cuenta".' }}
       </p>
     </section>
 
@@ -159,28 +204,39 @@
         >
           <div class="flex flex-col md:items-end">
             <span class="font-sans text-xs text-on-surface-variant">Saldo pendiente:</span>
-            <span class="font-heading font-extrabold text-2xl text-error leading-tight">
+            <span
+              class="font-heading font-extrabold text-2xl leading-tight"
+              [ngClass]="d.saldoDeudor > 0 ? 'text-error' : 'text-emerald-600'"
+            >
               {{ moneda(d.saldoDeudor) }}
+            </span>
+            <span
+              *ngIf="d.saldoDeudor <= 0"
+              class="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full mt-0.5"
+            >
+              Al corriente
             </span>
           </div>
 
           <!-- Botones de Acción -->
           <div class="flex items-center gap-2">
-            <!-- Botón Abonar -->
+            <!-- Botón Abonar (solo con saldo) -->
             <button
+              *ngIf="d.saldoDeudor > 0"
               type="button"
               (click)="abrirModalAbono(d)"
-              class="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-semibold text-xs px-3.5 py-2.5 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-semibold text-xs px-3.5 py-2.5 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
             >
               <span class="material-symbols-outlined text-[18px]">payments</span>
               <span>Abonar</span>
             </button>
 
-            <!-- Botón WhatsApp -->
+            <!-- Botón WhatsApp (solo con saldo) -->
             <button
+              *ngIf="d.saldoDeudor > 0"
               type="button"
               (click)="enviarWhatsApp(d)"
-              class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-sans font-semibold text-xs px-3 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-1"
+              class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-sans font-semibold text-xs px-3 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
               title="Enviar recordatorio cortés por WhatsApp"
             >
               <span class="material-symbols-outlined text-[18px]">chat</span>
@@ -191,7 +247,7 @@
             <button
               type="button"
               (click)="verHistorial(d)"
-              class="p-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors active:scale-95"
+              class="p-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors active:scale-95 cursor-pointer"
               title="Ver estado de cuenta y compras a crédito"
             >
               <span class="material-symbols-outlined text-[20px]">history</span>

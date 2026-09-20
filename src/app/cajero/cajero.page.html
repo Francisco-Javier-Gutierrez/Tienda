@@ -511,7 +511,7 @@
                   class="text-xs font-bold px-2 py-0.5 rounded-full"
                   [ngClass]="c.saldoDeudor > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'"
                 >
-                  Debe: {{ c.saldoDeudor | currency:'MXN' }}
+                  {{ c.saldoDeudor > 0 ? ('Debe: ' + (c.saldoDeudor | currency:'MXN')) : 'Al corriente ($0.00)' }}
                 </span>
               </div>
             </button>
