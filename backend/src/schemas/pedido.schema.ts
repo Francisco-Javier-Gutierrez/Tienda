@@ -17,8 +17,11 @@ export const itemPedidoSchema = z.preprocess(
     }),
     id: z.union([z.string(), z.number()]).optional(),
     productoId: z.union([z.string(), z.number()]).optional(),
-    cantidad: z.number().int({ message: 'La cantidad debe ser un entero' }).positive({ message: 'La cantidad debe ser mayor a cero' }),
-  })
+    cantidad: z
+      .number()
+      .int({ message: 'La cantidad debe ser un entero' })
+      .positive({ message: 'La cantidad debe ser mayor a cero' }),
+  }),
 );
 
 export const crearPedidoSchema = z.object({

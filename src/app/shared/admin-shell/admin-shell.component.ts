@@ -10,6 +10,8 @@ import { ImagenesService } from '../../services/imagenes.service';
 export type AdminSection =
   | 'inicio'
   | 'productos'
+  | 'mermas'
+  | 'fiados'
   | 'categorias'
   | 'marcas'
   | 'empleados'

@@ -31,7 +31,8 @@ export function normalizarDetallePedido(d: any) {
     productoId: prodId,
     nombre: d.producto?.nombrePro || d.nombrePro || d.nombre || 'Producto',
     imagen: d.producto?.imagenPro || d.imagenPro || d.imagen || null,
-    presentacion: d.presentacion ?? ([d.producto?.tamanoPro, d.producto?.presentacionPro].filter(Boolean).join(' · ') || null),
+    presentacion:
+      d.presentacion ?? ([d.producto?.tamanoPro, d.producto?.presentacionPro].filter(Boolean).join(' · ') || null),
     cantidad: Number(d.cantidad || 0),
     precioUnitario: Number(d.precioUnitario || 0),
     subtotal: Number(d.subtotal || 0),

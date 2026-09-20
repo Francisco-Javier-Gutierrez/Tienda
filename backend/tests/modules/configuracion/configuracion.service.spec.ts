@@ -29,27 +29,27 @@ describe('ConfiguracionService', () => {
       expect(validarConfiguracionTransferencia({ activo: 'invalido' }).error).toBe(
         'El estado de transferencias no es válido.',
       );
-      expect(
-        validarConfiguracionTransferencia({ activo: true, banco: 'a'.repeat(105) }).error,
-      ).toBe('El banco no puede superar 100 caracteres.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, titular: 'a'.repeat(155) }).error,
-      ).toBe('El titular no puede superar 150 caracteres.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, clabe: '123' }).error,
-      ).toBe('La CLABE debe contener exactamente 18 dígitos.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, numeroCuenta: 'a'.repeat(55) }).error,
-      ).toBe('El número de cuenta no puede superar 50 caracteres.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, instrucciones: 'a'.repeat(1005) }).error,
-      ).toBe('Las instrucciones no pueden superar 1000 caracteres.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, banco: '', titular: '' }).error,
-      ).toBe('Banco y titular son obligatorios al habilitar transferencias.');
-      expect(
-        validarConfiguracionTransferencia({ activo: true, banco: 'B', titular: 'T' }).error,
-      ).toBe('Configura una CLABE o un número de cuenta.');
+      expect(validarConfiguracionTransferencia({ activo: true, banco: 'a'.repeat(105) }).error).toBe(
+        'El banco no puede superar 100 caracteres.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, titular: 'a'.repeat(155) }).error).toBe(
+        'El titular no puede superar 150 caracteres.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, clabe: '123' }).error).toBe(
+        'La CLABE debe contener exactamente 18 dígitos.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, numeroCuenta: 'a'.repeat(55) }).error).toBe(
+        'El número de cuenta no puede superar 50 caracteres.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, instrucciones: 'a'.repeat(1005) }).error).toBe(
+        'Las instrucciones no pueden superar 1000 caracteres.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, banco: '', titular: '' }).error).toBe(
+        'Banco y titular son obligatorios al habilitar transferencias.',
+      );
+      expect(validarConfiguracionTransferencia({ activo: true, banco: 'B', titular: 'T' }).error).toBe(
+        'Configura una CLABE o un número de cuenta.',
+      );
     });
   });
 

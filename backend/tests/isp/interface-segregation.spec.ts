@@ -5,26 +5,14 @@ import {
   IFileDeletionService,
   IComprobanteInspectorService,
 } from '../../src/services/storage.service';
-import {
-  IReadOnlyRepository,
-  IWriteOnlyRepository,
-  ITransactionalRepository,
-} from '../../src/db/base.repository';
+import { IReadOnlyRepository, IWriteOnlyRepository, ITransactionalRepository } from '../../src/db/base.repository';
 import {
   productoRepository,
   IProductoCatalogReader,
   IProductoCatalogWriter,
 } from '../../src/db/repositories/producto.repository';
-import {
-  cajaRepository,
-  ICajaReader,
-  ICajaOperator,
-} from '../../src/db/repositories/caja.repository';
-import {
-  pedidosService,
-  IClientePedidoService,
-  IAdminPedidoService,
-} from '../../src/modules/pedidos/pedidos.service';
+import { cajaRepository, ICajaReader, ICajaOperator } from '../../src/db/repositories/caja.repository';
+import { pedidosService, IClientePedidoService, IAdminPedidoService } from '../../src/modules/pedidos/pedidos.service';
 import {
   productosService,
   IProductoPublicService,
@@ -156,9 +144,7 @@ describe('Interface Segregation Principle (ISP)', () => {
       }
 
       const estrategiaEfectivo = defaultPaymentRegistry.get('EFECTIVO');
-      expect(() => validarPayload(estrategiaEfectivo, { montoRecibido: -5 })).toThrow(
-        'El monto recibido no es válido',
-      );
+      expect(() => validarPayload(estrategiaEfectivo, { montoRecibido: -5 })).toThrow('El monto recibido no es válido');
       expect(() => validarPayload(estrategiaEfectivo, { montoRecibido: 100 })).not.toThrow();
     });
 

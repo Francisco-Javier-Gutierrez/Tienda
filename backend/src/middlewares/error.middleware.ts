@@ -10,9 +10,10 @@ export function errorServidor(
 
   if (error && (error.name === 'TransactionCanceledException' || error.name === 'ConditionalCheckFailedException')) {
     return res.status(409).json({
-      message: error.message && !error.message.includes('Transaction cancelled')
-        ? error.message
-        : 'Conflicto de concurrencia o elemento duplicado en la base de datos',
+      message:
+        error.message && !error.message.includes('Transaction cancelled')
+          ? error.message
+          : 'Conflicto de concurrencia o elemento duplicado en la base de datos',
     });
   }
 

@@ -5,17 +5,17 @@ import { empleadoSeguro, clienteSeguro } from '../../utils/security';
 export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     const result = await authService.loginEmpleado(req.body?.correo, req.body?.password);
-      res.json(result);
+    res.json(result);
   }
 
   async googleEmpleado(req: Request, res: Response): Promise<void> {
     const result = await authService.googleAuthEmpleado(req.body?.idToken);
-      res.json(result);
+    res.json(result);
   }
 
   async googleCliente(req: Request, res: Response): Promise<void> {
     const result = await authService.googleAuthCliente(req.body?.idToken);
-      res.json(result);
+    res.json(result);
   }
 
   meEmpleado(req: Request, res: Response): void {

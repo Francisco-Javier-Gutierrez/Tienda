@@ -173,13 +173,7 @@ export class PedidosController {
       return;
     }
 
-    const pedido = await this.service.confirmarComprobante(
-      idPedido,
-      req.cliente.idCliente,
-      key,
-      filename,
-      mimeType,
-    );
+    const pedido = await this.service.confirmarComprobante(idPedido, req.cliente.idCliente, key, filename, mimeType);
     res.json(pedido);
   }
 

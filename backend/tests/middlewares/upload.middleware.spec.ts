@@ -41,10 +41,14 @@ describe('Upload Middleware', () => {
         storageComp.getFilename({} as any, { mimetype: 'application/pdf' }, (_errComp: any, filenameComp: string) => {
           expect(filenameComp).toContain('.pdf');
 
-          storageComp.getFilename({} as any, { mimetype: 'unknown/mime' }, (_errComp2: any, filenameCompNoExt: string) => {
-            expect(filenameCompNoExt).toBeDefined();
-            done();
-          });
+          storageComp.getFilename(
+            {} as any,
+            { mimetype: 'unknown/mime' },
+            (_errComp2: any, filenameCompNoExt: string) => {
+              expect(filenameCompNoExt).toBeDefined();
+              done();
+            },
+          );
         });
       });
     });

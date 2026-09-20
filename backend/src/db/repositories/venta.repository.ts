@@ -30,6 +30,8 @@ export interface VentaEntity {
   pagoCon?: number;
   cambio?: number;
   metodoPago: string;
+  idCliente?: number | null;
+  clienteNombre?: string | null;
   fechaVenta: string;
   detalles: DetalleVentaItem[];
   estadoVenta?: string;
@@ -50,6 +52,8 @@ export class VentaRepository {
     idSuc: number;
     idEmp: number;
     idSesionCaja: number;
+    idCliente?: number | null;
+    clienteNombre?: string | null;
     totalVenta: number;
     costoTotal?: number;
     ganancia?: number;
@@ -60,7 +64,13 @@ export class VentaRepository {
     cambio?: number;
     metodoPago?: string;
     uuidVenta?: string;
-    items: Array<{ idPro: number; cantidad: number; precioUnitario: number; costoUnitario?: number; nombrePro?: string }>;
+    items: Array<{
+      idPro: number;
+      cantidad: number;
+      precioUnitario: number;
+      costoUnitario?: number;
+      nombrePro?: string;
+    }>;
   }): Promise<VentaEntity> {
     // Si se proporciona uuidVenta, verificar primero si ya existe (idempotencia rápida)
     if (data.uuidVenta) {
@@ -120,6 +130,8 @@ export class VentaRepository {
       pagoCon: data.pagoCon,
       cambio: data.cambio,
       metodoPago: data.metodoPago || 'EFECTIVO',
+      idCliente: data.idCliente || null,
+      clienteNombre: data.clienteNombre || null,
       estadoVenta: 'COMPLETADA',
       origen: 'POS',
       fechaVenta: now,
@@ -186,6 +198,47 @@ export class VentaRepository {
       })),
     ];
 
+    // Si la venta fue a crédito (FIADO), registrar cargo en la cuenta del cliente
+    if (metodoPago === 'FIADO' && data.idCliente) {
+      const idMov = await getNextSequence('movimientoCuenta', 1);
+      transactItems.push(
+        {
+          Update: {
+            TableName: TABLE_NAME,
+            Key: Keys.cliente(data.idCliente),
+            UpdateExpression: 'SET saldoDeudor = if_not_exists(saldoDeudor, :cero) + :monto, ultimoCargo = :ahora',
+            ExpressionAttributeValues: {
+              ':monto': totalVenta,
+              ':cero': 0,
+              ':ahora': now,
+            },
+          },
+        },
+        {
+          Put: {
+            TableName: TABLE_NAME,
+            Item: {
+              ...Keys.movimientoCuenta(data.idCliente, idMov),
+              GSI1PK: `SUC#${data.idSuc}#FIADOS`,
+              GSI1SK: `${now}#MOV#${idMov}`,
+              idMov,
+              idCliente: data.idCliente,
+              clienteNombre: data.clienteNombre || 'Cliente',
+              idSuc: data.idSuc,
+              idEmp: data.idEmp,
+              tipo: 'CARGO',
+              monto: totalVenta,
+              idVenta,
+              concepto: `Compra a crédito - Folio #${idVenta}`,
+              fechaHora: now,
+              fecha: now.slice(0, 10),
+              createdAt: now,
+            },
+          },
+        },
+      );
+    }
+
     // 4. Bloqueo de idempotencia atómico
     if (data.uuidVenta) {
       transactItems.push(
@@ -211,7 +264,10 @@ export class VentaRepository {
             return existenteConcurrente;
           }
         }
-        throw errorFuncional('No se pudo procesar la venta. Verifique que haya existencias suficientes de todos los productos.', 400);
+        throw errorFuncional(
+          'No se pudo procesar la venta. Verifique que haya existencias suficientes de todos los productos.',
+          400,
+        );
       }
       throw error;
     }

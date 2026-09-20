@@ -196,10 +196,7 @@ export class CajaRepository extends BaseDynamoRepository<SesionCajaEntity> imple
     }
 
     try {
-      await this.executeTransaction(
-        transactItems,
-        'Ya tienes una sesión de caja abierta en esta sucursal',
-      );
+      await this.executeTransaction(transactItems, 'Ya tienes una sesión de caja abierta en esta sucursal');
     } catch (error: any) {
       if (data.uuidSesionCaja) {
         const existente = await this.getSesionByUuid(data.uuidSesionCaja, data.idSuc);
@@ -353,9 +350,7 @@ export class CajaRepository extends BaseDynamoRepository<SesionCajaEntity> imple
           TableName: this.tableName,
           Key: Keys.sesionCaja(data.idSuc, data.idSesionCaja),
           UpdateExpression:
-            data.tipoMovimiento === 'INGRESO'
-              ? 'ADD totalIngresos :montoMov'
-              : 'ADD totalRetiros :montoMov',
+            data.tipoMovimiento === 'INGRESO' ? 'ADD totalIngresos :montoMov' : 'ADD totalRetiros :montoMov',
           ConditionExpression: 'attribute_exists(PK) AND estado = :abierta',
           ExpressionAttributeValues: {
             ':montoMov': Number(Number(data.monto).toFixed(2)),

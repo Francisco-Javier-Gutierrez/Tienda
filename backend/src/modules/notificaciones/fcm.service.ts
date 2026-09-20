@@ -47,13 +47,19 @@ export class FcmService implements IFcmService {
     }
   }
 
-  async enviarACliente(idCliente: number, payload: PushNotificationPayload): Promise<{ exitosos: number; fallidos: number }> {
+  async enviarACliente(
+    idCliente: number,
+    payload: PushNotificationPayload,
+  ): Promise<{ exitosos: number; fallidos: number }> {
     if (process.env.NODE_ENV === 'test') {
       return { exitosos: 0, fallidos: 0 };
     }
     try {
       const tokens = await this.fcmRepo.obtenerTokensUsuario(idCliente, 'CLIENTE');
-      return await this.despacharNotificaciones(tokens.map((t) => t.token), payload);
+      return await this.despacharNotificaciones(
+        tokens.map((t) => t.token),
+        payload,
+      );
     } catch (err) {
       console.warn(`[FCM] No se pudieron enviar notificaciones al cliente ${idCliente}:`, err);
       return { exitosos: 0, fallidos: 0 };
@@ -66,7 +72,10 @@ export class FcmService implements IFcmService {
     }
     try {
       const tokens = await this.fcmRepo.obtenerTokensEmpleados();
-      return await this.despacharNotificaciones(tokens.map((t) => t.token), payload);
+      return await this.despacharNotificaciones(
+        tokens.map((t) => t.token),
+        payload,
+      );
     } catch (err) {
       console.warn('[FCM] No se pudieron enviar notificaciones a empleados:', err);
       return { exitosos: 0, fallidos: 0 };

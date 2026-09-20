@@ -34,7 +34,9 @@ export class SucursalRepository {
     return (res.Item as SucursalEntity) || null;
   }
 
-  async getPublic(idSuc = 1): Promise<Array<{ idSuc: number; nombreSuc: string; descripcionSuc: string | null; logoSuc: string | null }>> {
+  async getPublic(
+    idSuc = 1,
+  ): Promise<Array<{ idSuc: number; nombreSuc: string; descripcionSuc: string | null; logoSuc: string | null }>> {
     const sucursal = await this.getById(idSuc);
     if (!sucursal) return [];
     return [

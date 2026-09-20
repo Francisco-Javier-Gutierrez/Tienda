@@ -123,7 +123,10 @@ export class AuthService {
         fotoPerfil: fotoPerfil || undefined,
       });
     } else {
-      const actualizado = await this.authRepo.updateClienteUltimoAcceso(cliente.idCliente, fotoPerfil || cliente.fotoPerfil);
+      const actualizado = await this.authRepo.updateClienteUltimoAcceso(
+        cliente.idCliente,
+        fotoPerfil || cliente.fotoPerfil,
+      );
       if (actualizado) {
         cliente = actualizado;
       }

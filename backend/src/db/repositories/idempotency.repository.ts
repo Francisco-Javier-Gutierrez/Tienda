@@ -2,11 +2,13 @@ import { GetCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from '../dynamo.client';
 import { Keys } from '../dynamo.keys';
 
+export type IdempotencyOperation = 'VENTA' | 'PEDIDO' | 'CAJA' | 'MOVIMIENTO' | 'MERMA' | 'ABONO';
+
 export interface IdempotencyRecord {
   PK: string;
   SK: string;
   uuid: string;
-  operation: 'VENTA' | 'PEDIDO' | 'CAJA' | 'MOVIMIENTO';
+  operation: IdempotencyOperation;
   targetId: number;
   idSuc?: number;
   idEmp?: number;
@@ -19,7 +21,7 @@ export interface IIdempotencyRepository {
   getRecord(uuid: string, operation: string): Promise<IdempotencyRecord | null>;
   buildTransactItem(
     uuid: string,
-    operation: 'VENTA' | 'PEDIDO' | 'CAJA' | 'MOVIMIENTO',
+    operation: IdempotencyOperation,
     targetId: number,
     metadata?: { idSuc?: number; idEmp?: number; idCliente?: number },
   ): any;
@@ -40,7 +42,7 @@ export class IdempotencyRepository implements IIdempotencyRepository {
 
   buildTransactItem(
     uuid: string,
-    operation: 'VENTA' | 'PEDIDO' | 'CAJA' | 'MOVIMIENTO',
+    operation: IdempotencyOperation,
     targetId: number,
     metadata: { idSuc?: number; idEmp?: number; idCliente?: number } = {},
   ) {

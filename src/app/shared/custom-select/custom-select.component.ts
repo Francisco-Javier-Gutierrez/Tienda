@@ -167,8 +167,8 @@ export class CustomSelectComponent implements ControlValueAccessor, OnChanges {
         return { value: item, label: String(item) };
       }
       if (typeof item === 'object' && item !== null) {
-        const val = this.valueKey in item ? item[this.valueKey] : item['value'] ?? item['id'] ?? item;
-        const lbl = this.labelKey in item ? item[this.labelKey] : item['label'] ?? item['nombre'] ?? String(val);
+        const val = this.valueKey in item ? item[this.valueKey] : (item['value'] ?? item['id'] ?? item);
+        const lbl = this.labelKey in item ? item[this.labelKey] : (item['label'] ?? item['nombre'] ?? String(val));
         const icon = item.icon || undefined;
         const disabled = item.disabled || false;
         return { value: val, label: String(lbl), icon, disabled };

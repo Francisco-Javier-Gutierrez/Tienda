@@ -1,0 +1,544 @@
+<app-admin-shell menuId="admin-mermas-menu" contentId="admin-mermas-content" activeSection="mermas">
+  <div class="p-4 md:p-6 max-w-6xl mx-auto pb-32 flex flex-col gap-6">
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1"
+          >Inventario y Pérdidas</span
+        >
+        <h1 class="font-heading font-bold text-3xl text-primary mb-1">Mermas y Caducados</h1>
+        <p class="font-sans text-sm text-on-surface-variant">
+          Control de bajas de producto por caducidad, empaques rotos y devoluciones a proveedores.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="abrirModalRegistro()"
+        class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-sans font-semibold text-sm px-5 py-3 rounded-2xl shadow-sm transition-all active:scale-95 shrink-0"
+      >
+        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+        <span>Registrar Merma / Baja</span>
+      </button>
+    </header>
+
+    <!-- METRICS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" *ngIf="resumen">
+      <!-- Pérdida Total -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-error mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Pérdida Económica</span
+          >
+          <span class="material-symbols-outlined text-2xl">trending_down</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-error">{{ moneda(resumen.totalPerdida) }}</div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Costo neto de mercancía perdida</span>
+      </div>
+
+      <!-- Piezas Mermadas -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-amber-600 mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Piezas Dadas de Baja</span
+          >
+          <span class="material-symbols-outlined text-2xl">remove_shopping_cart</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-on-surface">
+          {{ resumen.totalPiezas }} <span class="text-sm font-normal text-on-surface-variant">piezas</span>
+        </div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Unidades descontadas del stock</span>
+      </div>
+
+      <!-- Devoluciones a Proveedores -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-sky-600 mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Devoluciones Pendientes</span
+          >
+          <span class="material-symbols-outlined text-2xl">assignment_return</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-sky-700">
+          {{ moneda(resumen.totalDevolucionesPendientes) }}
+        </div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">
+          {{ resumen.piezasDevolucionesPendientes }} pzas apartadas p/ cambio
+        </span>
+      </div>
+
+      <!-- Registros Realizados -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-primary mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Movimientos Registrados</span
+          >
+          <span class="material-symbols-outlined text-2xl">receipt_long</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-primary">{{ resumen.totalRegistros }}</div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Folios de mermas capturados</span>
+      </div>
+    </div>
+
+    <!-- BUSCADOR Y FILTROS -->
+    <div
+      class="flex flex-col gap-3 bg-surface-container-lowest p-4 rounded-2xl border border-surface-variant/30 shadow-xs"
+    >
+      <!-- Search Input -->
+      <div class="relative w-full">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+        <input
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-12 pr-4 text-on-surface font-sans text-sm placeholder:text-outline-variant/80 focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+          placeholder="Buscar merma por producto, motivo o código de barras..."
+          type="text"
+          [(ngModel)]="filtroBusqueda"
+        />
+      </div>
+
+      <!-- Filter chips -->
+      <div class="flex flex-wrap items-center gap-2 pt-1">
+        <span class="font-sans text-xs font-semibold text-on-surface-variant mr-1">Tipo:</span>
+        <button
+          type="button"
+          (click)="filtroTipo = 'TODOS'"
+          [class]="filtroTipo === 'TODOS' ? 'bg-primary text-on-primary font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          (click)="filtroTipo = 'CADUCADO'"
+          [class]="filtroTipo === 'CADUCADO' ? 'bg-rose-600 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Caducados
+        </button>
+        <button
+          type="button"
+          (click)="filtroTipo = 'DANADO'"
+          [class]="filtroTipo === 'DANADO' ? 'bg-amber-600 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Dañados / Rotos
+        </button>
+        <button
+          type="button"
+          (click)="filtroTipo = 'DEVOLUCION_PROVEEDOR'"
+          [class]="filtroTipo === 'DEVOLUCION_PROVEEDOR' ? 'bg-sky-600 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Devolución Proveedor
+        </button>
+        <button
+          type="button"
+          (click)="filtroTipo = 'CONSUMO_INTERNO'"
+          [class]="filtroTipo === 'CONSUMO_INTERNO' ? 'bg-purple-600 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Consumo Tienda
+        </button>
+
+        <div class="h-4 w-px bg-surface-variant/40 mx-2 hidden sm:block"></div>
+
+        <span class="font-sans text-xs font-semibold text-on-surface-variant mr-1">Estado:</span>
+        <button
+          type="button"
+          (click)="filtroEstado = 'TODOS'"
+          [class]="filtroEstado === 'TODOS' ? 'bg-secondary text-on-secondary font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          (click)="filtroEstado = 'PENDIENTE_REPOSICION'"
+          [class]="filtroEstado === 'PENDIENTE_REPOSICION' ? 'bg-amber-500 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Pendiente Cambio
+        </button>
+        <button
+          type="button"
+          (click)="filtroEstado = 'DEVUELTO_PROVEEDOR'"
+          [class]="filtroEstado === 'DEVUELTO_PROVEEDOR' ? 'bg-emerald-600 text-white font-semibold text-xs px-3 py-1.5 rounded-full' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs px-3 py-1.5 rounded-full transition-colors'"
+        >
+          Repuesto
+        </button>
+      </div>
+    </div>
+
+    <!-- SKELETON LOADER -->
+    <div class="flex flex-col gap-3" *ngIf="cargando">
+      <article
+        *ngFor="let i of [1,2,3,4,5]"
+        class="bg-surface-container-lowest rounded-2xl p-4 border border-surface-variant/30 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-4 w-full">
+          <ion-skeleton-text
+            animated
+            style="width: 48px; height: 48px; border-radius: 12px; margin: 0"
+          ></ion-skeleton-text>
+          <div class="flex flex-col gap-2 flex-grow">
+            <ion-skeleton-text animated style="width: 40%; height: 16px; border-radius: 4px"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 60%; height: 12px; border-radius: 4px"></ion-skeleton-text>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- LISTA VACÍA -->
+    <section
+      class="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest rounded-2xl shadow-xs border border-surface-variant/30"
+      *ngIf="!cargando && mermasFiltradas.length === 0"
+    >
+      <span class="material-symbols-outlined text-6xl text-primary/30 mb-4">inventory</span>
+      <h2 class="font-heading font-bold text-xl text-on-surface mb-2">
+        {{ mermas.length ? 'No hay mermas que coincidan con la búsqueda' : 'No hay mermas registradas' }}
+      </h2>
+      <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-md mx-auto">
+        {{ mermas.length ? 'Intenta seleccionando otros filtros o cambiando el término de búsqueda.' : 'Cuando tengas
+        productos rotos, caducados o para cambio de proveedor, regístralos aquí para mantener cuadrado tu inventario.'
+        }}
+      </p>
+      <button
+        type="button"
+        *ngIf="!mermas.length"
+        (click)="abrirModalRegistro()"
+        class="bg-primary text-on-primary font-sans font-semibold text-sm px-6 py-2.5 rounded-xl shadow-xs active:scale-95 transition-all"
+      >
+        Registrar la primera merma
+      </button>
+    </section>
+
+    <!-- LISTA DE MERMAS -->
+    <div class="flex flex-col gap-3" *ngIf="!cargando && mermasFiltradas.length > 0">
+      <article
+        *ngFor="let item of mermasFiltradas"
+        class="bg-surface-container-lowest rounded-2xl p-4 md:p-5 shadow-xs border border-surface-variant/30 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow"
+      >
+        <!-- Info del producto y motivo -->
+        <div class="flex items-start gap-4">
+          <!-- Icono de tipo -->
+          <div
+            [class]="
+              item.tipo === 'CADUCADO'
+                ? 'w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0'
+                : item.tipo === 'DANADO'
+                ? 'w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0'
+                : item.tipo === 'DEVOLUCION_PROVEEDOR'
+                ? 'w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0'
+                : 'w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0'
+            "
+          >
+            <span class="material-symbols-outlined text-[24px]">
+              {{ item.tipo === 'CADUCADO' ? 'event_busy' : item.tipo === 'DANADO' ? 'broken_image' : item.tipo ===
+              'DEVOLUCION_PROVEEDOR' ? 'assignment_return' : 'storefront' }}
+            </span>
+          </div>
+
+          <!-- Detalles de la merma -->
+          <div class="flex flex-col">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-sans font-bold text-base text-on-surface">{{ item.productoNombre }}</h3>
+
+              <!-- Badges de Tipo -->
+              <span
+                *ngIf="item.tipo === 'CADUCADO'"
+                class="bg-rose-100 text-rose-800 font-sans font-semibold text-[11px] px-2.5 py-0.5 rounded-full"
+              >
+                Caducado
+              </span>
+              <span
+                *ngIf="item.tipo === 'DANADO'"
+                class="bg-amber-100 text-amber-800 font-sans font-semibold text-[11px] px-2.5 py-0.5 rounded-full"
+              >
+                Dañado / Roto
+              </span>
+              <span
+                *ngIf="item.tipo === 'DEVOLUCION_PROVEEDOR'"
+                class="bg-sky-100 text-sky-800 font-sans font-semibold text-[11px] px-2.5 py-0.5 rounded-full"
+              >
+                Devolución Proveedor
+              </span>
+              <span
+                *ngIf="item.tipo === 'CONSUMO_INTERNO'"
+                class="bg-purple-100 text-purple-800 font-sans font-semibold text-[11px] px-2.5 py-0.5 rounded-full"
+              >
+                Consumo Interno
+              </span>
+
+              <!-- Badge de Estado p/ Devoluciones -->
+              <span
+                *ngIf="item.tipo === 'DEVOLUCION_PROVEEDOR' && item.estado === 'PENDIENTE_REPOSICION'"
+                class="bg-amber-500 text-white font-sans font-bold text-[10px] px-2 py-0.5 rounded-full"
+              >
+                Pendiente de cambio
+              </span>
+              <span
+                *ngIf="item.tipo === 'DEVOLUCION_PROVEEDOR' && item.estado === 'DEVUELTO_PROVEEDOR'"
+                class="bg-emerald-100 text-emerald-800 font-sans font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-[12px]">check</span>
+                Repuesto / Entregado
+              </span>
+            </div>
+
+            <p class="font-sans text-xs text-on-surface-variant mt-1"><strong>Motivo:</strong> {{ item.motivo }}</p>
+
+            <div class="flex flex-wrap items-center gap-4 text-xs text-on-surface-variant/80 mt-2">
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                {{ formatearFecha(item.fechaHora) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">person</span>
+                {{ item.empleadoNombre }}
+              </span>
+              <span
+                *ngIf="item.codigoQR"
+                class="flex items-center gap-1 font-mono text-[11px] bg-surface-container px-2 py-0.5 rounded"
+              >
+                <span class="material-symbols-outlined text-[12px]">qr_code</span>
+                {{ item.codigoQR }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Costos y Acciones -->
+        <div
+          class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-surface-variant/30 pt-3 md:pt-0 shrink-0"
+        >
+          <div class="flex flex-col md:items-end">
+            <span class="font-sans font-extrabold text-base text-on-surface">
+              {{ item.cantidad }} <span class="text-xs font-normal text-on-surface-variant">pzas</span>
+            </span>
+            <span class="font-sans font-bold text-sm text-error"> -{{ moneda(item.costoTotal) }} </span>
+            <span class="font-sans text-[11px] text-on-surface-variant">
+              Costo unit: {{ moneda(item.costoUnitario) }}
+            </span>
+          </div>
+
+          <!-- Botón de Reposición si es devolución pendiente -->
+          <div *ngIf="item.tipo === 'DEVOLUCION_PROVEEDOR' && item.estado === 'PENDIENTE_REPOSICION'">
+            <button
+              type="button"
+              (click)="marcarDevuelto(item)"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-semibold text-xs px-3 py-2 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
+              title="Marcar que el proveedor ya repuso o cambió la mercancía"
+            >
+              <span class="material-symbols-outlined text-[16px]">published_with_changes</span>
+              <span>Marcar repuesto</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- TOP PRODUCTOS MERMADOS (Business Intelligence) -->
+    <div
+      *ngIf="resumen && resumen.topProductos && resumen.topProductos.length > 0"
+      class="bg-surface-container-lowest rounded-2xl p-5 border border-surface-variant/30 shadow-xs mt-2"
+    >
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary">insights</span>
+        <h2 class="font-heading font-bold text-lg text-primary">Productos con mayor pérdida acumulada</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+        <div
+          *ngFor="let top of resumen.topProductos"
+          class="bg-surface-container rounded-xl p-3.5 border border-surface-variant/20 flex items-center justify-between"
+        >
+          <div class="flex flex-col min-w-0 pr-2">
+            <strong class="font-sans font-bold text-sm text-on-surface truncate">{{ top.nombre }}</strong>
+            <span class="font-sans text-xs text-on-surface-variant">{{ top.cantidad }} piezas dadas de baja</span>
+          </div>
+          <div class="font-heading font-extrabold text-sm text-error shrink-0">{{ moneda(top.costoTotal) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-admin-shell>
+
+<!-- MODAL PARA REGISTRAR MERMA -->
+<div
+  *ngIf="mostrarModalRegistro"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+>
+  <div
+    class="bg-surface-container-lowest rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-surface-variant/30 flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Modal Header -->
+    <div class="p-6 pb-4 border-b border-surface-variant/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-error/10 text-error flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined">delete_sweep</span>
+        </div>
+        <div>
+          <h2 class="font-heading font-bold text-xl text-on-surface">Registrar Baja / Merma</h2>
+          <p class="font-sans text-xs text-on-surface-variant">Descontará el stock y registrará el costo de pérdida</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalRegistro()"
+        class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 flex flex-col gap-5">
+      <!-- 1. Buscar y seleccionar producto -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Producto a dar de baja * </label>
+
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant"
+            >search</span
+          >
+          <input
+            type="text"
+            [(ngModel)]="busquedaProducto"
+            placeholder="Buscar por nombre o escanear código..."
+            class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 pl-11 pr-4 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Lista desplegable rápida de productos coincidentes -->
+        <div
+          *ngIf="!productoSeleccionado && productosFiltradosParaModal.length > 0"
+          class="mt-2 max-h-48 overflow-y-auto border border-surface-variant/30 rounded-xl divide-y divide-surface-variant/20 bg-surface-container-low"
+        >
+          <button
+            type="button"
+            *ngFor="let p of productosFiltradosParaModal"
+            (click)="seleccionarProducto(p)"
+            class="w-full text-left p-3 hover:bg-surface-container-highest transition-colors flex items-center justify-between"
+          >
+            <div>
+              <div class="font-sans font-bold text-xs text-on-surface">{{ p.nombre }}</div>
+              <div class="font-sans text-[11px] text-on-surface-variant">
+                Stock: {{ p.existencia }} pzas · Costo: {{ moneda(p.costo) }}
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-primary text-[18px]">add_circle</span>
+          </button>
+        </div>
+
+        <!-- Producto Seleccionado Tarjeta -->
+        <div
+          *ngIf="productoSeleccionado"
+          class="mt-2 p-3 bg-primary-container/20 border border-primary/30 rounded-xl flex items-center justify-between"
+        >
+          <div>
+            <div class="font-sans font-bold text-sm text-primary">{{ productoSeleccionado.nombre }}</div>
+            <div class="font-sans text-xs text-on-surface-variant">
+              Stock actual: <strong>{{ productoSeleccionado.existencia }} pzas</strong> · Costo unitario: {{
+              moneda(productoSeleccionado.costo) }}
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="productoSeleccionado = null; busquedaProducto = ''"
+            class="text-xs text-error font-semibold hover:underline px-2 py-1"
+          >
+            Cambiar
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Cantidad a mermar -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Cantidad a descontar * </label>
+        <div class="flex items-center gap-3">
+          <input
+            type="number"
+            min="1"
+            [max]="productoSeleccionado ? productoSeleccionado.existencia : 9999"
+            [(ngModel)]="cantidad"
+            class="w-32 bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-base font-bold text-on-surface text-center focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <span class="font-sans text-xs text-on-surface-variant"> piezas </span>
+          <span *ngIf="productoSeleccionado" class="font-sans text-xs text-on-surface-variant ml-auto">
+            (Disponibles: {{ productoSeleccionado.existencia }})
+          </span>
+        </div>
+      </div>
+
+      <!-- 3. Tipo de Merma -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Tipo de Merma o Destino * </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label
+            *ngFor="let t of tiposDisponibles"
+            [class]="
+              tipoSeleccionado === t.valor
+                ? 'flex items-center gap-2 p-2.5 rounded-xl border-2 border-primary bg-primary/5 cursor-pointer'
+                : 'flex items-center gap-2 p-2.5 rounded-xl border border-surface-variant/40 bg-surface-container-low cursor-pointer hover:bg-surface-container'
+            "
+          >
+            <input type="radio" name="tipoMerma" [value]="t.valor" [(ngModel)]="tipoSeleccionado" class="sr-only" />
+            <span class="material-symbols-outlined text-[18px] text-primary">{{ t.icono }}</span>
+            <div class="flex flex-col">
+              <span class="font-sans font-semibold text-xs text-on-surface">{{ t.label }}</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 4. Motivo / Descripción -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Motivo o Explicación * </label>
+        <textarea
+          rows="2"
+          [(ngModel)]="motivo"
+          placeholder="Ej. Caducó el lote anterior / Frasco roto al acomodar / Apartado para cambio con Bimbo..."
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl p-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+        ></textarea>
+      </div>
+
+      <!-- 5. Resumen de Impacto Financiero -->
+      <div
+        class="p-3.5 bg-surface-container rounded-xl border border-surface-variant/30 flex items-center justify-between"
+      >
+        <div>
+          <span class="font-sans text-xs text-on-surface-variant block">Impacto estimado en costos:</span>
+          <strong class="font-heading font-extrabold text-base text-error">
+            -{{ moneda(costoPerdidaEstimado) }}
+          </strong>
+        </div>
+        <span
+          *ngIf="tipoSeleccionado === 'DEVOLUCION_PROVEEDOR'"
+          class="text-[11px] font-semibold text-sky-700 bg-sky-100 px-2 py-1 rounded-lg"
+        >
+          Se aparta p/ cambio
+        </span>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-6 pt-4 border-t border-surface-variant/20 flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="cerrarModalRegistro()"
+        class="px-4 py-2.5 rounded-xl font-sans font-semibold text-sm text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="guardarMerma()"
+        [disabled]="guardando || !productoSeleccionado"
+        class="px-6 py-2.5 rounded-xl font-sans font-semibold text-sm bg-primary text-on-primary shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+      >
+        <span *ngIf="guardando" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+        <span>{{ guardando ? 'Guardando...' : 'Confirmar Baja de Inventario' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

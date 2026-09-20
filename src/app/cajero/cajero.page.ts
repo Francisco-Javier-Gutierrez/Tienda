@@ -1,11 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 
-import { IonSearchbar, ToastController } from '@ionic/angular';
+import { AlertController, IonSearchbar, ToastController } from '@ionic/angular';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -21,6 +30,9 @@ import { ScanFeedbackService } from '../services/scan-feedback.service';
 import { SyncService } from '../services/sync.service';
 import { VentaService } from '../services/venta.service';
 import { DialogService } from '../services/dialog.service';
+import { TicketService } from '../services/ticket.service';
+import { FiadoService } from '../services/fiado.service';
+import { ClienteDeudor } from '../models/fiado';
 
 @Component({
   selector: 'app-cajero',
@@ -44,6 +56,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   readonly auth = inject(AuthService);
   readonly sync = inject(SyncService);
+  readonly ticket = inject(TicketService);
 
   private readonly sqlite = inject(SqliteService);
   private readonly ventas = inject(VentaService);
@@ -51,8 +64,10 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly imagenes = inject(ImagenesService);
   private readonly scanFeedback = inject(ScanFeedbackService);
   private readonly toast = inject(ToastController);
+  private readonly alertController = inject(AlertController);
   private readonly dialog = inject(DialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly fiadoService = inject(FiadoService);
 
   /* =========================================
      DATOS GENERALES
@@ -77,6 +92,14 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   metodoPago: MetodoPago = 'EFECTIVO';
 
   montoRecibido: number | null = null;
+
+  clientesFiado: ClienteDeudor[] = [];
+
+  clientesFiadoSugeridos: ClienteDeudor[] = [];
+
+  clienteFiadoSeleccionado: ClienteDeudor | null = null;
+
+  busquedaClienteFiado = '';
 
   /* =========================================
      ESTADOS DEL POS
@@ -239,9 +262,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
     const productosFiltrados = termino
       ? this.productos.filter((producto) =>
-          [producto.nombre, producto.codigoQR, producto.sku].some((valor) =>
-            this.normalizar(valor).includes(termino),
-          ),
+          [producto.nombre, producto.codigoQR, producto.sku].some((valor) => this.normalizar(valor).includes(termino)),
         )
       : this.productos;
 
@@ -286,6 +307,11 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   get puedeCobrar(): boolean {
     const tieneProductos = this.carrito.length > 0;
     const tieneExtra = Number(this.montoNotaAdicional || 0) > 0;
+    if (this.metodoPago === 'FIADO') {
+      return Boolean(
+        this.caja && (tieneProductos || tieneExtra) && !this.procesandoVenta && this.clienteFiadoSeleccionado,
+      );
+    }
     return Boolean(
       this.caja &&
       (tieneProductos || tieneExtra) &&
@@ -644,7 +670,10 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
                 return;
               }
             }
-            await this.feedback('Cámara utilizada. Escribe el código en la barra de búsqueda si no se autodetectó.', 'warning');
+            await this.feedback(
+              'Cámara utilizada. Escribe el código en la barra de búsqueda si no se autodetectó.',
+              'warning',
+            );
             return;
           } catch (camError: unknown) {
             const mensaje = camError instanceof Error ? camError.message.toLowerCase() : '';
@@ -724,6 +753,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.carrito = [];
     this.notaAdicional = '';
     this.montoNotaAdicional = null;
+    this.clienteFiadoSeleccionado = null;
+    this.busquedaClienteFiado = '';
   }
 
   abrirModalCobro(): void {
@@ -731,8 +762,105 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
       this.mostrarModalCobro = true;
       this.metodoPago = 'EFECTIVO';
       this.montoRecibido = null;
+      this.clienteFiadoSeleccionado = null;
+      this.busquedaClienteFiado = '';
       this.ticketVisible = true;
+      void this.cargarClientesFiado();
     }
+  }
+
+  async cargarClientesFiado(): Promise<void> {
+    try {
+      this.clientesFiado = (await firstValueFrom(this.fiadoService.listarDeudores())) || [];
+    } catch {
+      this.clientesFiado = [];
+    }
+  }
+
+  filtrarClientesFiado(): void {
+    const q = this.busquedaClienteFiado.trim().toLowerCase();
+    if (!q) {
+      this.clientesFiadoSugeridos = this.clientesFiado.slice(0, 5);
+      return;
+    }
+    this.clientesFiadoSugeridos = this.clientesFiado
+      .filter((c) => (c.nombreCompleto || c.nombre || '').toLowerCase().includes(q) || (c.telefono || '').includes(q))
+      .slice(0, 8);
+  }
+
+  seleccionarClienteFiado(c: ClienteDeudor): void {
+    this.clienteFiadoSeleccionado = c;
+    this.busquedaClienteFiado = c.nombreCompleto || c.nombre;
+    this.clientesFiadoSugeridos = [];
+  }
+
+  async crearNuevoClienteFiadoRapido(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Nuevo Cliente para Fiado',
+      subHeader: 'Registra un nuevo cliente para su cuenta corriente',
+      inputs: [
+        {
+          name: 'nombreCompleto',
+          type: 'text',
+          placeholder: 'Nombre completo (ej: Doña Martha)',
+        },
+        {
+          name: 'telefono',
+          type: 'tel',
+          placeholder: 'Teléfono / WhatsApp (10 dígitos)',
+        },
+        {
+          name: 'limiteCredito',
+          type: 'number',
+          placeholder: 'Límite de crédito (opcional)',
+          min: 0,
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Guardar y Seleccionar',
+          handler: (data) => {
+            const partes = (data.nombreCompleto || '').trim().split(' ');
+            const nombreCliente = partes[0] || '';
+            const apellidoPatCliente = partes.slice(1).join(' ') || undefined;
+            const tel = (data.telefono || '').replace(/[^0-9]/g, '');
+
+            if (nombreCliente.length < 2) {
+              void this.feedback('El nombre debe tener al menos 2 letras', 'warning');
+              return false;
+            }
+            if (tel.length < 10) {
+              void this.feedback('El teléfono debe tener al menos 10 dígitos', 'warning');
+              return false;
+            }
+
+            void (async () => {
+              try {
+                const nuevo = await firstValueFrom(
+                  this.fiadoService.crearClienteRapido({
+                    nombreCliente,
+                    apellidoPatCliente,
+                    telefono: tel,
+                    limiteCredito: data.limiteCredito ? Number(data.limiteCredito) : undefined,
+                  }),
+                );
+                this.clientesFiado.unshift(nuevo);
+                this.seleccionarClienteFiado(nuevo);
+                await this.feedback(`Cliente ${nuevo.nombreCompleto || nuevo.nombre} registrado.`, 'success');
+              } catch (err: any) {
+                await this.feedback(err?.error?.message || 'Error al registrar cliente', 'danger');
+              }
+            })();
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   /* =========================================
@@ -749,7 +877,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     const uuidVenta = crypto.randomUUID();
     const extra = Math.max(0, Number(this.montoNotaAdicional || 0));
 
-    const dto = {
+    const dto: any = {
       uuidVenta,
 
       items: this.carrito.map((item) => ({
@@ -758,6 +886,13 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
       })),
 
       metodoPago: this.metodoPago,
+
+      idCliente: this.metodoPago === 'FIADO' && this.clienteFiadoSeleccionado ? this.clienteFiadoSeleccionado.id : null,
+
+      clienteNombre:
+        this.metodoPago === 'FIADO' && this.clienteFiadoSeleccionado
+          ? this.clienteFiadoSeleccionado.nombreCompleto
+          : null,
 
       montoRecibido: this.metodoPago === 'EFECTIVO' ? Number(this.montoRecibido) : null,
 
@@ -859,6 +994,8 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.montoNotaAdicional = null;
     this.montoRecibido = null;
     this.metodoPago = 'EFECTIVO';
+    this.clienteFiadoSeleccionado = null;
+    this.busquedaClienteFiado = '';
     this.ticketVisible = false;
 
     /*
@@ -1225,12 +1362,17 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     const total = venta?.total ?? this.total;
     const cambio = venta?.cambio ?? this.cambio;
     const folio = venta?.id ? `Folio #${venta.id}` : 'Venta procesada';
+    const esFiado = (venta?.metodoPago ?? this.metodoPago) === 'FIADO';
+
+    const mensaje = esFiado
+      ? `${folio} — Total: ${this.moneda(total)} · Cargado a cuenta corriente de fiado`
+      : `${folio} — Total: ${this.moneda(total)} · Cambio: ${this.moneda(cambio)}`;
 
     const confirmado = await this.dialog.confirm({
-      title: '¡Venta realizada!',
-      message: `${folio} — Total: ${this.moneda(total)} · Cambio: ${this.moneda(cambio)}`,
+      title: esFiado ? '¡Fiado registrado con éxito!' : '¡Venta realizada!',
+      message: mensaje,
       type: 'success',
-      icon: 'check_circle',
+      icon: esFiado ? 'menu_book' : 'check_circle',
       confirmText: venta?.id ? 'Ver comprobante' : 'Aceptar',
       cancelText: 'Nueva venta',
     });
@@ -1251,7 +1393,3 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     }).format(Number(valor));
   }
 }
-
-
-
-

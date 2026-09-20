@@ -74,10 +74,7 @@ export interface IProductoPosService {
   obtenerProducto(idPro: number): Promise<any>;
 }
 
-export interface IProductosService
-  extends IProductoPublicService,
-    IProductoAdminService,
-    IProductoPosService {}
+export interface IProductosService extends IProductoPublicService, IProductoAdminService, IProductoPosService {}
 
 export class ProductosService implements IProductosService {
   constructor(
@@ -218,13 +215,23 @@ export class ProductosService implements IProductosService {
     }
 
     // Preserve existing image if body.imagen is undefined (not sent)
-    const imagenPro = body.imagen !== undefined ? textoNullable(body.imagen) : (productoExistente.imagen || null);
-    const idMarca = body.idMarca !== undefined
-      ? (body.idMarca ? Number(idValido(body.idMarca)) : null)
-      : (productoExistente.idMarca ? Number(idValido(productoExistente.idMarca)) : null);
-    const idCat = body.idCat !== undefined
-      ? (body.idCat ? Number(idValido(body.idCat)) : null)
-      : (productoExistente.idCat ? Number(idValido(productoExistente.idCat)) : null);
+    const imagenPro = body.imagen !== undefined ? textoNullable(body.imagen) : productoExistente.imagen || null;
+    const idMarca =
+      body.idMarca !== undefined
+        ? body.idMarca
+          ? Number(idValido(body.idMarca))
+          : null
+        : productoExistente.idMarca
+          ? Number(idValido(productoExistente.idMarca))
+          : null;
+    const idCat =
+      body.idCat !== undefined
+        ? body.idCat
+          ? Number(idValido(body.idCat))
+          : null
+        : productoExistente.idCat
+          ? Number(idValido(productoExistente.idCat))
+          : null;
 
     await this.repo.updateProducto(idPro, {
       nombrePro: texto(body.nombre),

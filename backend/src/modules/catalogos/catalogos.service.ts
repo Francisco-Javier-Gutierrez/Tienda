@@ -61,7 +61,10 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    const marca = await catalogoRepository.createMarca({ nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
+    const marca = await catalogoRepository.createMarca({
+      nombreMarca: nombreLimpio,
+      descripMarca: descripcion || undefined,
+    });
     return toMarcaDto(marca);
   }
 
@@ -70,7 +73,10 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la marca es obligatorio', 400);
     }
-    const marca = await catalogoRepository.updateMarca(idMarca, { nombreMarca: nombreLimpio, descripMarca: descripcion || undefined });
+    const marca = await catalogoRepository.updateMarca(idMarca, {
+      nombreMarca: nombreLimpio,
+      descripMarca: descripcion || undefined,
+    });
     return toMarcaDto(marca);
   }
 
@@ -90,7 +96,10 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    const categoria = await catalogoRepository.createCategoria({ nombreCat: nombreLimpio, descripCat: descripcion || undefined });
+    const categoria = await catalogoRepository.createCategoria({
+      nombreCat: nombreLimpio,
+      descripCat: descripcion || undefined,
+    });
     return toCategoriaDto(categoria);
   }
 
@@ -99,7 +108,10 @@ export class CatalogosService {
     if (!nombreLimpio) {
       throw errorFuncional('El nombre de la categoría es obligatorio', 400);
     }
-    const categoria = await catalogoRepository.updateCategoria(idCat, { nombreCat: nombreLimpio, descripCat: descripcion || undefined });
+    const categoria = await catalogoRepository.updateCategoria(idCat, {
+      nombreCat: nombreLimpio,
+      descripCat: descripcion || undefined,
+    });
     return toCategoriaDto(categoria);
   }
 

@@ -11,12 +11,12 @@ export class CatalogosController {
   // MARCAS
   async listarMarcas(req: Request, res: Response): Promise<void> {
     const marcas = await catalogosService.listarMarcas();
-      res.json(marcas);
+    res.json(marcas);
   }
 
   async crearMarca(req: Request, res: Response): Promise<void> {
     const marca = await catalogosService.crearMarca(req.body?.nombre, req.body?.descripcion);
-      res.status(201).json(marca);
+    res.status(201).json(marca);
   }
 
   async actualizarMarca(req: Request, res: Response): Promise<void> {
@@ -26,7 +26,7 @@ export class CatalogosController {
       return;
     }
     const marca = await catalogosService.actualizarMarca(idMarca, req.body?.nombre, req.body?.descripcion);
-      res.json(marca);
+    res.json(marca);
   }
 
   async eliminarMarca(req: Request, res: Response): Promise<void> {
@@ -36,18 +36,18 @@ export class CatalogosController {
       return;
     }
     const resultado = await catalogosService.eliminarMarca(idMarca);
-      res.json(resultado);
+    res.json(resultado);
   }
 
   // CATEGORÍAS
   async listarCategorias(req: Request, res: Response): Promise<void> {
     const categorias = await catalogosService.listarCategorias();
-      res.json(categorias);
+    res.json(categorias);
   }
 
   async crearCategoria(req: Request, res: Response): Promise<void> {
     const categoria = await catalogosService.crearCategoria(req.body?.nombre, req.body?.descripcion);
-      res.status(201).json(categoria);
+    res.status(201).json(categoria);
   }
 
   async actualizarCategoria(req: Request, res: Response): Promise<void> {
@@ -57,7 +57,7 @@ export class CatalogosController {
       return;
     }
     const categoria = await catalogosService.actualizarCategoria(idCat, req.body?.nombre, req.body?.descripcion);
-      res.json(categoria);
+    res.json(categoria);
   }
 
   async eliminarCategoria(req: Request, res: Response): Promise<void> {
@@ -67,13 +67,13 @@ export class CatalogosController {
       return;
     }
     const resultado = await catalogosService.eliminarCategoria(idCat);
-      res.json(resultado);
+    res.json(resultado);
   }
 
   // SUCURSALES
   async listarSucursales(req: Request, res: Response): Promise<void> {
     const sucursales = await catalogosService.listarSucursales();
-      res.json(sucursales);
+    res.json(sucursales);
   }
 
   async obtenerSucursal(req: Request, res: Response): Promise<void> {
@@ -83,16 +83,16 @@ export class CatalogosController {
       return;
     }
     const sucursal = await catalogosService.obtenerSucursal(idSuc);
-      if (!sucursal) {
-              res.status(404).json({ message: 'Sucursal no encontrada' });
-              return;
-            }
-      res.json(sucursal);
+    if (!sucursal) {
+      res.status(404).json({ message: 'Sucursal no encontrada' });
+      return;
+    }
+    res.json(sucursal);
   }
 
   async crearSucursal(req: Request, res: Response): Promise<void> {
     const sucursal = await catalogosService.crearSucursal(req.body);
-      res.status(201).json(sucursal);
+    res.status(201).json(sucursal);
   }
 
   async actualizarSucursal(req: Request, res: Response): Promise<void> {
@@ -102,7 +102,7 @@ export class CatalogosController {
       return;
     }
     const sucursal = await catalogosService.actualizarSucursal(idSuc, req.body);
-      res.json(sucursal);
+    res.json(sucursal);
   }
 
   async subirLogoLocal(req: Request, res: Response): Promise<void> {
@@ -147,7 +147,7 @@ export class CatalogosController {
       return;
     }
     const presigned = await catalogosService.presignLogo(idSuc, mimeType, nombreOriginal);
-      res.json(presigned);
+    res.json(presigned);
   }
 
   async confirmarLogo(req: Request, res: Response): Promise<void> {
@@ -162,7 +162,7 @@ export class CatalogosController {
       return;
     }
     const sucursal = await catalogosService.confirmarLogo(idSuc, logoUrl);
-      res.json(sucursal);
+    res.json(sucursal);
   }
 
   async eliminarLogo(req: Request, res: Response): Promise<void> {
@@ -172,22 +172,20 @@ export class CatalogosController {
       return;
     }
     const sucursal = await catalogosService.eliminarLogo(idSuc);
-      res.json(sucursal);
+    res.json(sucursal);
   }
 
   // CARGOS
   async listarCargos(req: Request, res: Response): Promise<void> {
     const cargos = await catalogosService.listarCargos();
-      res.json(cargos);
+    res.json(cargos);
   }
 
   // TIENDA PÚBLICA
   async listarTiendaPublica(req: Request, res: Response): Promise<void> {
     const tiendas = await catalogosService.listarTiendaPublica();
-      res.json(tiendas);
+    res.json(tiendas);
   }
 }
 
 export const catalogosController = new CatalogosController();
-
-

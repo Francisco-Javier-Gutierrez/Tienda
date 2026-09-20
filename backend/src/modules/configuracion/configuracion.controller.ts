@@ -10,7 +10,7 @@ export class ConfiguracionController {
       return;
     }
     const configuracion = await configuracionService.obtenerAdmin(idSuc);
-      res.json({ configuracion });
+    res.json({ configuracion });
   }
 
   async actualizarAdmin(req: Request, res: Response): Promise<void> {
@@ -20,12 +20,12 @@ export class ConfiguracionController {
       return;
     }
     const configuracion = await configuracionService.actualizarAdmin(idSuc, req.body);
-      res.json({ configuracion });
+    res.json({ configuracion });
   }
 
   async obtenerCliente(req: Request, res: Response): Promise<void> {
     const configuracion = await configuracionService.obtenerCliente();
-      res.json({ configuracion });
+    res.json({ configuracion });
   }
 }
 

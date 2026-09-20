@@ -300,13 +300,7 @@ describe('Dependency Inversion Principle (DIP) - Container & Constructor Injecti
           listPedidosAdmin: jest.fn().mockResolvedValue([{ idPedido: 99, totalPedido: 350 }]),
         };
 
-        const service = new PedidosService(
-          undefined,
-          undefined,
-          mockPedidoRepo,
-          undefined,
-          mockConfigRepo,
-        );
+        const service = new PedidosService(undefined, undefined, mockPedidoRepo, undefined, mockConfigRepo);
 
         const config = await service.obtenerConfiguracionTransferencia(1);
         expect(mockConfigRepo.getConfiguracion).toHaveBeenCalledWith(1);

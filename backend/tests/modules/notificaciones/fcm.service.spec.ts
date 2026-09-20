@@ -50,9 +50,7 @@ describe('FcmService Unit Tests', () => {
   });
 
   it('debe enviar notificacion a cliente retornando exitosos/fallidos sin lanzar error', async () => {
-    mockFcmRepo.obtenerTokensUsuario.mockResolvedValue([
-      { token: 'token-1', plataforma: 'ANDROID' },
-    ]);
+    mockFcmRepo.obtenerTokensUsuario.mockResolvedValue([{ token: 'token-1', plataforma: 'ANDROID' }]);
 
     const res = await service.enviarACliente(1, {
       titulo: 'Test Push',
@@ -65,9 +63,7 @@ describe('FcmService Unit Tests', () => {
   });
 
   it('debe enviar notificacion a empleados retornando sin lanzar error', async () => {
-    mockFcmRepo.obtenerTokensEmpleados.mockResolvedValue([
-      { token: 'token-emp-1', plataforma: 'WEB' },
-    ]);
+    mockFcmRepo.obtenerTokensEmpleados.mockResolvedValue([{ token: 'token-emp-1', plataforma: 'WEB' }]);
 
     const res = await service.enviarAEmpleados({
       titulo: 'Nuevo Pedido',

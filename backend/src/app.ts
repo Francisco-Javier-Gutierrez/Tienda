@@ -16,12 +16,16 @@ import { adminPedidosRoutes, clientePedidosRoutes } from './modules/pedidos/pedi
 import { adminConfiguracionRoutes, clienteConfiguracionRoutes } from './modules/configuracion/configuracion.routes';
 import { uploadsRoutes } from './modules/uploads/uploads.routes';
 import notificacionesRoutes from './modules/notificaciones/notificaciones.routes';
+import { mermasRoutes } from './modules/mermas/mermas.routes';
+import { fiadosRoutes } from './modules/fiados/fiados.routes';
 
 const app = express();
 app.set('trust proxy', 1);
 
 const clientUrls = env.CLIENT_URL
-  ? env.CLIENT_URL.split(',').map((u) => u.trim()).filter(Boolean)
+  ? env.CLIENT_URL.split(',')
+      .map((u) => u.trim())
+      .filter(Boolean)
   : [];
 
 const allowedOrigins = new Set([
@@ -74,6 +78,8 @@ app.use('/configuracion', adminConfiguracionRoutes);
 app.use('/cliente', clienteConfiguracionRoutes);
 app.use('/uploads', uploadsRoutes);
 app.use('/notificaciones', notificacionesRoutes);
+app.use('/mermas', mermasRoutes);
+app.use('/fiados', fiadosRoutes);
 
 // Manejadores de 404 y errores globales
 app.use(notFoundHandler);

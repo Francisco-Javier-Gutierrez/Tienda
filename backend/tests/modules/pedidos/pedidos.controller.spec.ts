@@ -81,7 +81,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
 
       mockReq.cliente = { idCliente: 1 } as any;
-      jest.spyOn(pedidosModule.pedidosService, 'cancelarPedidoCliente').mockResolvedValue({ idPedido: 1, estado: 'CANCELADO' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'cancelarPedidoCliente')
+        .mockResolvedValue({ idPedido: 1, estado: 'CANCELADO' } as any);
       await pedidosController.cancelarPedidoCliente(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalledWith({ idPedido: 1, estado: 'CANCELADO' });
     });
@@ -110,13 +112,17 @@ describe('PedidosController Comprehensive Suite', () => {
 
       // Error con status desde servicio
       jest.spyOn(pedidosModule, 'mimeRealComprobante').mockReturnValue('image/jpeg');
-      jest.spyOn(pedidosModule.pedidosService, 'confirmarComprobante').mockRejectedValueOnce({ status: 409, message: 'Conflicto' });
+      jest
+        .spyOn(pedidosModule.pedidosService, 'confirmarComprobante')
+        .mockRejectedValueOnce({ status: 409, message: 'Conflicto' });
       await pedidosController.subirComprobanteLocal(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(409);
 
       // Error generico
       jest.spyOn(pedidosModule.pedidosService, 'confirmarComprobante').mockRejectedValueOnce(new Error('Fatal'));
-      await expect(pedidosController.subirComprobanteLocal(mockReq as Request, mockRes as Response)).rejects.toThrow('Fatal');
+      await expect(pedidosController.subirComprobanteLocal(mockReq as Request, mockRes as Response)).rejects.toThrow(
+        'Fatal',
+      );
 
       // Exito
       jest.spyOn(pedidosModule.pedidosService, 'confirmarComprobante').mockResolvedValue({ idPedido: 1 } as any);
@@ -140,7 +146,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
 
       mockReq.body = { mimeType: 'image/png' };
-      jest.spyOn(pedidosModule.pedidosService, 'presignComprobante').mockResolvedValue({ uploadUrl: 'http://url' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'presignComprobante')
+        .mockResolvedValue({ uploadUrl: 'http://url' } as any);
       await pedidosController.presignComprobante(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
 
@@ -312,7 +320,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
-      jest.spyOn(pedidosModule.pedidosService, 'rechazarPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'RECHAZADO' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'rechazarPedidoAdmin')
+        .mockResolvedValue({ idPedido: 1, estado: 'RECHAZADO' } as any);
       await pedidosController.rechazarPedidoAdmin(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
 
@@ -327,7 +337,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(401);
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
-      jest.spyOn(pedidosModule.pedidosService, 'aprobarPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'PAGADO' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'aprobarPedidoAdmin')
+        .mockResolvedValue({ idPedido: 1, estado: 'PAGADO' } as any);
       await pedidosController.aprobarPedidoAdmin(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
 
@@ -342,7 +354,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
-      jest.spyOn(pedidosModule.pedidosService, 'cambiarEstadoOperativo').mockResolvedValue({ idPedido: 1, estado: 'LISTO' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'cambiarEstadoOperativo')
+        .mockResolvedValue({ idPedido: 1, estado: 'LISTO' } as any);
       await pedidosController.cambiarEstadoListo(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
 
@@ -356,7 +370,9 @@ describe('PedidosController Comprehensive Suite', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409);
 
       mockReq.empleado = { idEmp: 1, idSuc: 1 } as any;
-      jest.spyOn(pedidosModule.pedidosService, 'cambiarEstadoOperativo').mockResolvedValue({ idPedido: 1, estado: 'ENTREGADO' } as any);
+      jest
+        .spyOn(pedidosModule.pedidosService, 'cambiarEstadoOperativo')
+        .mockResolvedValue({ idPedido: 1, estado: 'ENTREGADO' } as any);
       await pedidosController.cambiarEstadoEntregar(mockReq as Request, mockRes as Response);
       expect(mockRes.json).toHaveBeenCalled();
     });

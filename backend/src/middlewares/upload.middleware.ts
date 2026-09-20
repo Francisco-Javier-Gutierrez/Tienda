@@ -9,9 +9,7 @@ const isServerless = Boolean(
   process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT,
 );
 
-export const baseUploadsDir = isServerless
-  ? path.join(os.tmpdir(), 'uploads')
-  : path.join(__dirname, '../../uploads');
+export const baseUploadsDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, '../../uploads');
 
 export const productosUploadDir = path.join(baseUploadsDir, 'productos');
 export const tiendaUploadDir = path.join(baseUploadsDir, 'tienda');

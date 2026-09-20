@@ -25,4 +25,3 @@ export const env = {
   OPEN_FOOD_FACTS_USER_AGENT:
     process.env.OPEN_FOOD_FACTS_USER_AGENT || 'TiendaInventario/0.0.1 (contacto: administrador local)',
 };
-

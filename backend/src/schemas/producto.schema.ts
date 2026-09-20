@@ -22,11 +22,14 @@ export const baseProductoSchema = z.object({
   idCat: z.union([z.string(), z.number()], { message: 'La categoría es obligatoria' }),
 });
 
-export const crearProductoSchema = baseProductoSchema.refine((d) => {
-  const p = d.precio !== undefined ? d.precio : d.precioVenta;
-  return p !== undefined && !isNaN(Number(p)) && Number(p) >= 0;
-}, {
-  message: 'El precio de venta debe ser un número válido mayor o igual a cero',
-});
+export const crearProductoSchema = baseProductoSchema.refine(
+  (d) => {
+    const p = d.precio !== undefined ? d.precio : d.precioVenta;
+    return p !== undefined && !isNaN(Number(p)) && Number(p) >= 0;
+  },
+  {
+    message: 'El precio de venta debe ser un número válido mayor o igual a cero',
+  },
+);
 
 export const actualizarProductoSchema = baseProductoSchema.partial();

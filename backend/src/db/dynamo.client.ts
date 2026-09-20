@@ -30,7 +30,6 @@ const client = new DynamoDBClient({
   ...(credentials && { credentials }),
 });
 
-
 export const docClient = DynamoDBDocumentClient.from(client, {
   marshallOptions: {
     removeUndefinedValues: true,

@@ -26,9 +26,7 @@ describe('AuthController', () => {
     });
 
     await authController.login(mockReq as Request, mockRes as Response);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ token: 'jwt-token' }),
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'jwt-token' }));
   });
 
   it('googleEmpleado debe llamar a authService.googleAuthEmpleado', async () => {
@@ -39,9 +37,7 @@ describe('AuthController', () => {
     });
 
     await authController.googleEmpleado(mockReq as Request, mockRes as Response);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ token: 'jwt-token' }),
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'jwt-token' }));
   });
 
   it('googleCliente debe llamar a authService.googleAuthCliente', async () => {
@@ -52,9 +48,7 @@ describe('AuthController', () => {
     });
 
     await authController.googleCliente(mockReq as Request, mockRes as Response);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ token: 'jwt-token-client' }),
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'jwt-token-client' }));
   });
 
   it('meEmpleado (sin empleado y con empleado)', () => {

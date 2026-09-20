@@ -154,8 +154,12 @@ describe('App End-to-End Integration Tests', () => {
       const rPedCliId = await request(app).get('/cliente/pedidos/1').set('Authorization', `Bearer ${tokenCliente}`);
       expect(rPedCliId.status).toBe(200);
 
-      jest.spyOn(pedidosService, 'cancelarPedidoCliente').mockResolvedValue({ idPedido: 1, estado: 'CANCELADO' } as any);
-      const rPedCliCanc = await request(app).post('/cliente/pedidos/1/cancelar').set('Authorization', `Bearer ${tokenCliente}`);
+      jest
+        .spyOn(pedidosService, 'cancelarPedidoCliente')
+        .mockResolvedValue({ idPedido: 1, estado: 'CANCELADO' } as any);
+      const rPedCliCanc = await request(app)
+        .post('/cliente/pedidos/1/cancelar')
+        .set('Authorization', `Bearer ${tokenCliente}`);
       expect(rPedCliCanc.status).toBe(200);
 
       jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValue([]);
@@ -167,19 +171,28 @@ describe('App End-to-End Integration Tests', () => {
       expect(rPedAdminId.status).toBe(200);
 
       jest.spyOn(pedidosService, 'aprobarPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'PAGADO' } as any);
-      const rPedApprove = await request(app).post('/admin/pedidos/1/aprobar').set('Authorization', `Bearer ${tokenAdmin}`);
+      const rPedApprove = await request(app)
+        .post('/admin/pedidos/1/aprobar')
+        .set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rPedApprove.status).toBe(200);
 
       jest.spyOn(pedidosService, 'rechazarPedidoAdmin').mockResolvedValue({ idPedido: 1, estado: 'RECHAZADO' } as any);
-      const rPedReject = await request(app).post('/admin/pedidos/1/rechazar').set('Authorization', `Bearer ${tokenAdmin}`).send({ motivo: 'Invalido' });
+      const rPedReject = await request(app)
+        .post('/admin/pedidos/1/rechazar')
+        .set('Authorization', `Bearer ${tokenAdmin}`)
+        .send({ motivo: 'Invalido' });
       expect(rPedReject.status).toBe(200);
 
       jest.spyOn(pedidosService, 'cambiarEstadoOperativo').mockResolvedValue({ idPedido: 1, estado: 'LISTO' } as any);
       const rPedListo = await request(app).post('/admin/pedidos/1/listo').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rPedListo.status).toBe(200);
 
-      jest.spyOn(pedidosService, 'cambiarEstadoOperativo').mockResolvedValue({ idPedido: 1, estado: 'ENTREGADO' } as any);
-      const rPedEntr = await request(app).post('/admin/pedidos/1/entregar').set('Authorization', `Bearer ${tokenAdmin}`);
+      jest
+        .spyOn(pedidosService, 'cambiarEstadoOperativo')
+        .mockResolvedValue({ idPedido: 1, estado: 'ENTREGADO' } as any);
+      const rPedEntr = await request(app)
+        .post('/admin/pedidos/1/entregar')
+        .set('Authorization', `Bearer ${tokenAdmin}`);
       expect(rPedEntr.status).toBe(200);
     });
   });
