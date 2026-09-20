@@ -8,7 +8,12 @@ describe('StorageService', () => {
   });
 
   it('generarPresignedUpload debe llamar a s3Config.generarPresignedUpload', async () => {
-    const mockResult: any = { uploadUrl: 'https://s3.test/upload', key: 'test/file.jpg', publicUrl: 'https://s3.test/public', fileName: 'file.jpg' };
+    const mockResult: any = {
+      uploadUrl: 'https://s3.test/upload',
+      key: 'test/file.jpg',
+      publicUrl: 'https://s3.test/public',
+      fileName: 'file.jpg',
+    };
     jest.spyOn(s3Config, 'generarPresignedUpload').mockResolvedValue(mockResult);
 
     const result = await storageService.generarPresignedUpload({

@@ -22,9 +22,14 @@ export function normalizarCaja(caja: any) {
     fechaHoraApertura: caja.fechaHoraApertura || caja.fechaApertura || null,
     fechaHoraCierre: caja.fechaHoraCierre || caja.fechaCierre || null,
     ...caja,
-    empleado: caja.empleadoNombre || (caja.empleado
-      ? [caja.empleado.nombreEmp, caja.empleado.apellidoPatEmp, caja.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-      : null) || 'Cajero',
+    empleado:
+      caja.empleadoNombre ||
+      (caja.empleado
+        ? [caja.empleado.nombreEmp, caja.empleado.apellidoPatEmp, caja.empleado.apellidoMatEmp]
+            .filter(Boolean)
+            .join(' ')
+        : null) ||
+      'Cajero',
     nombreSuc: caja.sucursal?.nombreSuc || caja.nombreSuc || 'Doña paty',
   };
   for (const campo of campos) {

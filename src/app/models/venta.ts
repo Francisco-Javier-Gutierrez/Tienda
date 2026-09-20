@@ -1,4 +1,4 @@
-export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
+export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'FIADO';
 export type EstadoVenta = 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE' | 'PENDIENTE_PAGO' | 'EN_REVISION';
 
 export interface ProductoPos {
@@ -119,6 +119,8 @@ export interface CrearVentaDto {
   uuidVenta: string;
   items: CrearVentaItem[];
   metodoPago: MetodoPago;
+  idCliente?: string | number | null;
+  clienteNombre?: string | null;
   montoRecibido: number | null;
   nota?: string | null;
   montoNota?: number | null;

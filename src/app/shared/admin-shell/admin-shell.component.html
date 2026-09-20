@@ -65,6 +65,36 @@
           Productos
         </a>
         <a
+          routerLink="/mermas"
+          [class]="
+            activeSection === 'mermas'
+              ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs'
+              : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+          "
+        >
+          <span
+            class="material-symbols-outlined text-[20px]"
+            [style.font-variation-settings]="activeSection === 'mermas' ? '\'FILL\' 1' : '\'FILL\' 0'"
+            >delete_sweep</span
+          >
+          Mermas y Bajas
+        </a>
+        <a
+          routerLink="/fiados"
+          [class]="
+            activeSection === 'fiados'
+              ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all shadow-xs'
+              : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+          "
+        >
+          <span
+            class="material-symbols-outlined text-[20px]"
+            [style.font-variation-settings]="activeSection === 'fiados' ? '\'FILL\' 1' : '\'FILL\' 0'"
+            >menu_book</span
+          >
+          Libreta de Fiados
+        </a>
+        <a
           routerLink="/categorias"
           [class]="
             activeSection === 'categorias'
@@ -346,6 +376,38 @@
             >inventory_2</span
           >
           Productos
+        </a>
+        <a
+          routerLink="/mermas"
+          (click)="cerrarSidebar()"
+          [class]="
+            activeSection === 'mermas'
+              ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+              : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+          "
+        >
+          <span
+            class="material-symbols-outlined text-[20px]"
+            [style.font-variation-settings]="activeSection === 'mermas' ? '\'FILL\' 1' : '\'FILL\' 0'"
+            >delete_sweep</span
+          >
+          Mermas y Bajas
+        </a>
+        <a
+          routerLink="/fiados"
+          (click)="cerrarSidebar()"
+          [class]="
+            activeSection === 'fiados'
+              ? 'flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+              : 'flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-highest rounded-full px-4 py-2.5 font-sans font-semibold text-sm transition-all'
+          "
+        >
+          <span
+            class="material-symbols-outlined text-[20px]"
+            [style.font-variation-settings]="activeSection === 'fiados' ? '\'FILL\' 1' : '\'FILL\' 0'"
+            >menu_book</span
+          >
+          Libreta de Fiados
         </a>
         <a
           routerLink="/categorias"

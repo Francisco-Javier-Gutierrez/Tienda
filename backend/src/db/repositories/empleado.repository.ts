@@ -172,4 +172,3 @@ export class EmpleadoRepository {
 }
 
 export const empleadoRepository = new EmpleadoRepository();
-

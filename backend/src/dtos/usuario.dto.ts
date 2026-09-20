@@ -24,7 +24,9 @@ export const toClienteDto = (cliente: any) => {
   const id = encodeId(cliente.idCliente);
   return {
     id,
-    nombreCompleto: [cliente.nombreCliente, cliente.apellidoPatCliente, cliente.apellidoMatCliente].filter(Boolean).join(' '),
+    nombreCompleto: [cliente.nombreCliente, cliente.apellidoPatCliente, cliente.apellidoMatCliente]
+      .filter(Boolean)
+      .join(' '),
     nombre: cliente.nombreCliente,
     apellidoPat: cliente.apellidoPatCliente || null,
     apellidoMat: cliente.apellidoMatCliente || null,

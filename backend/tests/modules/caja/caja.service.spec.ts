@@ -23,17 +23,18 @@ describe('CajaService Complete Coverage', () => {
       await expect(cajaService.abrirCaja(1, 1, 'invalido', 100)).rejects.toMatchObject({
         status: 400,
       });
-      await expect(
-        cajaService.abrirCaja(1, 1, '11111111-1111-4111-8111-111111111111', -10),
-      ).rejects.toMatchObject({ status: 400 });
+      await expect(cajaService.abrirCaja(1, 1, '11111111-1111-4111-8111-111111111111', -10)).rejects.toMatchObject({
+        status: 400,
+      });
     });
 
     it('debe rechazar si ya tiene una caja abierta', async () => {
       jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValue(dummySesion);
 
-      await expect(
-        cajaService.abrirCaja(1, 1, '11111111-1111-4111-8111-111111111111', 500),
-      ).rejects.toMatchObject({ status: 409, message: 'Ya tienes una caja abierta.' });
+      await expect(cajaService.abrirCaja(1, 1, '11111111-1111-4111-8111-111111111111', 500)).rejects.toMatchObject({
+        status: 409,
+        message: 'Ya tienes una caja abierta.',
+      });
     });
 
     it('debe crear una nueva caja exitosamente', async () => {
@@ -61,9 +62,36 @@ describe('CajaService Complete Coverage', () => {
       // Exito
       jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValue(dummySesion);
       jest.spyOn(ventaRepository, 'listVentas').mockResolvedValue([
-        { idVenta: 1, idSuc: 1, idEmp: 1, idSesionCaja: 1, totalVenta: 100, metodoPago: 'EFECTIVO', fechaVenta: '', detalles: [] },
-        { idVenta: 2, idSuc: 1, idEmp: 1, idSesionCaja: 1, totalVenta: 200, metodoPago: 'TARJETA', fechaVenta: '', detalles: [] },
-        { idVenta: 3, idSuc: 1, idEmp: 1, idSesionCaja: 1, totalVenta: 50, metodoPago: 'TRANSFERENCIA', fechaVenta: '', detalles: [] },
+        {
+          idVenta: 1,
+          idSuc: 1,
+          idEmp: 1,
+          idSesionCaja: 1,
+          totalVenta: 100,
+          metodoPago: 'EFECTIVO',
+          fechaVenta: '',
+          detalles: [],
+        },
+        {
+          idVenta: 2,
+          idSuc: 1,
+          idEmp: 1,
+          idSesionCaja: 1,
+          totalVenta: 200,
+          metodoPago: 'TARJETA',
+          fechaVenta: '',
+          detalles: [],
+        },
+        {
+          idVenta: 3,
+          idSuc: 1,
+          idEmp: 1,
+          idSesionCaja: 1,
+          totalVenta: 50,
+          metodoPago: 'TRANSFERENCIA',
+          fechaVenta: '',
+          detalles: [],
+        },
       ]);
       jest.spyOn(cajaRepository, 'listMovimientos').mockResolvedValue([
         { tipoMovimiento: 'INGRESO', monto: 20 },
@@ -83,10 +111,18 @@ describe('CajaService Complete Coverage', () => {
 
   describe('registrarMovimiento y listarMovimientos', () => {
     it('debe validar uuid, tipo, monto y concepto', async () => {
-      await expect(cajaService.registrarMovimiento(1, 'inv', 'INGRESO', 'c', 10)).rejects.toMatchObject({ status: 400 });
-      await expect(cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'OTRO', 'c', 10)).rejects.toMatchObject({ status: 400 });
-      await expect(cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'INGRESO', 'c', 0)).rejects.toMatchObject({ status: 400 });
-      await expect(cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'INGRESO', '', 10)).rejects.toMatchObject({ status: 400 });
+      await expect(cajaService.registrarMovimiento(1, 'inv', 'INGRESO', 'c', 10)).rejects.toMatchObject({
+        status: 400,
+      });
+      await expect(
+        cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'OTRO', 'c', 10),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'INGRESO', 'c', 0),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'INGRESO', '', 10),
+      ).rejects.toMatchObject({ status: 400 });
     });
 
     it('debe rechazar si no hay caja abierta', async () => {
@@ -110,13 +146,17 @@ describe('CajaService Complete Coverage', () => {
         fechaHora: new Date().toISOString(),
       });
 
-      const nuevo = await cajaService.registrarMovimiento(1, '11111111-1111-4111-8111-111111111111', 'RETIRO', 'Retiro', 15);
+      const nuevo = await cajaService.registrarMovimiento(
+        1,
+        '11111111-1111-4111-8111-111111111111',
+        'RETIRO',
+        'Retiro',
+        15,
+      );
       expect(nuevo.idMovimientoCaja).toBe(20);
 
       // Listar movimientos
-      jest.spyOn(cajaRepository, 'listMovimientos').mockResolvedValue([
-        { idMovimientoCaja: 20, monto: 15 },
-      ]);
+      jest.spyOn(cajaRepository, 'listMovimientos').mockResolvedValue([{ idMovimientoCaja: 20, monto: 15 }]);
       const lista = await cajaService.listarMovimientos(1);
       expect(lista.length).toBe(1);
     });
@@ -124,17 +164,19 @@ describe('CajaService Complete Coverage', () => {
 
   describe('historial y detalle con rol Administrador y Cajero', () => {
     it('historial con filtros de estado para admin y cajero', async () => {
-      jest.spyOn(cajaRepository, 'listSesiones').mockResolvedValue([
-        dummySesion,
-        { ...dummySesion, idEmp: 2, idSesionCaja: 2, estado: 'CERRADA' },
-      ]);
+      jest
+        .spyOn(cajaRepository, 'listSesiones')
+        .mockResolvedValue([dummySesion, { ...dummySesion, idEmp: 2, idSesionCaja: 2, estado: 'CERRADA' }]);
 
       // Cajero
       const resCaj = await cajaService.historial({ idEmp: 2, idSuc: 1, cargo: 'CAJERO' }, { estado: 'CERRADA' });
       expect(resCaj.length).toBe(1);
 
       // Admin
-      const resAdmin = await cajaService.historial({ idEmp: 1, idSuc: 1, cargo: 'ADMINISTRADOR' }, { estado: 'ABIERTA' });
+      const resAdmin = await cajaService.historial(
+        { idEmp: 1, idSuc: 1, cargo: 'ADMINISTRADOR' },
+        { estado: 'ABIERTA' },
+      );
       expect(resAdmin.length).toBe(1);
     });
 

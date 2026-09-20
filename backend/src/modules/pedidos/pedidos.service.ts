@@ -327,7 +327,10 @@ export class PedidosService implements IPedidosService {
         throw errorFuncional(`${prod.nombrePro} ya no está disponible para venta.`, 409, { idPro });
       }
       if (cantidad > prod.existenciaPro) {
-        throw errorFuncional(`Stock insuficiente para ${prod.nombrePro}.`, 409, { idPro, disponible: prod.existenciaPro });
+        throw errorFuncional(`Stock insuficiente para ${prod.nombrePro}.`, 409, {
+          idPro,
+          disponible: prod.existenciaPro,
+        });
       }
       const precioCentavos = dineroCentavos(prod.precioVentaPro);
       if (precioCentavos === null || precioCentavos < 0) {

@@ -142,7 +142,10 @@ export class PedidoRepository {
             return existenteConcurrente;
           }
         }
-        throw errorFuncional('No se pudo procesar el pedido. Puede que el stock de algún producto se haya agotado o sea insuficiente.', 400);
+        throw errorFuncional(
+          'No se pudo procesar el pedido. Puede que el stock de algún producto se haya agotado o sea insuficiente.',
+          400,
+        );
       }
       throw error;
     }

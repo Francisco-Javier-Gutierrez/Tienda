@@ -1,13 +1,7 @@
 import { errorFuncional } from '../../utils/formatters';
 
 export type EstadoPedido =
-  | 'PENDIENTE_PAGO'
-  | 'PENDIENTE'
-  | 'EN_REVISION'
-  | 'PAGADO'
-  | 'RECHAZADO'
-  | 'ENTREGADO'
-  | 'CANCELADO';
+  'PENDIENTE_PAGO' | 'PENDIENTE' | 'EN_REVISION' | 'PAGADO' | 'RECHAZADO' | 'ENTREGADO' | 'CANCELADO';
 
 export interface TransitionRule {
   readonly accion: string;
@@ -74,7 +68,9 @@ export class OrderStateMachine {
 
     const actualTipado = estadoActual as EstadoPedido;
     if (!regla.origenesPermitidos.has(actualTipado)) {
-      const msg = regla.mensajeError ? regla.mensajeError(estadoActual) : `Transición no permitida desde ${estadoActual}.`;
+      const msg = regla.mensajeError
+        ? regla.mensajeError(estadoActual)
+        : `Transición no permitida desde ${estadoActual}.`;
       throw errorFuncional(msg, 409);
     }
 

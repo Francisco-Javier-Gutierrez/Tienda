@@ -10,7 +10,10 @@
 >
   <ng-template>
     <!-- Header -->
-    <ion-header *ngIf="showHeader" class="ion-no-border border-b border-surface-variant bg-surface-container-lowest shrink-0">
+    <ion-header
+      *ngIf="showHeader"
+      class="ion-no-border border-b border-surface-variant bg-surface-container-lowest shrink-0"
+    >
       <ion-toolbar class="[--background:theme('colors.surface-container-lowest')] px-2">
         <!-- Start Close Button -->
         <ion-buttons slot="start" *ngIf="showCloseButton && closeButtonPosition === 'start'">
@@ -57,7 +60,10 @@
     </div>
 
     <!-- Footer -->
-    <ion-footer *ngIf="showFooter" class="ion-no-border bg-surface-container-lowest border-t border-surface-variant shrink-0">
+    <ion-footer
+      *ngIf="showFooter"
+      class="ion-no-border bg-surface-container-lowest border-t border-surface-variant shrink-0"
+    >
       <ng-content select="[footer]"></ng-content>
     </ion-footer>
   </ng-template>

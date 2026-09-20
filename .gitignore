@@ -117,4 +117,8 @@ stitch-designs/
 /stitch-designs/
 
 # APK builds
-*.apk
+*.apk
+
+# Backups
+backups/
+/backups/

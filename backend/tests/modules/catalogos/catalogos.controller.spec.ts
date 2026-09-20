@@ -146,7 +146,8 @@ describe('CatalogosController', () => {
       await catalogosController.subirLogoLocal(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(404);
 
-      jest.spyOn(catalogosService, 'obtenerSucursal')
+      jest
+        .spyOn(catalogosService, 'obtenerSucursal')
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: null } as any)
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/logo.png' } as any);
       jest.spyOn(sucursalRepository, 'updateLogo').mockResolvedValue({ idSuc: 1 } as any);

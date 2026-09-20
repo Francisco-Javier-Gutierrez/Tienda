@@ -27,11 +27,38 @@ describe('VentasService Complete Branch Coverage', () => {
 
   describe('crearVenta validaciones y ramas', () => {
     it('debe validar uuid, método de pago, items y monto recibido', async () => {
-      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: 'invalido' })).rejects.toMatchObject({ status: 400 });
-      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: '11111111-1111-4111-8111-111111111111', metodoPago: 'CRIPTO' })).rejects.toMatchObject({ status: 400 });
-      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: '11111111-1111-4111-8111-111111111111', metodoPago: 'EFECTIVO', items: [] })).rejects.toMatchObject({ status: 400 });
-      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: '11111111-1111-4111-8111-111111111111', metodoPago: 'EFECTIVO', items: [{ idPro: 'inv', cantidad: 1 }], montoRecibido: 10 })).rejects.toMatchObject({ status: 400 });
-      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: '11111111-1111-4111-8111-111111111111', metodoPago: 'EFECTIVO', items: [{ idPro: 1, cantidad: 1 }], montoRecibido: -1 })).rejects.toMatchObject({ status: 400 });
+      await expect(ventasService.crearVenta(dummyEmpleado, { uuidVenta: 'invalido' })).rejects.toMatchObject({
+        status: 400,
+      });
+      await expect(
+        ventasService.crearVenta(dummyEmpleado, {
+          uuidVenta: '11111111-1111-4111-8111-111111111111',
+          metodoPago: 'CRIPTO',
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        ventasService.crearVenta(dummyEmpleado, {
+          uuidVenta: '11111111-1111-4111-8111-111111111111',
+          metodoPago: 'EFECTIVO',
+          items: [],
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        ventasService.crearVenta(dummyEmpleado, {
+          uuidVenta: '11111111-1111-4111-8111-111111111111',
+          metodoPago: 'EFECTIVO',
+          items: [{ idPro: 'inv', cantidad: 1 }],
+          montoRecibido: 10,
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        ventasService.crearVenta(dummyEmpleado, {
+          uuidVenta: '11111111-1111-4111-8111-111111111111',
+          metodoPago: 'EFECTIVO',
+          items: [{ idPro: 1, cantidad: 1 }],
+          montoRecibido: -1,
+        }),
+      ).rejects.toMatchObject({ status: 400 });
     });
 
     it('debe rechazar si la caja no está abierta, si falta un producto, sin stock o efectivo insuficiente', async () => {
@@ -58,7 +85,9 @@ describe('VentasService Complete Branch Coverage', () => {
 
       // Stock insuficiente
       jest.spyOn(cajaRepository, 'getSesionAbierta').mockResolvedValueOnce({ idSesionCaja: 1 } as any);
-      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 2 } as any);
+      jest
+        .spyOn(productoRepository, 'getProductoById')
+        .mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 2 } as any);
       await expect(
         ventasService.crearVenta(dummyEmpleado, {
           uuidVenta: '11111111-1111-4111-8111-111111111111',
@@ -126,21 +155,24 @@ describe('VentasService Complete Branch Coverage', () => {
       expect(vTar?.id).toBeDefined();
 
       // Venta con productos + montoNota (extra sin código)
-      jest.spyOn(ventaRepository, 'createVenta').mockImplementationOnce(async (data: any) => ({
-        idVenta: 102,
-        idSuc: 1,
-        idEmp: 1,
-        idSesionCaja: 1,
-        totalVenta: data.totalVenta,
-        pagoCon: data.pagoCon,
-        cambio: data.cambio,
-        metodoPago: data.metodoPago,
-        nota: data.nota,
-        montoNota: data.montoNota,
-        items: data.items,
-        detalles: data.items || [],
-        fechaVenta: new Date().toISOString(),
-      } as any));
+      jest.spyOn(ventaRepository, 'createVenta').mockImplementationOnce(
+        async (data: any) =>
+          ({
+            idVenta: 102,
+            idSuc: 1,
+            idEmp: 1,
+            idSesionCaja: 1,
+            totalVenta: data.totalVenta,
+            pagoCon: data.pagoCon,
+            cambio: data.cambio,
+            metodoPago: data.metodoPago,
+            nota: data.nota,
+            montoNota: data.montoNota,
+            items: data.items,
+            detalles: data.items || [],
+            fechaVenta: new Date().toISOString(),
+          }) as any,
+      );
       const vConExtra = await ventasService.crearVenta(dummyEmpleado, {
         uuidVenta: '33333333-3333-4333-8333-333333333333',
         metodoPago: 'EFECTIVO',
@@ -153,21 +185,24 @@ describe('VentasService Complete Branch Coverage', () => {
       expect(vConExtra?.montoNota).toBe(5);
 
       // Venta únicamente con montoNota (producto fantasma sin items)
-      jest.spyOn(ventaRepository, 'createVenta').mockImplementationOnce(async (data: any) => ({
-        idVenta: 103,
-        idSuc: 1,
-        idEmp: 1,
-        idSesionCaja: 1,
-        totalVenta: data.totalVenta,
-        pagoCon: data.pagoCon,
-        cambio: data.cambio,
-        metodoPago: data.metodoPago,
-        nota: data.nota,
-        montoNota: data.montoNota,
-        items: data.items,
-        detalles: [],
-        fechaVenta: new Date().toISOString(),
-      } as any));
+      jest.spyOn(ventaRepository, 'createVenta').mockImplementationOnce(
+        async (data: any) =>
+          ({
+            idVenta: 103,
+            idSuc: 1,
+            idEmp: 1,
+            idSesionCaja: 1,
+            totalVenta: data.totalVenta,
+            pagoCon: data.pagoCon,
+            cambio: data.cambio,
+            metodoPago: data.metodoPago,
+            nota: data.nota,
+            montoNota: data.montoNota,
+            items: data.items,
+            detalles: [],
+            fechaVenta: new Date().toISOString(),
+          }) as any,
+      );
       const vSoloExtra = await ventasService.crearVenta(dummyEmpleado, {
         uuidVenta: '44444444-4444-4444-8444-444444444444',
         metodoPago: 'EFECTIVO',

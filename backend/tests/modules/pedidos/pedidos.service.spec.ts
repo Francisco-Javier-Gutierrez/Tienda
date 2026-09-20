@@ -141,7 +141,11 @@ describe('PedidosService Complete Branch Coverage', () => {
     it('crearPedidoSchema debe aceptar items con id, idPro o productoId', async () => {
       const parsed = await crearPedidoSchema.parseAsync({
         uuidPedido: '4915e834-87e6-4dbd-89cf-df8730e0f62b',
-        items: [{ id: 'lakJ85ZE', cantidad: 1 }, { idPro: 2, cantidad: 3 }, { productoId: 'abc', cantidad: 1 }],
+        items: [
+          { id: 'lakJ85ZE', cantidad: 1 },
+          { idPro: 2, cantidad: 3 },
+          { productoId: 'abc', cantidad: 1 },
+        ],
       });
       expect(parsed.items[0].idPro).toBe('lakJ85ZE');
       expect(parsed.items[1].idPro).toBe(2);
@@ -149,42 +153,82 @@ describe('PedidosService Complete Branch Coverage', () => {
     });
 
     it('debe validar items y productos', async () => {
-      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: 'invalido' })).rejects.toMatchObject({ status: 400 });
-      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [] })).rejects.toMatchObject({ status: 400 });
-      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 'invalido', cantidad: 1 }] })).rejects.toMatchObject({ status: 400 });
-      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: -5 }] })).rejects.toMatchObject({ status: 400 });
+      await expect(pedidosService.crearPedidoCliente(1, { uuidPedido: 'invalido' })).rejects.toMatchObject({
+        status: 400,
+      });
+      await expect(
+        pedidosService.crearPedidoCliente(1, { uuidPedido: '11111111-1111-4111-8111-111111111111', items: [] }),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        pedidosService.crearPedidoCliente(1, {
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 'invalido', cantidad: 1 }],
+        }),
+      ).rejects.toMatchObject({ status: 400 });
+      await expect(
+        pedidosService.crearPedidoCliente(1, {
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 1, cantidad: -5 }],
+        }),
+      ).rejects.toMatchObject({ status: 400 });
     });
 
     it('debe rechazar producto no encontrado, inactivo o con stock insuficiente', async () => {
-      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
+      jest
+        .spyOn(configuracionRepository, 'getConfiguracion')
+        .mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
 
       // Producto no encontrado
       jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce(null);
       await expect(
-        pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
+        pedidosService.crearPedidoCliente(1, {
+          idSuc: 1,
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 1, cantidad: 1 }],
+        }),
       ).rejects.toMatchObject({ status: 404 });
 
       // Inactivo
-      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, activoPro: false } as any);
+      jest
+        .spyOn(productoRepository, 'getProductoById')
+        .mockResolvedValueOnce({ ...dummyProducto, activoPro: false } as any);
       await expect(
-        pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
+        pedidosService.crearPedidoCliente(1, {
+          idSuc: 1,
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 1, cantidad: 1 }],
+        }),
       ).rejects.toMatchObject({ status: 409 });
 
       // Precio inválido
-      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, precioVentaPro: -1 } as any);
+      jest
+        .spyOn(productoRepository, 'getProductoById')
+        .mockResolvedValueOnce({ ...dummyProducto, precioVentaPro: -1 } as any);
       await expect(
-        pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 1 }] }),
+        pedidosService.crearPedidoCliente(1, {
+          idSuc: 1,
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 1, cantidad: 1 }],
+        }),
       ).rejects.toMatchObject({ status: 409 });
 
       // Stock insuficiente
-      jest.spyOn(productoRepository, 'getProductoById').mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 1 } as any);
+      jest
+        .spyOn(productoRepository, 'getProductoById')
+        .mockResolvedValueOnce({ ...dummyProducto, existenciaPro: 1 } as any);
       await expect(
-        pedidosService.crearPedidoCliente(1, { idSuc: 1, uuidPedido: '11111111-1111-4111-8111-111111111111', items: [{ idPro: 1, cantidad: 10 }] }),
+        pedidosService.crearPedidoCliente(1, {
+          idSuc: 1,
+          uuidPedido: '11111111-1111-4111-8111-111111111111',
+          items: [{ idPro: 1, cantidad: 10 }],
+        }),
       ).rejects.toMatchObject({ status: 409 });
     });
 
     it('debe crear pedido exitosamente', async () => {
-      jest.spyOn(configuracionRepository, 'getConfiguracion').mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
+      jest
+        .spyOn(configuracionRepository, 'getConfiguracion')
+        .mockResolvedValue({ idConfiguracion: 1, idSuc: 1, banco: 'B', titular: 'T', activo: true } as any);
       jest.spyOn(productoRepository, 'getProductoById').mockResolvedValue(dummyProducto as any);
       jest.spyOn(pedidoRepository, 'createPedido').mockResolvedValue({ idPedido: 100 } as any);
       jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValue({ id: 'enc100', total: 40 } as any);
@@ -219,7 +263,9 @@ describe('PedidosService Complete Branch Coverage', () => {
         estado: 'PENDIENTE_PAGO',
       } as any);
       jest.spyOn(pedidoRepository, 'cancelarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'CANCELADO' } as any);
-      jest.spyOn(pedidosService, 'obtenerPedidoSeguro').mockResolvedValueOnce({ id: 'enc1', estado: 'CANCELADO' } as any);
+      jest
+        .spyOn(pedidosService, 'obtenerPedidoSeguro')
+        .mockResolvedValueOnce({ id: 'enc1', estado: 'CANCELADO' } as any);
 
       const cancelado = await pedidosService.cancelarPedidoCliente(1, 1);
       expect(cancelado?.estado).toBe('CANCELADO');
@@ -286,18 +332,22 @@ describe('PedidosService Complete Branch Coverage', () => {
       await expect(pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 404 });
 
       // Estado no en revisión
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([{ idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any]);
       await expect(pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Motivo')).rejects.toMatchObject({ status: 409 });
 
       // Éxito
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'EN_REVISION', comprobanteRuta: 'comprobantes/foto.jpg' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([
+          { idPedido: 1, idCliente: 1, estado: 'EN_REVISION', comprobanteRuta: 'comprobantes/foto.jpg' } as any,
+        ]);
       jest.spyOn(pedidoRepository, 'rechazarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'RECHAZADO' } as any);
       jest.spyOn(storageService, 'eliminarArchivo').mockResolvedValueOnce();
-      jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'RECHAZADO' } as any);
+      jest
+        .spyOn(pedidosService, 'obtenerPedidoAdmin')
+        .mockResolvedValueOnce({ id: 'enc1', estado: 'RECHAZADO' } as any);
 
       const res = await pedidosService.rechazarPedidoAdmin(1, 1, 1, 'Comprobante ilegible');
       expect(res).toBeDefined();
@@ -311,21 +361,21 @@ describe('PedidosService Complete Branch Coverage', () => {
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 404 });
 
       // Ya aprobado
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([{ idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any]);
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409 });
 
       // Estado no en revisión
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([{ idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO' } as any]);
       await expect(pedidosService.aprobarPedidoAdmin(1, 1, 1)).rejects.toMatchObject({ status: 409 });
 
       // Éxito
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'EN_REVISION' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([{ idPedido: 1, idCliente: 1, estado: 'EN_REVISION' } as any]);
       jest.spyOn(pedidoRepository, 'aprobarPedido').mockResolvedValueOnce({ idPedido: 1, estado: 'PAGADO' } as any);
       jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'PAGADO' } as any);
 
@@ -373,16 +423,20 @@ describe('PedidosService Complete Branch Coverage', () => {
     });
 
     it('cambiarEstadoOperativo validaciones y transiciones', async () => {
-      await expect(pedidosService.cambiarEstadoOperativo(0, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({ status: 400 });
+      await expect(pedidosService.cambiarEstadoOperativo(0, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({
+        status: 400,
+      });
 
       // No encontrado
       jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([]);
-      await expect(pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({ status: 404 });
+      await expect(pedidosService.cambiarEstadoOperativo(1, 1, 'PAGADO', 'LISTO')).rejects.toMatchObject({
+        status: 404,
+      });
 
       // Éxito
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValueOnce([
-        { idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValueOnce([{ idPedido: 1, idCliente: 1, estado: 'PAGADO' } as any]);
       jest.spyOn(pedidoRepository, 'updateEstado').mockResolvedValueOnce({ idPedido: 1, estado: 'LISTO' } as any);
       jest.spyOn(pedidosService, 'obtenerPedidoAdmin').mockResolvedValueOnce({ id: 'enc1', estado: 'LISTO' } as any);
 
@@ -391,15 +445,15 @@ describe('PedidosService Complete Branch Coverage', () => {
     });
 
     it('listarPedidosCliente y listarPedidosAdmin', async () => {
-      jest.spyOn(pedidoRepository, 'listPedidosCliente').mockResolvedValue([
-        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosCliente')
+        .mockResolvedValue([{ idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any]);
       const listaCliente = await pedidosService.listarPedidosCliente(1);
       expect(listaCliente.length).toBe(1);
 
-      jest.spyOn(pedidoRepository, 'listPedidosAdmin').mockResolvedValue([
-        { idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any,
-      ]);
+      jest
+        .spyOn(pedidoRepository, 'listPedidosAdmin')
+        .mockResolvedValue([{ idPedido: 1, idCliente: 1, estado: 'PENDIENTE_PAGO', totalPedido: 50 } as any]);
       const listaAdmin = await pedidosService.listarPedidosAdmin(1);
       expect(listaAdmin.length).toBe(1);
     });

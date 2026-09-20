@@ -8,18 +8,15 @@
     class="w-full flex items-center justify-between text-left transition-all duration-200 outline-none group select-none"
     [ngClass]="[
       compact ? 'py-2 px-3 text-xs rounded-lg' : 'py-3 px-4 text-sm rounded-xl',
-      isModalOpen ? 'ring-2 ring-primary/20 border-primary bg-surface-container-lowest shadow-sm' : 'border border-outline-variant/30 bg-surface-container hover:border-outline-variant/60 focus:border-primary',
-      disabled ? 'opacity-50 cursor-not-allowed bg-surface-variant/40' : 'cursor-pointer'
+      isModalOpen
+        ? 'ring-2 ring-primary/20 border-primary bg-surface-container-lowest shadow-sm'
+        : 'border border-outline-variant/30 bg-surface-container hover:border-outline-variant/60 focus:border-primary',
+      disabled ? 'opacity-50 cursor-not-allowed bg-surface-variant/40' : 'cursor-pointer',
     ]"
   >
     <div class="flex items-center gap-2.5 overflow-hidden truncate">
-      <span class="material-symbols-outlined text-lg text-primary/80 shrink-0">
-        calendar_today
-      </span>
-      <span
-        class="truncate"
-        [ngClass]="selectedLabel ? 'text-on-surface font-medium' : 'text-on-surface-variant/60'"
-      >
+      <span class="material-symbols-outlined text-lg text-primary/80 shrink-0"> calendar_today </span>
+      <span class="truncate" [ngClass]="selectedLabel ? 'text-on-surface font-medium' : 'text-on-surface-variant/60'">
         {{ selectedLabel || placeholder }}
       </span>
     </div>
@@ -36,9 +33,7 @@
       </span>
 
       <!-- Expand indicator -->
-      <span
-        class="material-symbols-outlined text-xl text-on-surface-variant/70 transition-transform duration-200"
-      >
+      <span class="material-symbols-outlined text-xl text-on-surface-variant/70 transition-transform duration-200">
         calendar_month
       </span>
     </div>
@@ -53,7 +48,9 @@
     [backdropDismiss]="true"
   >
     <ng-template>
-      <div class="bg-surface-container-lowest rounded-[28px] shadow-2xl border border-surface-variant/30 overflow-hidden flex flex-col font-sans p-4 sm:p-5">
+      <div
+        class="bg-surface-container-lowest rounded-[28px] shadow-2xl border border-surface-variant/30 overflow-hidden flex flex-col font-sans p-4 sm:p-5"
+      >
         <!-- Header -->
         <div class="flex items-center justify-between pb-3 mb-2 border-b border-surface-variant/20">
           <div class="flex items-center gap-2.5">
@@ -79,7 +76,10 @@
         </div>
 
         <!-- Quick Shortcuts -->
-        <div *ngIf="showShortcuts" class="flex items-center justify-between gap-1.5 p-1 mb-2 bg-surface-container/60 rounded-xl border border-surface-variant/20">
+        <div
+          *ngIf="showShortcuts"
+          class="flex items-center justify-between gap-1.5 p-1 mb-2 bg-surface-container/60 rounded-xl border border-surface-variant/20"
+        >
           <button
             type="button"
             (click)="setToday($event)"

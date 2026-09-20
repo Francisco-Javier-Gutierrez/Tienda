@@ -17,22 +17,29 @@ export const itemVentaSchema = z.preprocess(
     }),
     id: z.union([z.string(), z.number()]).optional(),
     productoId: z.union([z.string(), z.number()]).optional(),
-    cantidad: z.number().int({ message: 'La cantidad debe ser un entero' }).positive({ message: 'La cantidad debe ser mayor a cero' }),
-  })
+    cantidad: z
+      .number()
+      .int({ message: 'La cantidad debe ser un entero' })
+      .positive({ message: 'La cantidad debe ser mayor a cero' }),
+  }),
 );
 
 export const crearVentaSchema = z
   .object({
     uuidVenta: z.string().min(10, { message: 'El identificador uuidVenta no es válido' }),
-    metodoPago: z.enum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA'], {
-      message: 'Método de pago debe ser EFECTIVO, TARJETA o TRANSFERENCIA',
+    metodoPago: z.enum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'FIADO'], {
+      message: 'Método de pago debe ser EFECTIVO, TARJETA, TRANSFERENCIA o FIADO',
     }),
+    idCliente: z.union([z.number(), z.string()]).optional().nullable(),
+    clienteNombre: z.string().max(200).optional().nullable(),
     montoRecibido: z.union([z.number(), z.string()]).optional().nullable(),
     items: z.array(itemVentaSchema).default([]),
     nota: z.string().max(500).optional().nullable(),
     montoNota: z.union([z.number(), z.string()]).optional().nullable(),
   })
-  .refine(
-    (data) => (Array.isArray(data.items) && data.items.length > 0) || Number(data.montoNota || 0) > 0,
-    { message: 'La venta debe contener al menos un producto o un importe adicional' }
-  );
+  .refine((data) => (Array.isArray(data.items) && data.items.length > 0) || Number(data.montoNota || 0) > 0, {
+    message: 'La venta debe contener al menos un producto o un importe adicional',
+  })
+  .refine((data) => data.metodoPago !== 'FIADO' || Boolean(data.idCliente), {
+    message: 'Para ventas a crédito (FIADO) es obligatorio seleccionar un cliente',
+  });

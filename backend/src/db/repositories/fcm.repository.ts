@@ -55,9 +55,7 @@ export class FcmRepository {
 
   async eliminarToken(usuarioId: number, tipoUsuario: 'CLIENTE' | 'EMPLEADO', token: string): Promise<void> {
     const key =
-      tipoUsuario === 'CLIENTE'
-        ? Keys.fcmTokenCliente(usuarioId, token)
-        : Keys.fcmTokenEmpleado(usuarioId, token);
+      tipoUsuario === 'CLIENTE' ? Keys.fcmTokenCliente(usuarioId, token) : Keys.fcmTokenEmpleado(usuarioId, token);
 
     await docClient.send(
       new DeleteCommand({

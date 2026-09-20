@@ -19,9 +19,7 @@ describe('AuthService', () => {
 
     it('debe rechazar credenciales inválidas con 401', async () => {
       jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValue(null);
-      await expect(
-        authService.loginEmpleado('noexiste@correo.com', 'password123'),
-      ).rejects.toMatchObject({
+      await expect(authService.loginEmpleado('noexiste@correo.com', 'password123')).rejects.toMatchObject({
         status: 401,
         message: 'Correo o contraseña incorrectos',
       });
@@ -42,9 +40,7 @@ describe('AuthService', () => {
         cargo: 'CAJERO',
       });
 
-      await expect(
-        authService.loginEmpleado('cajero@tienda.com', 'WrongPassword'),
-      ).rejects.toMatchObject({
+      await expect(authService.loginEmpleado('cajero@tienda.com', 'WrongPassword')).rejects.toMatchObject({
         status: 401,
         message: 'Correo o contraseña incorrectos',
       });
@@ -65,9 +61,7 @@ describe('AuthService', () => {
         cargo: 'CAJERO',
       });
 
-      await expect(
-        authService.loginEmpleado('cajero@tienda.com', 'CorrectPassword123'),
-      ).rejects.toMatchObject({
+      await expect(authService.loginEmpleado('cajero@tienda.com', 'CorrectPassword123')).rejects.toMatchObject({
         status: 403,
         message: 'Tu cuenta está desactivada',
       });
@@ -88,9 +82,7 @@ describe('AuthService', () => {
         cargo: 'LIMPIEZA',
       });
 
-      await expect(
-        authService.loginEmpleado('limpieza@tienda.com', 'CorrectPassword123'),
-      ).rejects.toMatchObject({
+      await expect(authService.loginEmpleado('limpieza@tienda.com', 'CorrectPassword123')).rejects.toMatchObject({
         status: 403,
         message: 'Tu cuenta no tiene un cargo autorizado',
       });
@@ -162,7 +154,10 @@ describe('AuthService', () => {
         estadoEmp: false,
         cargoNombre: 'ADMINISTRADOR',
       });
-      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta está desactivada' });
+      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({
+        status: 403,
+        message: 'Tu cuenta está desactivada',
+      });
 
       // Sin cargo autorizado
       jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce({
@@ -177,7 +172,10 @@ describe('AuthService', () => {
         cargoNombre: 'OTRO',
         cargo: 'OTRO',
       });
-      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta no tiene un cargo autorizado' });
+      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({
+        status: 403,
+        message: 'Tu cuenta no tiene un cargo autorizado',
+      });
 
       // Sub mismatch
       jest.spyOn(authRepository, 'findEmpleadoByEmail').mockResolvedValueOnce({
@@ -193,7 +191,10 @@ describe('AuthService', () => {
         cargo: 'ADMINISTRADOR',
         googleSub: 'otro-sub',
       } as any);
-      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({ status: 403, message: 'Esta cuenta Google no coincide con la cuenta vinculada' });
+      await expect(authService.googleAuthEmpleado('tok')).rejects.toMatchObject({
+        status: 403,
+        message: 'Esta cuenta Google no coincide con la cuenta vinculada',
+      });
     });
 
     it('debe autenticar exitosamente y vincular googleSub si no estaba vinculado', async () => {
@@ -287,7 +288,10 @@ describe('AuthService', () => {
         estadoCliente: false,
         googleSub: 'sub-cli-1',
       });
-      await expect(authService.googleAuthCliente('tok')).rejects.toMatchObject({ status: 403, message: 'Tu cuenta de cliente está desactivada' });
+      await expect(authService.googleAuthCliente('tok')).rejects.toMatchObject({
+        status: 403,
+        message: 'Tu cuenta de cliente está desactivada',
+      });
     });
 
     it('debe autenticar o registrar automáticamente cliente mediante Google', async () => {

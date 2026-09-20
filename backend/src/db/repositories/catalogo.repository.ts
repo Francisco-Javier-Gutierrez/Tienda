@@ -74,7 +74,11 @@ export class CatalogoRepository {
     return item;
   }
 
-  async updateCategoria(idCat: number, data: { nombreCat?: string; descripCat?: string }, idSuc = 1): Promise<CategoriaEntity | null> {
+  async updateCategoria(
+    idCat: number,
+    data: { nombreCat?: string; descripCat?: string },
+    idSuc = 1,
+  ): Promise<CategoriaEntity | null> {
     const existing = await this.getCategoriaById(idCat, idSuc);
     if (!existing) return null;
     const updated: CategoriaEntity = {
@@ -110,7 +114,10 @@ export class CatalogoRepository {
       }),
     );
     if (checkProds.Items && checkProds.Items.length > 0) {
-      throw errorFuncional('No se puede eliminar la categoría porque contiene productos asociados (Restricción ON DELETE RESTRICT)', 409);
+      throw errorFuncional(
+        'No se puede eliminar la categoría porque contiene productos asociados (Restricción ON DELETE RESTRICT)',
+        409,
+      );
     }
 
     await docClient.send(
@@ -171,7 +178,11 @@ export class CatalogoRepository {
     return item;
   }
 
-  async updateMarca(idMarca: number, data: { nombreMarca?: string; descripMarca?: string }, idSuc = 1): Promise<MarcaEntity | null> {
+  async updateMarca(
+    idMarca: number,
+    data: { nombreMarca?: string; descripMarca?: string },
+    idSuc = 1,
+  ): Promise<MarcaEntity | null> {
     const existing = await this.getMarcaById(idMarca, idSuc);
     if (!existing) return null;
     const updated: MarcaEntity = {
@@ -210,7 +221,10 @@ export class CatalogoRepository {
       }),
     );
     if (checkProds.Items && checkProds.Items.length > 0) {
-      throw errorFuncional('No se puede eliminar la marca porque contiene productos asociados (Restricción ON DELETE RESTRICT)', 409);
+      throw errorFuncional(
+        'No se puede eliminar la marca porque contiene productos asociados (Restricción ON DELETE RESTRICT)',
+        409,
+      );
     }
 
     await docClient.send(

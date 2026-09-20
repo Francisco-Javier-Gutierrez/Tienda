@@ -1,8 +1,4 @@
-import {
-  BaseStorageDriver,
-  LocalStorageDriver,
-  StorageService,
-} from '../../src/services/storage.service';
+import { BaseStorageDriver, LocalStorageDriver, StorageService } from '../../src/services/storage.service';
 import { PresignedUploadOptions, PresignedUploadResult } from '../../src/config/s3';
 
 class MemoryStorageDriver extends BaseStorageDriver {

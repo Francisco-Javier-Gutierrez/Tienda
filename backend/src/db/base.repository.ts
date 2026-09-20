@@ -1,10 +1,4 @@
-import {
-  GetCommand,
-  QueryCommand,
-  PutCommand,
-  DeleteCommand,
-  TransactWriteCommand,
-} from '@aws-sdk/lib-dynamodb';
+import { GetCommand, QueryCommand, PutCommand, DeleteCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient, TABLE_NAME } from './dynamo.client';
 import { errorFuncional } from '../utils/formatters';
 
@@ -40,10 +34,7 @@ export interface ITransactionalRepository {
 /**
  * Contrato completo compuesto para repositorios que requieren lectura, escritura y transacciones.
  */
-export interface IRepository<T>
-  extends IReadOnlyRepository<T>,
-    IWriteOnlyRepository<T>,
-    ITransactionalRepository {}
+export interface IRepository<T> extends IReadOnlyRepository<T>, IWriteOnlyRepository<T>, ITransactionalRepository {}
 
 /**
  * BaseDynamoRepository: Supertipo abstracto para repositorios en AWS DynamoDB Single-Table.
@@ -75,11 +66,7 @@ export abstract class BaseDynamoRepository<T> implements IRepository<T> {
   /**
    * Consulta registros utilizando expresión de condición de clave (GSI o clave principal).
    */
-  async queryItems(
-    keyCondition: string,
-    values: Record<string, any>,
-    options?: QueryOptions,
-  ): Promise<T[]> {
+  async queryItems(keyCondition: string, values: Record<string, any>, options?: QueryOptions): Promise<T[]> {
     const res = await docClient.send(
       new QueryCommand({
         TableName: this.tableName,

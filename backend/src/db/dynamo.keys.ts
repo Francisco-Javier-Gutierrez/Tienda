@@ -80,6 +80,16 @@ export const Keys = {
     SK: `MOVIMIENTO#${idMovimiento}`,
   }),
 
+  merma: (idSuc: number, idMerma: number) => ({
+    PK: `SUC#${idSuc}`,
+    SK: `MERMA#${idMerma}`,
+  }),
+
+  movimientoCuenta: (idCliente: number, idMov: number) => ({
+    PK: `CLI#${idCliente}`,
+    SK: `MOV_CUENTA#${idMov}`,
+  }),
+
   fcmTokenCliente: (idCliente: number, token: string) => ({
     PK: `CLI#${idCliente}`,
     SK: `FCM#${token}`,
@@ -95,4 +105,3 @@ export const Keys = {
     SK: operation,
   }),
 };
-

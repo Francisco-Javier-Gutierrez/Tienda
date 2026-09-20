@@ -13,4 +13,3 @@ router.get('/:id', autenticar, rolesPos, ventasController.detalle.bind(ventasCon
 router.post('/:id/cancelar', autenticar, soloAdmin, ventasController.cancelar.bind(ventasController));
 
 export const ventasRoutes = router;
-

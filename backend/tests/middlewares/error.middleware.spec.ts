@@ -1,9 +1,5 @@
 import { Request, Response } from 'express';
-import {
-  errorServidor,
-  globalErrorHandler,
-  notFoundHandler,
-} from '../../src/middlewares/error.middleware';
+import { errorServidor, globalErrorHandler, notFoundHandler } from '../../src/middlewares/error.middleware';
 
 describe('Error Handling Middlewares', () => {
   let mockReq: Partial<Request>;

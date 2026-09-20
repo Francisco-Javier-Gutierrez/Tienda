@@ -55,7 +55,9 @@ export class UploadsService implements IUploadsService {
       }
       const idEmp = idValido(payload.sub);
       const emp = idEmp ? await this.authRepo.findEmpleadoById(idEmp) : null;
-      const esAdmin = Boolean(emp && emp.estadoEmp && (emp.cargoNombre === 'ADMINISTRADOR' || emp.cargo === 'ADMINISTRADOR'));
+      const esAdmin = Boolean(
+        emp && emp.estadoEmp && (emp.cargoNombre === 'ADMINISTRADOR' || emp.cargo === 'ADMINISTRADOR'),
+      );
 
       if (!esAdmin) {
         throw errorFuncional('Solo los administradores pueden subir imágenes de productos o tienda', 403);

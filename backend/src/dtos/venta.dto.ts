@@ -5,9 +5,9 @@ export const normalizarDetalleVenta = (d: any) => {
   const prodId = encodeId(d.idPro || d.productoId || d.id);
   const cantidad = Number(d.cantidadDetVenta ?? d.cantidad ?? 0);
   const precioUnitario = Number(d.precioUnitarioDetVenta ?? d.precioUnitario ?? 0);
-  const subtotal = Number(d.subtotalDetVenta ?? d.subtotal ?? (cantidad * precioUnitario));
+  const subtotal = Number(d.subtotalDetVenta ?? d.subtotal ?? cantidad * precioUnitario);
   const costoUnitario = Number(d.costoUnitario ?? d.costoPro ?? d.costo ?? 0);
-  const ganancia = Number((subtotal - (costoUnitario * cantidad)).toFixed(2));
+  const ganancia = Number((subtotal - costoUnitario * cantidad).toFixed(2));
   const margenPorcentaje = subtotal > 0 ? Number(((ganancia / subtotal) * 100).toFixed(1)) : 0;
 
   return {
@@ -43,12 +43,21 @@ export const toVentaRegistradaDto = (v: any, empleado?: any) => {
     nota: v.nota || null,
     montoNota: v.montoNota !== null && v.montoNota !== undefined ? Number(v.montoNota) : null,
     metodoPago: v.metodoPago,
-    montoRecibido: v.montoRecibido !== null && v.montoRecibido !== undefined ? Number(v.montoRecibido) : (v.pagoCon !== undefined ? Number(v.pagoCon) : null),
+    montoRecibido:
+      v.montoRecibido !== null && v.montoRecibido !== undefined
+        ? Number(v.montoRecibido)
+        : v.pagoCon !== undefined
+          ? Number(v.pagoCon)
+          : null,
     cambio: Number(v.cambio || 0),
     estado: v.estadoVenta || 'COMPLETADA',
-    cajero: { 
-      id: encodeId(Number(v.idEmp)), 
-      nombre: empleado ? empleadoSeguro(empleado).nombre : (v.empleado ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ') : null)
+    cajero: {
+      id: encodeId(Number(v.idEmp)),
+      nombre: empleado
+        ? empleadoSeguro(empleado).nombre
+        : v.empleado
+          ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
+          : null,
     },
     items: (v.detalles || v.items)?.map(normalizarDetalleVenta) || [],
   };
@@ -59,7 +68,7 @@ export const toVentaListDto = (v: any) => {
   const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
+    : v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null);
 
   const ventaId = encodeId(v.idVenta);
   return {
@@ -84,13 +93,15 @@ export const toVentaListDto = (v: any) => {
 
 export const toVentaDetalleDto = (v: any) => {
   if (!v) return null;
-  
+
   const origen = (v.pedidos && v.pedidos.length > 0) || v.origen === 'ONLINE' || v.idPedido ? 'ONLINE' : 'POS';
   const cajeroStr = v.empleado
     ? [v.empleado.nombreEmp, v.empleado.apellidoPatEmp, v.empleado.apellidoMatEmp].filter(Boolean).join(' ')
-    : (v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null));
+    : v.empleadoNombre || (origen === 'ONLINE' ? 'Pedido Online' : null);
   const canceladorStr = v.empleadoCancela
-    ? [v.empleadoCancela.nombreEmp, v.empleadoCancela.apellidoPatEmp, v.empleadoCancela.apellidoMatEmp].filter(Boolean).join(' ')
+    ? [v.empleadoCancela.nombreEmp, v.empleadoCancela.apellidoPatEmp, v.empleadoCancela.apellidoMatEmp]
+        .filter(Boolean)
+        .join(' ')
     : null;
 
   const ventaId = encodeId(v.idVenta);
@@ -108,10 +119,15 @@ export const toVentaDetalleDto = (v: any) => {
     nota: v.nota || null,
     montoNota: v.montoNota !== null && v.montoNota !== undefined ? Number(v.montoNota) : null,
     metodoPago: v.metodoPago || 'EFECTIVO',
-    montoRecibido: v.montoRecibido !== null && v.montoRecibido !== undefined ? Number(v.montoRecibido) : (v.pagoCon !== undefined ? Number(v.pagoCon) : null),
+    montoRecibido:
+      v.montoRecibido !== null && v.montoRecibido !== undefined
+        ? Number(v.montoRecibido)
+        : v.pagoCon !== undefined
+          ? Number(v.pagoCon)
+          : null,
     cambio: Number(v.cambio || 0),
     estado: v.estadoVenta || 'COMPLETADA',
-    fechaCancelacion: v.fechaCancelacion?.toISOString ? v.fechaCancelacion.toISOString() : (v.fechaCancelacion || null),
+    fechaCancelacion: v.fechaCancelacion?.toISOString ? v.fechaCancelacion.toISOString() : v.fechaCancelacion || null,
     motivoCancelacion: v.motivoCancelacion || null,
     cajeroCancela: canceladorStr,
     sucursal: v.sucursal?.nombreSuc || v.nombreSuc || 'Doña paty',

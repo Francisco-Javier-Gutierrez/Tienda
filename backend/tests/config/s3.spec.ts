@@ -32,9 +32,9 @@ describe('S3 Configuration & Helper Utilities', () => {
 
   describe('extraerKeyS3', () => {
     it('debe extraer la key relativa desde URLs completas de S3', () => {
-      expect(
-        extraerKeyS3('https://mi-bucket.s3.us-east-1.amazonaws.com/productos/foto.jpg?param=1'),
-      ).toBe('productos/foto.jpg');
+      expect(extraerKeyS3('https://mi-bucket.s3.us-east-1.amazonaws.com/productos/foto.jpg?param=1')).toBe(
+        'productos/foto.jpg',
+      );
       expect(extraerKeyS3('comprobantes/abc.pdf')).toBe('comprobantes/abc.pdf');
       expect(extraerKeyS3('tienda/logo.png')).toBe('tienda/logo.png');
     });
@@ -78,7 +78,11 @@ describe('S3 Configuration & Helper Utilities', () => {
     });
 
     it('debe generar URL pre-firmada de descarga con y sin opciones', async () => {
-      const url1 = await generarPresignedDownload('comprobantes/comprobante-1.pdf', 'comprobante.pdf', 'application/pdf');
+      const url1 = await generarPresignedDownload(
+        'comprobantes/comprobante-1.pdf',
+        'comprobante.pdf',
+        'application/pdf',
+      );
       expect(url1).toBe('https://s3.amazonaws.com/mock-signed-url');
 
       const url2 = await generarPresignedDownload('comprobantes/comprobante-2.pdf');

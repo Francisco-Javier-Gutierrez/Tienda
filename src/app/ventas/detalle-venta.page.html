@@ -1,17 +1,27 @@
-<app-admin-shell menuId="admin-sale-detail-menu" contentId="sale-detail-main" activeSection="ventas" customTitle="Detalle de venta">
+<app-admin-shell
+  menuId="admin-sale-detail-menu"
+  contentId="sale-detail-main"
+  activeSection="ventas"
+  customTitle="Detalle de venta"
+>
   <div header-actions class="flex items-center gap-2">
-    <a routerLink="/ventas" class="flex items-center gap-1 text-xs font-sans font-semibold text-primary hover:bg-surface-container-high px-3 py-1.5 rounded-full transition-colors active:scale-95">
+    <a
+      routerLink="/ventas"
+      class="flex items-center gap-1 text-xs font-sans font-semibold text-primary hover:bg-surface-container-high px-3 py-1.5 rounded-full transition-colors active:scale-95"
+    >
       <span class="material-symbols-outlined text-[18px]">arrow_back</span>
       <span>Volver</span>
     </a>
-    <a routerLink="/cajero" class="flex items-center gap-1 text-xs font-sans font-semibold bg-primary text-on-primary px-3 py-1.5 rounded-full hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+    <a
+      routerLink="/cajero"
+      class="flex items-center gap-1 text-xs font-sans font-semibold bg-primary text-on-primary px-3 py-1.5 rounded-full hover:bg-primary-container transition-colors shadow-sm active:scale-95"
+    >
       <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
       <span class="hidden sm:inline">Punto de venta</span>
     </a>
   </div>
 
   <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-6 pb-24 print:hidden">
-
     <!-- Skeleton durante carga -->
     <div class="space-y-6 animate-pulse" *ngIf="cargando">
       <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 space-y-4">
@@ -20,19 +30,26 @@
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-40"></div>
-          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-64"></div>
+          <div
+            class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-40"
+          ></div>
+          <div
+            class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-64"
+          ></div>
         </div>
         <div class="space-y-6">
-          <div class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-48"></div>
+          <div
+            class="bg-surface-container-lowest rounded-[24px] p-6 shadow-sm border border-surface-variant/30 h-48"
+          ></div>
         </div>
       </div>
     </div>
 
     <ng-container *ngIf="!cargando && venta as v">
-      
       <!-- Encabezado de la venta -->
-      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30">
+      <header
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30"
+      >
         <div>
           <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1">
             {{ v.origen === 'ONLINE' ? 'Pedido online' : 'Venta en caja' }}
@@ -41,7 +58,10 @@
             <h1 class="font-heading font-bold text-2xl md:text-3xl text-primary font-mono tracking-wide">
               Folio #{{ formatearFolio(v.id) }}
             </h1>
-            <span class="font-mono text-xs text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-surface-variant/30 select-all" [title]="'ID completo: ' + v.id">
+            <span
+              class="font-mono text-xs text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg border border-surface-variant/30 select-all"
+              [title]="'ID completo: ' + v.id"
+            >
               ID: {{ v.id }}
             </span>
           </div>
@@ -62,14 +82,22 @@
         </div>
 
         <div class="flex flex-col sm:items-end gap-2 shrink-0">
-          <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
-                [ngClass]="{
+          <span
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
+            [ngClass]="{
                   'bg-error-container text-on-error-container': v.estado === 'CANCELADA',
                   'bg-amber-100 text-amber-800 border border-amber-300/60': v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' || v.estado === 'EN_REVISION',
                   'bg-tertiary-fixed text-tertiary': v.estado === 'COMPLETADA' || (!v.estado)
-                }">
-            <span class="material-symbols-outlined text-[16px]">{{ v.estado === 'CANCELADA' ? 'cancel' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' || v.estado === 'EN_REVISION' ? 'pending' : 'check_circle') }}</span>
-            <span>{{ v.estado === 'CANCELADA' ? 'Cancelada' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' ? 'Pendiente' : (v.estado === 'EN_REVISION' ? 'En revisión' : 'Completada')) }}</span>
+                }"
+          >
+            <span class="material-symbols-outlined text-[16px]"
+              >{{ v.estado === 'CANCELADA' ? 'cancel' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' ||
+              v.estado === 'EN_REVISION' ? 'pending' : 'check_circle') }}</span
+            >
+            <span
+              >{{ v.estado === 'CANCELADA' ? 'Cancelada' : (v.estado === 'PENDIENTE' || v.estado === 'PENDIENTE_PAGO' ?
+              'Pendiente' : (v.estado === 'EN_REVISION' ? 'En revisión' : 'Completada')) }}</span
+            >
           </span>
           <div class="text-left sm:text-right">
             <span class="font-sans text-[11px] text-on-surface-variant block">Total de la venta</span>
@@ -81,14 +109,19 @@
       </header>
 
       <!-- Banner de Cancelación si aplica -->
-      <section *ngIf="v.estado === 'CANCELADA'" class="bg-error-container/30 border border-error-container rounded-[24px] p-5 md:p-6 text-on-error-container space-y-3 shadow-sm">
+      <section
+        *ngIf="v.estado === 'CANCELADA'"
+        class="bg-error-container/30 border border-error-container rounded-[24px] p-5 md:p-6 text-on-error-container space-y-3 shadow-sm"
+      >
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-error-container text-error flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined text-lg">warning</span>
           </div>
           <div>
             <h2 class="font-heading font-bold text-base text-error">Esta venta fue cancelada</h2>
-            <p class="font-sans text-xs text-on-surface-variant">Los productos fueron devueltos automáticamente al inventario disponible.</p>
+            <p class="font-sans text-xs text-on-surface-variant">
+              Los productos fueron devueltos automáticamente al inventario disponible.
+            </p>
           </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-error-container/40 text-xs">
@@ -109,15 +142,19 @@
 
       <!-- Layout Principal en Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
         <!-- Columna Izquierda: Metadatos y Productos (2 cols) -->
         <div class="lg:col-span-2 space-y-6">
-
           <!-- Métricas de Pago / Origen -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-xl">{{ v.origen === 'ONLINE' ? 'shopping_bag' : 'storefront' }}</span>
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0"
+              >
+                <span class="material-symbols-outlined text-xl"
+                  >{{ v.origen === 'ONLINE' ? 'shopping_bag' : 'storefront' }}</span
+                >
               </div>
               <div class="min-w-0">
                 <span class="font-sans text-[11px] text-on-surface-variant block truncate">Origen</span>
@@ -127,10 +164,15 @@
               </div>
             </div>
 
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0">
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0"
+              >
                 <span class="material-symbols-outlined text-xl">
-                  {{ v.metodoPago === 'EFECTIVO' ? 'payments' : (v.metodoPago === 'TARJETA' ? 'credit_card' : 'phone_android') }}
+                  {{ v.metodoPago === 'EFECTIVO' ? 'payments' : (v.metodoPago === 'TARJETA' ? 'credit_card' :
+                  (v.metodoPago === 'FIADO' ? 'menu_book' : 'phone_android')) }}
                 </span>
               </div>
               <div class="min-w-0">
@@ -141,8 +183,12 @@
               </div>
             </div>
 
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0">
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-tertiary-fixed text-tertiary flex items-center justify-center shrink-0"
+              >
                 <span class="material-symbols-outlined text-xl">wallet</span>
               </div>
               <div class="min-w-0">
@@ -153,8 +199,12 @@
               </div>
             </div>
 
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0">
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0"
+              >
                 <span class="material-symbols-outlined text-xl">change_circle</span>
               </div>
               <div class="min-w-0">
@@ -168,8 +218,12 @@
 
           <!-- Métricas de Ganancia y Margen -->
           <div *ngIf="v.ganancia !== undefined && v.ganancia !== null" class="grid grid-cols-2 gap-3">
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0">
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-tertiary-container/30 text-tertiary flex items-center justify-center shrink-0"
+              >
                 <span class="material-symbols-outlined text-xl">trending_up</span>
               </div>
               <div class="min-w-0">
@@ -180,8 +234,12 @@
               </div>
             </div>
 
-            <div class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0">
+            <div
+              class="bg-surface-container-lowest rounded-[20px] p-4 shadow-sm border border-surface-variant/30 flex items-center gap-3"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0"
+              >
                 <span class="material-symbols-outlined text-xl">percent</span>
               </div>
               <div class="min-w-0">
@@ -194,13 +252,20 @@
           </div>
 
           <!-- Nota Adicional / Extras -->
-          <div *ngIf="v.nota || (v.montoNota && v.montoNota > 0)" class="bg-primary/5 border border-primary/20 rounded-[20px] p-4 text-xs font-sans text-on-surface flex items-start justify-between gap-3 shadow-sm">
+          <div
+            *ngIf="v.nota || (v.montoNota && v.montoNota > 0)"
+            class="bg-primary/5 border border-primary/20 rounded-[20px] p-4 text-xs font-sans text-on-surface flex items-start justify-between gap-3 shadow-sm"
+          >
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <div
+                class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5"
+              >
                 <span class="material-symbols-outlined text-[18px]">sticky_note_2</span>
               </div>
               <div>
-                <span class="font-bold text-primary block text-xs uppercase tracking-wider mb-0.5">Nota adicional / Extras sin código</span>
+                <span class="font-bold text-primary block text-xs uppercase tracking-wider mb-0.5"
+                  >Nota adicional / Extras sin código</span
+                >
                 <p class="text-on-surface text-sm">{{ v.nota || 'Artículo adicional' }}</p>
               </div>
             </div>
@@ -210,30 +275,43 @@
           </div>
 
           <!-- Artículos Vendidos -->
-          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+          <section
+            class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+          >
             <div class="flex items-center justify-between border-b border-surface-variant/20 pb-3">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
                   <span class="material-symbols-outlined text-lg">inventory_2</span>
                 </div>
                 <div>
-                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Detalle</span>
+                  <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block"
+                    >Detalle</span
+                  >
                   <h2 class="font-heading font-bold text-base text-on-surface">Artículos en esta venta</h2>
                 </div>
               </div>
-              <span class="font-sans text-xs text-on-surface-variant font-medium bg-surface-container px-3 py-1 rounded-full">
+              <span
+                class="font-sans text-xs text-on-surface-variant font-medium bg-surface-container px-3 py-1 rounded-full"
+              >
                 {{ v.items.length }} {{ v.items.length === 1 ? 'artículo' : 'artículos' }}
               </span>
             </div>
 
             <div class="divide-y divide-surface-variant/20">
-              <article *ngFor="let item of v.items" class="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+              <article
+                *ngFor="let item of v.items"
+                class="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+              >
                 <div class="flex items-center gap-3.5 min-w-0">
-                  <div class="w-10 h-10 rounded-xl bg-surface-container-low border border-surface-variant/30 flex items-center justify-center shrink-0 text-outline">
+                  <div
+                    class="w-10 h-10 rounded-xl bg-surface-container-low border border-surface-variant/30 flex items-center justify-center shrink-0 text-outline"
+                  >
                     <span class="material-symbols-outlined text-xl">package_2</span>
                   </div>
                   <div class="min-w-0">
-                    <strong class="font-sans font-semibold text-sm text-on-surface block truncate">{{ item.nombre }}</strong>
+                    <strong class="font-sans font-semibold text-sm text-on-surface block truncate"
+                      >{{ item.nombre }}</strong
+                    >
                     <span class="font-sans text-xs text-on-surface-variant">
                       {{ item.cantidad }} × {{ item.precioUnitario | currency:'MXN' }} c/u
                     </span>
@@ -251,25 +329,25 @@
                 <span class="font-sans text-xs text-on-surface-variant block">Importe liquidado</span>
                 <span class="font-heading font-bold text-base text-on-surface">Total</span>
               </div>
-              <strong class="font-heading font-bold text-2xl text-primary">
-                {{ v.total | currency:'MXN' }}
-              </strong>
+              <strong class="font-heading font-bold text-2xl text-primary"> {{ v.total | currency:'MXN' }} </strong>
             </footer>
           </section>
-
         </div>
 
         <!-- Columna Derecha: Acciones de Comprobante y Zona de Peligro (1 col) -->
         <div class="space-y-6">
-
           <!-- Acciones de Comprobante / Ticket -->
-          <section class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4">
+          <section
+            class="bg-surface-container-lowest rounded-[24px] p-5 md:p-6 shadow-sm border border-surface-variant/30 space-y-4"
+          >
             <div class="flex items-center gap-2.5 border-b border-surface-variant/20 pb-3">
               <div class="w-8 h-8 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center">
                 <span class="material-symbols-outlined text-lg">receipt_long</span>
               </div>
               <div>
-                <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block">Comprobante</span>
+                <span class="font-sans font-semibold text-[11px] text-primary/70 uppercase tracking-wider block"
+                  >Comprobante</span
+                >
                 <h2 class="font-heading font-bold text-base text-on-surface">Ticket de compra</h2>
               </div>
             </div>
@@ -286,6 +364,15 @@
               >
                 <span class="material-symbols-outlined text-[18px]">print</span>
                 <span>Ver / Imprimir ticket</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="enviarWhatsApp()"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-bold text-xs py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span class="material-symbols-outlined text-[18px]">chat</span>
+                <span>Enviar ticket por WhatsApp</span>
               </button>
 
               <button
@@ -318,7 +405,9 @@
                 <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
               </div>
               <div>
-                <span class="font-sans font-semibold text-[11px] text-error uppercase tracking-wider block">Administración</span>
+                <span class="font-sans font-semibold text-[11px] text-error uppercase tracking-wider block"
+                  >Administración</span
+                >
                 <h2 class="font-heading font-bold text-base text-on-surface">Cancelar esta venta</h2>
               </div>
             </div>
@@ -336,13 +425,9 @@
               <span>Cancelar venta</span>
             </button>
           </section>
-
         </div>
-
       </div>
-
     </ng-container>
-
   </div>
 
   <!-- =========================================
@@ -352,9 +437,7 @@
     <h2>{{ v.sucursal || 'Tienda de abarrotes' }}</h2>
     <div class="ticket-divider"></div>
     <strong>COMPROBANTE DE COMPRA</strong>
-    <h3 class="ticket-cancelled" *ngIf="v.estado === 'CANCELADA'">
-      *** VENTA CANCELADA ***
-    </h3>
+    <h3 class="ticket-cancelled" *ngIf="v.estado === 'CANCELADA'">*** VENTA CANCELADA ***</h3>
     <p>Folio: {{ v.id }}</p>
     <p>{{ v.fecha }} · {{ v.hora }}</p>
     <p>Cajero: {{ obtenerNombreCajero(v.cajero) }}</p>
@@ -383,7 +466,7 @@
 
     <ng-container *ngIf="v.nota || (v.montoNota && v.montoNota > 0)">
       <div class="ticket-divider"></div>
-      <p style="font-size: 11px; font-style: italic;">
+      <p style="font-size: 11px; font-style: italic">
         Extra: {{ v.nota || 'Artículo adicional sin código' }}
         <span *ngIf="v.montoNota && v.montoNota > 0"> ({{ v.montoNota | currency:'MXN' }})</span>
       </p>
@@ -408,7 +491,9 @@
         <span class="material-symbols-outlined text-amber-600 text-xl shrink-0 mt-0.5">info</span>
         <div class="text-xs font-sans space-y-1">
           <p class="font-bold">Esta acción no elimina el registro de la venta.</p>
-          <p class="text-amber-800">La venta se marcará como CANCELADA y todos sus productos volverán automáticamente al inventario.</p>
+          <p class="text-amber-800">
+            La venta se marcará como CANCELADA y todos sus productos volverán automáticamente al inventario.
+          </p>
         </div>
       </div>
 

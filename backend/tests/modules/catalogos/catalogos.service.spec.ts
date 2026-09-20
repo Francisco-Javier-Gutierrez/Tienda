@@ -1,7 +1,4 @@
-import {
-  catalogosService,
-  validarSucursal,
-} from '../../../src/modules/catalogos/catalogos.service';
+import { catalogosService, validarSucursal } from '../../../src/modules/catalogos/catalogos.service';
 import { catalogoRepository } from '../../../src/db/repositories/catalogo.repository';
 import { sucursalRepository } from '../../../src/db/repositories/sucursal.repository';
 
@@ -67,9 +64,9 @@ describe('CatalogosService', () => {
 
   describe('Categorías', () => {
     it('debe listar y crear categorías', async () => {
-      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([
-        { idCat: 1, idSuc: 1, nombreCat: 'Bebidas', descripCat: 'Refrescos y jugos' },
-      ]);
+      jest
+        .spyOn(catalogoRepository, 'listCategorias')
+        .mockResolvedValue([{ idCat: 1, idSuc: 1, nombreCat: 'Bebidas', descripCat: 'Refrescos y jugos' }]);
 
       const cats = await catalogosService.listarCategorias();
       expect(cats[0]?.nombre).toBe('Bebidas');
@@ -125,12 +122,12 @@ describe('CatalogosService', () => {
       expect(validarSucursal({ nombreSuc: 'Central', correoSuc: 'correo-invalido' })).toBe(
         'El correo no tiene un formato válido',
       );
-      expect(
-        validarSucursal({ nombreSuc: 'Central', paginaWebSuc: 'ftp://invalido.com' }),
-      ).toBe('La página web debe usar http o https');
-      expect(
-        validarSucursal({ nombreSuc: 'Central', paginaWebSuc: 'no-es-url' }),
-      ).toBe('La página web no es una URL válida');
+      expect(validarSucursal({ nombreSuc: 'Central', paginaWebSuc: 'ftp://invalido.com' })).toBe(
+        'La página web debe usar http o https',
+      );
+      expect(validarSucursal({ nombreSuc: 'Central', paginaWebSuc: 'no-es-url' })).toBe(
+        'La página web no es una URL válida',
+      );
       expect(
         validarSucursal({
           nombreSuc: 'Central',
@@ -188,7 +185,9 @@ describe('CatalogosService', () => {
 
     it('crearSucursal y actualizarSucursal', async () => {
       jest.spyOn(sucursalRepository, 'create').mockResolvedValue({ idSuc: 1, nombreSuc: 'Suc 1' });
-      jest.spyOn(catalogosService, 'obtenerSucursal').mockResolvedValue({ id: 'enc1', idSuc: 1, nombreSuc: 'Suc 1' } as any);
+      jest
+        .spyOn(catalogosService, 'obtenerSucursal')
+        .mockResolvedValue({ id: 'enc1', idSuc: 1, nombreSuc: 'Suc 1' } as any);
 
       const creada = await catalogosService.crearSucursal({ nombreSuc: 'Suc 1' });
       expect(creada?.id).toBeDefined();
@@ -224,19 +223,27 @@ describe('CatalogosService', () => {
         status: 404,
       });
 
-      jest.spyOn(catalogosService, 'obtenerSucursal')
+      jest
+        .spyOn(catalogosService, 'obtenerSucursal')
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/old.png' } as any)
         .mockResolvedValueOnce({ id: 'enc1', idSuc: 1, logoSuc: 'https://example.com/logo.png' } as any);
 
-      jest.spyOn(sucursalRepository, 'updateLogo').mockResolvedValue({ idSuc: 1, logoSuc: 'https://example.com/logo.png' } as any);
+      jest
+        .spyOn(sucursalRepository, 'updateLogo')
+        .mockResolvedValue({ idSuc: 1, logoSuc: 'https://example.com/logo.png' } as any);
 
       const res = await catalogosService.confirmarLogo(1, 'https://example.com/logo.png');
       expect(res?.id).toBeDefined();
 
       // Confirmar con key s3
-      jest.spyOn(catalogosService, 'obtenerSucursal')
+      jest
+        .spyOn(catalogosService, 'obtenerSucursal')
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: null } as any)
-        .mockResolvedValueOnce({ id: 'enc1', idSuc: 1, logo: 'https://bucket.s3.region.amazonaws.com/tienda/key.png' } as any);
+        .mockResolvedValueOnce({
+          id: 'enc1',
+          idSuc: 1,
+          logo: 'https://bucket.s3.region.amazonaws.com/tienda/key.png',
+        } as any);
 
       const res2 = await catalogosService.confirmarLogo(1, 'tienda/key.png');
       expect(res2?.id).toBeDefined();
@@ -248,7 +255,8 @@ describe('CatalogosService', () => {
         status: 404,
       });
 
-      jest.spyOn(catalogosService, 'obtenerSucursal')
+      jest
+        .spyOn(catalogosService, 'obtenerSucursal')
         .mockResolvedValueOnce({ idSuc: 1, logoSuc: '/uploads/tienda/logo.png' } as any)
         .mockResolvedValueOnce({ idSuc: 1, logo: null } as any);
 
@@ -269,9 +277,9 @@ describe('CatalogosService', () => {
     });
 
     it('listarTiendaPublica debe retornar sucursales públicas', async () => {
-      jest.spyOn(sucursalRepository, 'getPublic').mockResolvedValue([
-        { idSuc: 1, nombreSuc: 'Matriz', descripcionSuc: 'Tienda principal', logoSuc: null },
-      ]);
+      jest
+        .spyOn(sucursalRepository, 'getPublic')
+        .mockResolvedValue([{ idSuc: 1, nombreSuc: 'Matriz', descripcionSuc: 'Tienda principal', logoSuc: null }]);
 
       const tiendas = await catalogosService.listarTiendaPublica();
       expect(tiendas.length).toBe(1);

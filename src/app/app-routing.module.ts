@@ -80,6 +80,18 @@ const routes: Routes = [
     path: 'productos',
     loadChildren: () => import('./productos/productos.module').then((m) => m.ProductosPageModule),
   },
+  {
+    path: 'mermas',
+    canActivate: [RoleGuard],
+    data: { roles: ['ADMINISTRADOR', 'CAJERO'] },
+    loadChildren: () => import('./mermas/mermas.module').then((m) => m.MermasPageModule),
+  },
+  {
+    path: 'fiados',
+    canActivate: [RoleGuard],
+    data: { roles: ['ADMINISTRADOR', 'CAJERO'] },
+    loadChildren: () => import('./fiados/fiados.module').then((m) => m.FiadosPageModule),
+  },
   { path: '**', redirectTo: 'login' },
 ];
 

@@ -26,9 +26,25 @@ router.get('/sucursal', autenticar, soloAdmin, catalogosController.listarSucursa
 router.get('/sucursal/:id', autenticar, soloAdmin, catalogosController.obtenerSucursal.bind(catalogosController));
 router.post('/sucursal', autenticar, soloAdmin, catalogosController.crearSucursal.bind(catalogosController));
 router.put('/sucursal/:id', autenticar, soloAdmin, catalogosController.actualizarSucursal.bind(catalogosController));
-router.post('/sucursal/:id/logo', autenticar, soloAdmin, uploadLogo.single('logo'), catalogosController.subirLogoLocal.bind(catalogosController));
-router.post('/sucursal/:id/presign-logo', autenticar, soloAdmin, catalogosController.presignLogo.bind(catalogosController));
-router.post('/sucursal/:id/confirmar-logo', autenticar, soloAdmin, catalogosController.confirmarLogo.bind(catalogosController));
+router.post(
+  '/sucursal/:id/logo',
+  autenticar,
+  soloAdmin,
+  uploadLogo.single('logo'),
+  catalogosController.subirLogoLocal.bind(catalogosController),
+);
+router.post(
+  '/sucursal/:id/presign-logo',
+  autenticar,
+  soloAdmin,
+  catalogosController.presignLogo.bind(catalogosController),
+);
+router.post(
+  '/sucursal/:id/confirmar-logo',
+  autenticar,
+  soloAdmin,
+  catalogosController.confirmarLogo.bind(catalogosController),
+);
 router.delete('/sucursal/:id/logo', autenticar, soloAdmin, catalogosController.eliminarLogo.bind(catalogosController));
 
 // Cargos

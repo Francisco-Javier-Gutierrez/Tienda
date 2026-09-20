@@ -36,11 +36,7 @@ export interface IPresignedDownloadService {
 }
 
 export interface IFileDeletionService {
-  eliminarArchivo(
-    rutaOKey?: string | null,
-    directorioLocal?: string,
-    prefijoLocal?: string,
-  ): Promise<void>;
+  eliminarArchivo(rutaOKey?: string | null, directorioLocal?: string, prefijoLocal?: string): Promise<void>;
 }
 
 export interface IComprobanteInspectorService {
@@ -60,7 +56,8 @@ export interface IFileMetadataValidator {
  * Contrato compuesto de alto nivel para almacenamiento completo.
  */
 export interface IStorageService
-  extends IPresignedUploadService,
+  extends
+    IPresignedUploadService,
     IPresignedDownloadService,
     IFileDeletionService,
     IComprobanteInspectorService,
@@ -124,7 +121,11 @@ export class S3CloudStorageDriver extends BaseStorageDriver {
     return generarPresignedUpload(opciones);
   }
 
-  async generarPresignedDownload(key: string, nombreArchivo?: string | null, mimeType?: string | null): Promise<string> {
+  async generarPresignedDownload(
+    key: string,
+    nombreArchivo?: string | null,
+    mimeType?: string | null,
+  ): Promise<string> {
     return generarPresignedDownload(key, nombreArchivo, mimeType);
   }
 
@@ -221,18 +222,18 @@ export class StorageService implements IStorageService {
   /**
    * Genera una URL prefirmada para descarga/visualización temporal segura (IPresignedDownloadService).
    */
-  async generarPresignedDownload(key: string, nombreArchivo?: string | null, mimeType?: string | null): Promise<string> {
+  async generarPresignedDownload(
+    key: string,
+    nombreArchivo?: string | null,
+    mimeType?: string | null,
+  ): Promise<string> {
     return this.cloudDriver.generarPresignedDownload(key, nombreArchivo, mimeType);
   }
 
   /**
    * Elimina un archivo ya sea que resida en el almacenamiento cloud o local (IFileDeletionService).
    */
-  async eliminarArchivo(
-    rutaOKey?: string | null,
-    directorioLocal?: string,
-    prefijoLocal?: string,
-  ): Promise<void> {
+  async eliminarArchivo(rutaOKey?: string | null, directorioLocal?: string, prefijoLocal?: string): Promise<void> {
     if (!rutaOKey) return;
 
     if (this.cloudDriver.puedeManejar(rutaOKey)) {

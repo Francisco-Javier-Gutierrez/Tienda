@@ -47,4 +47,3 @@ export function validarQuery(schema: ZodSchema) {
     }
   };
 }
-

@@ -154,6 +154,29 @@ export class TransferenciaPaymentStrategy extends BasePaymentStrategy {
 }
 
 /**
+ * Estrategia de pago para FIADO / CRÉDITO:
+ * Requiere que se indique el idCliente. El pago se registra por el monto total sin cambio.
+ */
+export class FiadoPaymentStrategy extends BasePaymentStrategy {
+  readonly metodo = 'FIADO';
+
+  override validarEntrada(body: any): void {
+    if (!body?.idCliente) {
+      throw errorFuncional('Para ventas a crédito (FIADO) es obligatorio seleccionar un cliente', 400);
+    }
+  }
+
+  protected override calcularPago(totalVenta: number, _body: any): PaymentResult {
+    return {
+      metodoPago: this.metodo,
+      pagoCon: Number(totalVenta.toFixed(2)),
+      cambio: 0,
+      montoRecibidoDb: null,
+    };
+  }
+}
+
+/**
  * Registro de estrategias de pago: Cumple OCP y LSP permitiendo registrar nuevos métodos
  * de pago (ej. SPEI, Vales, Stripe, PayPal) que heredan de BasePaymentStrategy
  * garantizando total sustituibilidad.
@@ -165,6 +188,7 @@ export class PaymentStrategyRegistry {
     this.register(new EfectivoPaymentStrategy());
     this.register(new TarjetaPaymentStrategy());
     this.register(new TransferenciaPaymentStrategy());
+    this.register(new FiadoPaymentStrategy());
   }
 
   register(strategy: IPaymentStrategy): this {
@@ -173,7 +197,9 @@ export class PaymentStrategyRegistry {
   }
 
   get(metodo: string): IPaymentStrategy {
-    const normalizado = String(metodo || '').trim().toUpperCase();
+    const normalizado = String(metodo || '')
+      .trim()
+      .toUpperCase();
     const strategy = this.strategies.get(normalizado);
     if (!strategy) {
       throw errorFuncional('El método de pago no es válido', 400);
@@ -182,7 +208,9 @@ export class PaymentStrategyRegistry {
   }
 
   has(metodo: string): boolean {
-    const normalizado = String(metodo || '').trim().toUpperCase();
+    const normalizado = String(metodo || '')
+      .trim()
+      .toUpperCase();
     return this.strategies.has(normalizado);
   }
 

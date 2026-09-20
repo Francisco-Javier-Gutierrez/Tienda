@@ -1,10 +1,4 @@
-import {
-  dineroCentavos,
-  errorFuncional,
-  idValido,
-  texto,
-  uuidValido,
-} from '../../utils/formatters';
+import { dineroCentavos, errorFuncional, idValido, texto, uuidValido } from '../../utils/formatters';
 import { toVentaRegistradaDto, toVentaListDto, toVentaDetalleDto } from '../../dtos/venta.dto';
 import { cajaRepository } from '../../db/repositories/caja.repository';
 import { productoRepository } from '../../db/repositories/producto.repository';
@@ -85,7 +79,10 @@ export class VentasService implements IVentasService {
       const prod = await this.prodRepo.getProductoById(idPro, empleado?.idSuc || 1);
       if (!prod) throw errorFuncional('El producto no existe', 404);
       if (prod.existenciaPro < cantidad) {
-        throw errorFuncional(`Existencias insuficientes para "${prod.nombrePro}". Disponibles: ${prod.existenciaPro}`, 409);
+        throw errorFuncional(
+          `Existencias insuficientes para "${prod.nombrePro}". Disponibles: ${prod.existenciaPro}`,
+          409,
+        );
       }
       const precio = Number(prod.precioVentaPro);
       const costo = Number(prod.costoPro || 0);
@@ -117,6 +114,8 @@ export class VentasService implements IVentasService {
       idSuc: empleado?.idSuc || 1,
       idEmp: empleado?.idEmp || 1,
       idSesionCaja: caja.idSesionCaja,
+      idCliente: body.idCliente ? idValido(body.idCliente) : null,
+      clienteNombre: body.clienteNombre || null,
       totalVenta: totalCalculado,
       costoTotal: costoTotalCalculado,
       ganancia,
@@ -156,9 +155,12 @@ export class VentasService implements IVentasService {
       }
       const totalVenta = Number(v.totalVenta ?? v.total ?? 0);
       const ganancia = v.ganancia !== undefined ? Number(v.ganancia) : Number((totalVenta - costoTotal).toFixed(2));
-      const margenPorcentaje = v.margenPorcentaje !== undefined 
-        ? Number(v.margenPorcentaje) 
-        : (totalVenta > 0 ? Number(((ganancia / totalVenta) * 100).toFixed(1)) : 0);
+      const margenPorcentaje =
+        v.margenPorcentaje !== undefined
+          ? Number(v.margenPorcentaje)
+          : totalVenta > 0
+            ? Number(((ganancia / totalVenta) * 100).toFixed(1))
+            : 0;
 
       return {
         ...v,
@@ -191,9 +193,12 @@ export class VentasService implements IVentasService {
     }
     const totalVenta = Number(v.totalVenta ?? v.total ?? 0);
     const ganancia = v.ganancia !== undefined ? Number(v.ganancia) : Number((totalVenta - costoTotal).toFixed(2));
-    const margenPorcentaje = v.margenPorcentaje !== undefined 
-      ? Number(v.margenPorcentaje) 
-      : (totalVenta > 0 ? Number(((ganancia / totalVenta) * 100).toFixed(1)) : 0);
+    const margenPorcentaje =
+      v.margenPorcentaje !== undefined
+        ? Number(v.margenPorcentaje)
+        : totalVenta > 0
+          ? Number(((ganancia / totalVenta) * 100).toFixed(1))
+          : 0;
 
     return toVentaDetalleDto({
       ...v,

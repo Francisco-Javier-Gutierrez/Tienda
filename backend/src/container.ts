@@ -5,6 +5,8 @@ import { pedidoRepository } from './db/repositories/pedido.repository';
 import { ventaRepository } from './db/repositories/venta.repository';
 import { configuracionRepository } from './db/repositories/configuracion.repository';
 import { authRepository } from './db/repositories/auth.repository';
+import { mermaRepository } from './db/repositories/merma.repository';
+import { fiadoRepository } from './db/repositories/fiado.repository';
 
 export const TOKENS = {
   StorageService: 'IStorageService',
@@ -14,11 +16,15 @@ export const TOKENS = {
   VentaRepository: 'IVentaRepository',
   ConfiguracionRepository: 'IConfiguracionRepository',
   AuthRepository: 'IAuthRepository',
+  MermaRepository: 'IMermaRepository',
+  FiadoRepository: 'IFiadoRepository',
   ProductosService: 'IProductosService',
   PedidosService: 'IPedidosService',
   VentasService: 'IVentasService',
   UploadsService: 'IUploadsService',
   CajaService: 'ICajaService',
+  MermasService: 'IMermasService',
+  FiadosService: 'IFiadosService',
 } as const;
 
 /**
@@ -81,6 +87,8 @@ appContainer.register(TOKENS.PedidoRepository, pedidoRepository);
 appContainer.register(TOKENS.VentaRepository, ventaRepository);
 appContainer.register(TOKENS.ConfiguracionRepository, configuracionRepository);
 appContainer.register(TOKENS.AuthRepository, authRepository);
+appContainer.register(TOKENS.MermaRepository, mermaRepository);
+appContainer.register(TOKENS.FiadoRepository, fiadoRepository);
 
 // Inicializar servicios en el contenedor mediante factories perezosas
 appContainer.registerFactory(TOKENS.ProductosService, () => {
@@ -102,4 +110,12 @@ appContainer.registerFactory(TOKENS.UploadsService, () => {
 appContainer.registerFactory(TOKENS.CajaService, () => {
   const { cajaService } = require('./modules/caja/caja.service');
   return cajaService;
+});
+appContainer.registerFactory(TOKENS.MermasService, () => {
+  const { mermasService } = require('./modules/mermas/mermas.service');
+  return mermasService;
+});
+appContainer.registerFactory(TOKENS.FiadosService, () => {
+  const { fiadosService } = require('./modules/fiados/fiados.service');
+  return fiadosService;
 });

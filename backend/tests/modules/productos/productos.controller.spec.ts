@@ -78,10 +78,14 @@ describe('ProductosController', () => {
 
     // Error en base de datos al guardar imagen
     jest.spyOn(productosService, 'actualizarImagenLocal').mockRejectedValueOnce(new Error('DB Error'));
-    await expect(productosController.subirImagenLocal(mockReq as Request, mockRes as Response)).rejects.toThrow('DB Error');
+    await expect(productosController.subirImagenLocal(mockReq as Request, mockRes as Response)).rejects.toThrow(
+      'DB Error',
+    );
 
     // Éxito
-    jest.spyOn(productosService, 'actualizarImagenLocal').mockResolvedValueOnce({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' } as any);
+    jest
+      .spyOn(productosService, 'actualizarImagenLocal')
+      .mockResolvedValueOnce({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' } as any);
 
     await productosController.subirImagenLocal(mockReq as Request, mockRes as Response);
     expect(mockRes.json).toHaveBeenCalledWith({ idPro: 1, imagenPro: '/uploads/productos/foto.jpg' });

@@ -8,7 +8,9 @@
   (didPresent)="onModalPresented()"
 >
   <div class="p-4 md:p-6 space-y-4">
-    <section class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4">
+    <section
+      class="bg-surface-container-lowest rounded-[24px] p-5 shadow-sm border border-surface-variant/30 space-y-4"
+    >
       <div>
         <label
           for="catalogo-nombre-input"
@@ -21,7 +23,7 @@
           #nombreInput
           id="catalogo-nombre-input"
           class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all relative z-10 select-text"
-          style="pointer-events: auto !important; -webkit-user-select: text !important; user-select: text !important;"
+          style="pointer-events: auto !important; -webkit-user-select: text !important; user-select: text !important"
           [class.border-error]="!!errorNombre"
           type="text"
           placeholder="Nombre..."
@@ -44,7 +46,7 @@
           #descInput
           id="catalogo-desc-input"
           class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 font-sans text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y min-h-[100px] relative z-10 select-text"
-          style="pointer-events: auto !important; -webkit-user-select: text !important; user-select: text !important;"
+          style="pointer-events: auto !important; -webkit-user-select: text !important; user-select: text !important"
           placeholder="Descripción opcional..."
           [(ngModel)]="descripcion"
         ></textarea>

@@ -5,6 +5,7 @@ import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { VentaDetalle } from '../models/venta';
 import { AuthService } from '../services/auth.service';
+import { DialogService } from '../services/dialog.service';
 import { ImagenesService } from '../services/imagenes.service';
 import { TicketService } from '../services/ticket.service';
 import { VentaService } from '../services/venta.service';
@@ -26,6 +27,7 @@ export class DetalleVentaPage implements OnInit {
   private api = inject(VentaService);
   private imagenes = inject(ImagenesService);
   private toast = inject(ToastController);
+  private dialog = inject(DialogService);
   ngOnInit(): void {
     void this.cargar();
   }
@@ -93,6 +95,24 @@ export class DetalleVentaPage implements OnInit {
       } catch {
         await this.feedback('No fue posible compartir el comprobante.', 'danger');
       }
+  }
+  async enviarWhatsApp(): Promise<void> {
+    if (!this.venta) return;
+    const telefono = await this.dialog.prompt({
+      title: 'Enviar Ticket por WhatsApp',
+      message:
+        'Ingresa el número celular del cliente (10 dígitos) o presiona Enviar para elegir el contacto en WhatsApp:',
+      placeholder: 'Ej. 7771234567 (opcional)',
+      confirmText: 'Abrir WhatsApp',
+      cancelText: 'Cancelar',
+      type: 'info',
+      icon: 'chat',
+    });
+
+    if (telefono !== null) {
+      await this.ticket.compartirPorWhatsApp(this.venta, telefono);
+      await this.feedback('Abriendo WhatsApp con el ticket...', 'success');
+    }
   }
   imagen(ruta: string | null): string | null {
     return this.imagenes.resolver(ruta);

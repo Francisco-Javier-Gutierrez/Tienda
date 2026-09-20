@@ -1,0 +1,515 @@
+<app-admin-shell menuId="admin-fiados-menu" contentId="admin-fiados-content" activeSection="fiados">
+  <div class="p-4 md:p-6 max-w-6xl mx-auto pb-32 flex flex-col gap-6">
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <span class="font-sans font-semibold text-xs text-primary/70 uppercase tracking-widest block mb-1"
+          >Cuentas por Cobrar</span
+        >
+        <h1 class="font-heading font-bold text-3xl text-primary mb-1">La Libreta de Fiados</h1>
+        <p class="font-sans text-sm text-on-surface-variant">
+          Control de créditos a vecinos, registro de abonos a caja y recordatorios amables por WhatsApp.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="abrirModalNuevoCliente()"
+        class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary font-sans font-semibold text-sm px-5 py-3 rounded-2xl shadow-sm transition-all active:scale-95 shrink-0"
+      >
+        <span class="material-symbols-outlined text-[20px]">person_add</span>
+        <span>Nuevo Vecino / Cuenta</span>
+      </button>
+    </header>
+
+    <!-- METRICS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" *ngIf="resumen">
+      <!-- Total Deuda -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-error mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Total por Cobrar</span
+          >
+          <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-error">{{ moneda(resumen.totalDeuda) }}</div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Saldo acumulado en la calle</span>
+      </div>
+
+      <!-- Total Deudores -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-amber-600 mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Cuentas con Saldo</span
+          >
+          <span class="material-symbols-outlined text-2xl">group</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-on-surface">
+          {{ resumen.totalDeudores }} <span class="text-sm font-normal text-on-surface-variant">vecinos</span>
+        </div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Personas con fiado activo</span>
+      </div>
+
+      <!-- Deuda Promedio -->
+      <div
+        class="bg-surface-container-lowest border border-surface-variant/30 rounded-2xl p-5 flex flex-col justify-between shadow-xs"
+      >
+        <div class="flex items-center justify-between text-primary mb-2">
+          <span class="font-sans font-semibold text-xs tracking-wider uppercase text-on-surface-variant"
+            >Saldo Promedio</span
+          >
+          <span class="material-symbols-outlined text-2xl">analytics</span>
+        </div>
+        <div class="font-heading font-extrabold text-2xl text-primary">{{ moneda(resumen.deudaPromedio) }}</div>
+        <span class="font-sans text-xs text-on-surface-variant mt-1">Promedio adeudado por cliente</span>
+      </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="bg-surface-container-lowest p-4 rounded-2xl border border-surface-variant/30 shadow-xs">
+      <div class="relative w-full">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+        <input
+          class="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-12 pr-4 text-on-surface font-sans text-sm placeholder:text-outline-variant/80 focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+          placeholder="Buscar por nombre del vecino o teléfono celular..."
+          type="text"
+          [(ngModel)]="filtroBusqueda"
+        />
+      </div>
+    </div>
+
+    <!-- SKELETON LOADER -->
+    <div class="flex flex-col gap-3" *ngIf="cargando">
+      <article
+        *ngFor="let i of [1,2,3,4]"
+        class="bg-surface-container-lowest rounded-2xl p-4 border border-surface-variant/30 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-4 w-full">
+          <ion-skeleton-text
+            animated
+            style="width: 48px; height: 48px; border-radius: 12px; margin: 0"
+          ></ion-skeleton-text>
+          <div class="flex flex-col gap-2 flex-grow">
+            <ion-skeleton-text animated style="width: 40%; height: 16px; border-radius: 4px"></ion-skeleton-text>
+            <ion-skeleton-text animated style="width: 60%; height: 12px; border-radius: 4px"></ion-skeleton-text>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- LISTA VACÍA -->
+    <section
+      class="flex flex-col items-center justify-center py-16 text-center bg-surface-container-lowest rounded-2xl shadow-xs border border-surface-variant/30"
+      *ngIf="!cargando && deudoresFiltrados.length === 0"
+    >
+      <span class="material-symbols-outlined text-6xl text-primary/30 mb-4">menu_book</span>
+      <h2 class="font-heading font-bold text-xl text-on-surface mb-2">
+        {{ deudores.length ? 'No encontramos coincidencias' : '¡La libreta está limpia!' }}
+      </h2>
+      <p class="text-on-surface-variant font-sans text-sm mb-6 max-w-md mx-auto">
+        {{ deudores.length ? 'Intenta con otro nombre o teléfono.' : 'No hay vecinos con deudas pendientes de cobro en
+        este momento.' }}
+      </p>
+    </section>
+
+    <!-- LISTA DE DEUDORES -->
+    <div class="flex flex-col gap-3" *ngIf="!cargando && deudoresFiltrados.length > 0">
+      <article
+        *ngFor="let d of deudoresFiltrados"
+        class="bg-surface-container-lowest rounded-2xl p-4 md:p-5 shadow-xs border border-surface-variant/30 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow"
+      >
+        <!-- Info del vecino -->
+        <div class="flex items-start gap-4">
+          <div
+            class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-heading font-extrabold text-lg shrink-0"
+          >
+            {{ (d.nombre || 'V')[0].toUpperCase() }}
+          </div>
+
+          <div class="flex flex-col">
+            <h3 class="font-sans font-bold text-base text-on-surface">{{ d.nombreCompleto || d.nombre }}</h3>
+
+            <div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant mt-1">
+              <span *ngIf="d.telefono" class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px] text-emerald-600">call</span>
+                {{ d.telefono }}
+              </span>
+
+              <span
+                *ngIf="d.limiteCredito"
+                class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded text-[11px]"
+              >
+                Límite: {{ moneda(d.limiteCredito) }}
+              </span>
+
+              <span *ngIf="d.ultimoCargo" class="text-on-surface-variant/70 text-[11px]">
+                Última compra: {{ formatearFecha(d.ultimoCargo) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saldo y Botones de Acción -->
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-4 border-t md:border-t-0 border-surface-variant/20 pt-3 md:pt-0"
+        >
+          <div class="flex flex-col md:items-end">
+            <span class="font-sans text-xs text-on-surface-variant">Saldo pendiente:</span>
+            <span class="font-heading font-extrabold text-2xl text-error leading-tight">
+              {{ moneda(d.saldoDeudor) }}
+            </span>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="flex items-center gap-2">
+            <!-- Botón Abonar -->
+            <button
+              type="button"
+              (click)="abrirModalAbono(d)"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-sans font-semibold text-xs px-3.5 py-2.5 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-[18px]">payments</span>
+              <span>Abonar</span>
+            </button>
+
+            <!-- Botón WhatsApp -->
+            <button
+              type="button"
+              (click)="enviarWhatsApp(d)"
+              class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-sans font-semibold text-xs px-3 py-2.5 rounded-xl transition-all active:scale-95 flex items-center gap-1"
+              title="Enviar recordatorio cortés por WhatsApp"
+            >
+              <span class="material-symbols-outlined text-[18px]">chat</span>
+              <span class="hidden sm:inline">WhatsApp</span>
+            </button>
+
+            <!-- Botón Historial / Estado de cuenta -->
+            <button
+              type="button"
+              (click)="verHistorial(d)"
+              class="p-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-colors active:scale-95"
+              title="Ver estado de cuenta y compras a crédito"
+            >
+              <span class="material-symbols-outlined text-[20px]">history</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</app-admin-shell>
+
+<!-- MODAL REGISTRAR ABONO -->
+<div
+  *ngIf="mostrarModalAbono && clienteAbono"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+>
+  <div
+    class="bg-surface-container-lowest rounded-3xl max-w-md w-full shadow-2xl border border-surface-variant/30 flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="p-6 pb-4 border-b border-surface-variant/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <div>
+          <h2 class="font-heading font-bold text-xl text-on-surface">Registrar Abono</h2>
+          <p class="font-sans text-xs text-on-surface-variant">{{ clienteAbono.nombreCompleto }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalAbono()"
+        class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-4">
+      <!-- Saldo actual card -->
+      <div
+        class="p-3 bg-surface-container rounded-xl flex items-center justify-between border border-surface-variant/20"
+      >
+        <span class="font-sans text-xs text-on-surface-variant">Deuda actual:</span>
+        <span class="font-heading font-bold text-lg text-error">{{ moneda(clienteAbono.saldoDeudor) }}</span>
+      </div>
+
+      <!-- Monto a abonar -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5">
+          Monto que entrega el cliente ($ MXN) *
+        </label>
+        <input
+          type="number"
+          min="1"
+          [(ngModel)]="montoAbono"
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-3 px-4 font-sans text-xl font-extrabold text-on-surface text-center focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <!-- Método de pago -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Forma de Pago * </label>
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            (click)="metodoPagoAbono = 'EFECTIVO'"
+            [class]="metodoPagoAbono === 'EFECTIVO' ? 'bg-primary text-on-primary font-bold text-xs py-2.5 rounded-xl' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs py-2.5 rounded-xl'"
+          >
+            💵 Efectivo
+          </button>
+          <button
+            type="button"
+            (click)="metodoPagoAbono = 'TRANSFERENCIA'"
+            [class]="metodoPagoAbono === 'TRANSFERENCIA' ? 'bg-primary text-on-primary font-bold text-xs py-2.5 rounded-xl' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs py-2.5 rounded-xl'"
+          >
+            📲 Transferencia
+          </button>
+          <button
+            type="button"
+            (click)="metodoPagoAbono = 'TARJETA'"
+            [class]="metodoPagoAbono === 'TARJETA' ? 'bg-primary text-on-primary font-bold text-xs py-2.5 rounded-xl' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-xs py-2.5 rounded-xl'"
+          >
+            💳 Tarjeta
+          </button>
+        </div>
+      </div>
+
+      <!-- Nota explicativa caja -->
+      <div
+        *ngIf="metodoPagoAbono === 'EFECTIVO'"
+        class="p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs flex items-center gap-2"
+      >
+        <span class="material-symbols-outlined text-[18px] shrink-0">info</span>
+        <span>El efectivo entrará como ingreso a tu turno activo de caja para cuadrar el corte.</span>
+      </div>
+
+      <!-- Concepto opcional -->
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5">
+          Notas o Concepto (opcional)
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="conceptoAbono"
+          placeholder="Ej. Dejó 100 pesos a cuenta..."
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+    </div>
+
+    <div class="p-6 pt-4 border-t border-surface-variant/20 flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="cerrarModalAbono()"
+        class="px-4 py-2.5 rounded-xl font-sans font-semibold text-sm text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="guardarAbono()"
+        [disabled]="guardandoAbono || !montoAbono || montoAbono <= 0"
+        class="px-6 py-2.5 rounded-xl font-sans font-semibold text-sm bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+      >
+        <span *ngIf="guardandoAbono" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+        <span>{{ guardandoAbono ? 'Guardando...' : 'Aplicar Abono' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO VECINO RÁPIDO -->
+<div
+  *ngIf="mostrarModalNuevoCliente"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+>
+  <div
+    class="bg-surface-container-lowest rounded-3xl max-w-md w-full shadow-2xl border border-surface-variant/30 flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="p-6 pb-4 border-b border-surface-variant/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined">person_add</span>
+        </div>
+        <div>
+          <h2 class="font-heading font-bold text-xl text-on-surface">Alta Rápida de Vecino</h2>
+          <p class="font-sans text-xs text-on-surface-variant">Solo nombre y WhatsApp para abrir libreta</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalNuevoCliente()"
+        class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Nombre(s) * </label>
+        <input
+          type="text"
+          [(ngModel)]="nuevoClienteNombre"
+          placeholder="Ej. Don Pepe / Señora Carmen"
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5"> Apellido (opcional) </label>
+        <input
+          type="text"
+          [(ngModel)]="nuevoClienteApellido"
+          placeholder="Ej. Pérez"
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5">
+          Celular / WhatsApp (10 dígitos) *
+        </label>
+        <input
+          type="tel"
+          maxlength="10"
+          [(ngModel)]="nuevoClienteTelefono"
+          placeholder="Ej. 7771234567"
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+
+      <div>
+        <label class="block font-sans font-semibold text-xs text-on-surface mb-1.5">
+          Límite de crédito máximo (opcional)
+        </label>
+        <input
+          type="number"
+          min="0"
+          [(ngModel)]="nuevoClienteLimite"
+          placeholder="Ej. 500 (vacío p/ ilimitado)"
+          class="w-full bg-surface-container border border-outline-variant/40 rounded-xl py-2.5 px-3 font-sans text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+    </div>
+
+    <div class="p-6 pt-4 border-t border-surface-variant/20 flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="cerrarModalNuevoCliente()"
+        class="px-4 py-2.5 rounded-xl font-sans font-semibold text-sm text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="guardarNuevoCliente()"
+        [disabled]="guardandoCliente || !nuevoClienteNombre.trim() || nuevoClienteTelefono.length < 10"
+        class="px-6 py-2.5 rounded-xl font-sans font-semibold text-sm bg-primary text-on-primary shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+      >
+        <span *ngIf="guardandoCliente" class="material-symbols-outlined animate-spin text-[18px]"
+          >progress_activity</span
+        >
+        <span>{{ guardandoCliente ? 'Guardando...' : 'Crear Cuenta' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESTADO DE CUENTA / HISTORIAL -->
+<div
+  *ngIf="mostrarModalHistorial && clienteHistorial"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+>
+  <div
+    class="bg-surface-container-lowest rounded-3xl max-w-lg w-full max-h-[85vh] overflow-hidden shadow-2xl border border-surface-variant/30 flex flex-col"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="p-6 pb-4 border-b border-surface-variant/20 flex items-center justify-between shrink-0">
+      <div>
+        <h2 class="font-heading font-bold text-xl text-on-surface">Estado de Cuenta</h2>
+        <p class="font-sans text-xs text-on-surface-variant">
+          {{ clienteHistorial.nombreCompleto }} · Saldo:
+          <strong class="text-error">{{ moneda(clienteHistorial.saldoDeudor) }}</strong>
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="cerrarModalHistorial()"
+        class="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+      >
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- Lista de movimientos -->
+    <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-3">
+      <div
+        *ngIf="cargandoHistorial"
+        class="py-8 text-center text-on-surface-variant text-sm flex items-center justify-center gap-2"
+      >
+        <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+        <span>Cargando movimientos...</span>
+      </div>
+
+      <div
+        *ngIf="!cargandoHistorial && movimientosHistorial.length === 0"
+        class="py-8 text-center text-on-surface-variant text-sm"
+      >
+        No hay compras a crédito ni abonos registrados para este cliente.
+      </div>
+
+      <article
+        *ngFor="let m of movimientosHistorial"
+        class="p-3.5 rounded-xl border flex items-center justify-between"
+        [class]="m.tipo === 'CARGO' ? 'bg-rose-50/50 border-rose-200/60' : 'bg-emerald-50/50 border-emerald-200/60'"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            [class]="m.tipo === 'CARGO' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'"
+          >
+            <span class="material-symbols-outlined text-[18px]">
+              {{ m.tipo === 'CARGO' ? 'shopping_cart' : 'payments' }}
+            </span>
+          </div>
+
+          <div class="flex flex-col">
+            <strong class="font-sans font-bold text-xs text-on-surface"> {{ m.concepto }} </strong>
+            <span class="font-sans text-[11px] text-on-surface-variant">
+              {{ formatearFecha(m.fechaHora) }} · {{ m.empleadoNombre }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-end">
+          <span
+            class="font-heading font-extrabold text-sm"
+            [class]="m.tipo === 'CARGO' ? 'text-error' : 'text-emerald-700'"
+          >
+            {{ m.tipo === 'CARGO' ? '+' : '-' }}{{ moneda(m.monto) }}
+          </span>
+          <span class="font-sans text-[10px] text-on-surface-variant"> Saldo: {{ moneda(m.saldoNuevo) }} </span>
+        </div>
+      </article>
+    </div>
+
+    <div class="p-4 border-t border-surface-variant/20 flex items-center justify-end shrink-0">
+      <button
+        type="button"
+        (click)="cerrarModalHistorial()"
+        class="px-5 py-2 rounded-xl font-sans font-semibold text-xs bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
+      >
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

@@ -39,13 +39,13 @@ describe('ProductosService', () => {
     });
 
     it('debe validar que precio y existencia sean positivos/válidos', () => {
-      expect(
-        validarProducto({ nombre: 'Item', precio: -1, existencia: 5, idMarca: 1, idCat: 1 }),
-      ).toBe('El precio de venta debe ser un número mayor o igual a cero');
+      expect(validarProducto({ nombre: 'Item', precio: -1, existencia: 5, idMarca: 1, idCat: 1 })).toBe(
+        'El precio de venta debe ser un número mayor o igual a cero',
+      );
 
-      expect(
-        validarProducto({ nombre: 'Item', precio: 10, existencia: -3, idMarca: 1, idCat: 1 }),
-      ).toBe('La existencia debe ser un entero mayor o igual a cero');
+      expect(validarProducto({ nombre: 'Item', precio: 10, existencia: -3, idMarca: 1, idCat: 1 })).toBe(
+        'La existencia debe ser un entero mayor o igual a cero',
+      );
     });
 
     it('debe validar costo y stock mínimo opcionales pero no negativos', () => {
@@ -73,13 +73,13 @@ describe('ProductosService', () => {
     });
 
     it('debe validar que idMarca e idCat sean válidos', () => {
-      expect(
-        validarProducto({ nombre: 'Item', precio: 10, existencia: 5, idMarca: 0, idCat: 1 }),
-      ).toBe('Selecciona una marca válida');
+      expect(validarProducto({ nombre: 'Item', precio: 10, existencia: 5, idMarca: 0, idCat: 1 })).toBe(
+        'Selecciona una marca válida',
+      );
 
-      expect(
-        validarProducto({ nombre: 'Item', precio: 10, existencia: 5, idMarca: 1, idCat: null }),
-      ).toBe('Selecciona una categoría válida');
+      expect(validarProducto({ nombre: 'Item', precio: 10, existencia: 5, idMarca: 1, idCat: null })).toBe(
+        'Selecciona una categoría válida',
+      );
     });
   });
 
@@ -129,12 +129,8 @@ describe('ProductosService', () => {
           activoPro: true,
         } as any,
       ]);
-      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([
-        { idMarca: 1, nombreMarca: 'Lala' } as any,
-      ]);
-      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([
-        { idCat: 1, nombreCat: 'Lácteos' } as any,
-      ]);
+      jest.spyOn(catalogoRepository, 'listMarcas').mockResolvedValue([{ idMarca: 1, nombreMarca: 'Lala' } as any]);
+      jest.spyOn(catalogoRepository, 'listCategorias').mockResolvedValue([{ idCat: 1, nombreCat: 'Lácteos' } as any]);
 
       const items = await productosService.listarAdmin();
       expect(items.length).toBe(1);
@@ -238,7 +234,14 @@ describe('ProductosService', () => {
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValue({ id: 'enc1', idPro: 1 } as any);
       jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue({ idPro: 99 } as any);
       await expect(
-        productosService.actualizar(1, { nombre: 'P', precio: 10, existencia: 1, idMarca: 1, idCat: 1, codigoQR: '123' }),
+        productosService.actualizar(1, {
+          nombre: 'P',
+          precio: 10,
+          existencia: 1,
+          idMarca: 1,
+          idCat: 1,
+          codigoQR: '123',
+        }),
       ).rejects.toMatchObject({ status: 409 });
 
       jest.spyOn(productoRepository, 'findByCodigoQR').mockResolvedValue(null);
@@ -268,7 +271,8 @@ describe('ProductosService', () => {
       jest.spyOn(productosService, 'obtenerProducto').mockResolvedValueOnce(null);
       await expect(productosService.confirmarImagen(1, 'key')).rejects.toMatchObject({ status: 404 });
 
-      jest.spyOn(productosService, 'obtenerProducto')
+      jest
+        .spyOn(productosService, 'obtenerProducto')
         .mockResolvedValueOnce({ id: 'enc10', idPro: 10, imagen: '/uploads/productos/antigua.jpg' } as any)
         .mockResolvedValueOnce({ id: 'enc10', idPro: 10, imagen: 'https://s3/productos/nueva.jpg' } as any);
       jest.spyOn(productoRepository, 'updateProducto').mockResolvedValue({ idPro: 10 } as any);
