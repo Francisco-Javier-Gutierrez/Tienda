@@ -99,7 +99,19 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   clienteFiadoSeleccionado: ClienteDeudor | null = null;
 
+  clienteFiadoSeleccionadoId: string | null = null;
+
   busquedaClienteFiado = '';
+
+  esVentaFiada = false;
+
+  get opcionesClientesFiado(): { id: string; label: string; nombre: string }[] {
+    return this.clientesFiado.map((c) => ({
+      id: String(c.id || c.idCliente),
+      label: `${c.nombreCompleto || c.nombre}${c.telefono ? ' · ' + c.telefono : ''}${c.saldoDeudor > 0 ? ' (Debe ' + this.moneda(c.saldoDeudor) + ')' : ' (Al corriente)'}`,
+      nombre: c.nombreCompleto || c.nombre,
+    }));
+  }
 
   /* =========================================
      ESTADOS DEL POS
@@ -245,7 +257,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (this.caja) {
-      await Promise.all([this.cargarProductos(), this.cargarMovimientos()]);
+      await Promise.all([this.cargarProductos(), this.cargarMovimientos(), this.cargarClientesFiado()]);
 
       this.enfocar();
     }
@@ -754,16 +766,19 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.notaAdicional = '';
     this.montoNotaAdicional = null;
     this.clienteFiadoSeleccionado = null;
+    this.clienteFiadoSeleccionadoId = null;
     this.busquedaClienteFiado = '';
+    this.esVentaFiada = false;
+    this.metodoPago = 'EFECTIVO';
   }
 
   abrirModalCobro(): void {
     if (this.carrito.length > 0 || Number(this.montoNotaAdicional || 0) > 0) {
       this.mostrarModalCobro = true;
-      this.metodoPago = 'EFECTIVO';
-      this.montoRecibido = null;
-      this.clienteFiadoSeleccionado = null;
-      this.busquedaClienteFiado = '';
+      if (!this.esVentaFiada) {
+        this.metodoPago = 'EFECTIVO';
+        this.montoRecibido = null;
+      }
       this.ticketVisible = true;
       void this.cargarClientesFiado();
     }
@@ -790,11 +805,76 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   seleccionarClienteFiado(c: ClienteDeudor): void {
     this.clienteFiadoSeleccionado = c;
+    this.clienteFiadoSeleccionadoId = String(c.id || c.idCliente);
     this.busquedaClienteFiado = c.nombreCompleto || c.nombre;
     this.clientesFiadoSugeridos = [];
+    this.esVentaFiada = true;
+    this.metodoPago = 'FIADO';
   }
 
-  async crearNuevoClienteFiadoRapido(): Promise<void> {
+  onClienteSeleccionadoChange(id: string | null): void {
+    this.clienteFiadoSeleccionadoId = id;
+    if (!id) {
+      this.clienteFiadoSeleccionado = null;
+      this.esVentaFiada = false;
+      this.metodoPago = 'EFECTIVO';
+      return;
+    }
+    const cliente = this.clientesFiado.find((c) => String(c.id || c.idCliente) === String(id));
+    if (cliente) {
+      this.seleccionarClienteFiado(cliente);
+    } else {
+      this.clienteFiadoSeleccionado = null;
+    }
+  }
+
+  toggleFiarVenta(): void {
+    this.esVentaFiada = !this.esVentaFiada;
+    if (this.esVentaFiada) {
+      this.metodoPago = 'FIADO';
+    } else {
+      this.metodoPago = 'EFECTIVO';
+    }
+  }
+
+  async procesarCobroBotonTicket(): Promise<void> {
+    if (this.esVentaFiada) {
+      if (!this.clienteFiadoSeleccionado) {
+        await this.feedback('Por favor selecciona o crea un cliente para registrar el fiado.', 'warning');
+        return;
+      }
+
+      const cliente = this.clienteFiadoSeleccionado;
+      const nuevoSaldo = Number(cliente.saldoDeudor || 0) + this.total;
+
+      const alert = await this.alertController.create({
+        header: 'Confirmar Venta Fiada',
+        subHeader: cliente.nombreCompleto || cliente.nombre,
+        message: `Total a fiar: ${this.moneda(this.total)}<br>Deuda actual: ${this.moneda(cliente.saldoDeudor)}<br><strong>Nuevo saldo: ${this.moneda(nuevoSaldo)}</strong>`,
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel',
+          },
+          {
+            text: 'Confirmar y Fiar',
+            handler: () => {
+              this.metodoPago = 'FIADO';
+              void this.cobrar();
+            },
+          },
+        ],
+      });
+
+      await alert.present();
+      return;
+    }
+
+    this.abrirModalCobro();
+  }
+
+  async crearNuevoClienteFiadoRapido(sugerenciaNombre?: string): Promise<void> {
+    const valorNombre = typeof sugerenciaNombre === 'string' ? sugerenciaNombre.trim() : '';
     const alert = await this.alertController.create({
       header: 'Nuevo Cliente para Fiado',
       subHeader: 'Registra un nuevo cliente para su cuenta corriente',
@@ -802,6 +882,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
         {
           name: 'nombreCompleto',
           type: 'text',
+          value: valorNombre,
           placeholder: 'Nombre completo (ej: Doña Martha)',
         },
         {
@@ -887,11 +968,14 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
       metodoPago: this.metodoPago,
 
-      idCliente: this.metodoPago === 'FIADO' && this.clienteFiadoSeleccionado ? this.clienteFiadoSeleccionado.id : null,
+      idCliente:
+        this.metodoPago === 'FIADO' && this.clienteFiadoSeleccionado
+          ? this.clienteFiadoSeleccionado.idCliente || Number(this.clienteFiadoSeleccionado.id)
+          : null,
 
       clienteNombre:
         this.metodoPago === 'FIADO' && this.clienteFiadoSeleccionado
-          ? this.clienteFiadoSeleccionado.nombreCompleto
+          ? this.clienteFiadoSeleccionado.nombreCompleto || this.clienteFiadoSeleccionado.nombre
           : null,
 
       montoRecibido: this.metodoPago === 'EFECTIVO' ? Number(this.montoRecibido) : null,
@@ -995,20 +1079,16 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.montoRecibido = null;
     this.metodoPago = 'EFECTIVO';
     this.clienteFiadoSeleccionado = null;
+    this.clienteFiadoSeleccionadoId = null;
     this.busquedaClienteFiado = '';
+    this.esVentaFiada = false;
     this.ticketVisible = false;
 
     /*
-     * Refrescar catálogo.
-     *
-     * ONLINE:
-     * obtiene stock actualizado MySQL.
-     *
-     * OFFLINE:
-     * obtiene stock actualizado SQLite.
+     * Refrescar catálogo y cartera de fiados.
      */
 
-    await this.cargarProductos();
+    await Promise.all([this.cargarProductos(), this.cargarClientesFiado()]);
 
     this.enfocar();
 
@@ -1386,7 +1466,7 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
      FORMATO MONEDA
   ========================================= */
 
-  private moneda(valor: number): string {
+  moneda(valor: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN',
