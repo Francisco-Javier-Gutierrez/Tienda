@@ -245,7 +245,7 @@
             </label>
             <button
               type="button"
-              (click)="crearNuevoClienteFiadoRapido()"
+              (click)="abrirModalNuevoCliente()"
               class="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center gap-1 group transition-colors cursor-pointer"
               title="Registrar nuevo cliente"
             >
@@ -265,7 +265,7 @@
             [clearable]="true"
             [allowCreate]="true"
             createLabel="Registrar cliente"
-            (createOption)="crearNuevoClienteFiadoRapido($event)"
+            (createOption)="abrirModalNuevoCliente($event)"
           ></app-custom-select>
 
           <!-- Tarjeta informativa de cliente y fiado si está seleccionado -->
@@ -569,7 +569,7 @@
           </label>
           <button
             type="button"
-            (click)="crearNuevoClienteFiadoRapido()"
+            (click)="abrirModalNuevoCliente()"
             class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span class="material-symbols-outlined text-sm">person_add</span>
@@ -588,7 +588,7 @@
           [clearable]="true"
           [allowCreate]="true"
           createLabel="Registrar nuevo cliente"
-          (createOption)="crearNuevoClienteFiadoRapido($event)"
+          (createOption)="abrirModalNuevoCliente($event)"
         ></app-custom-select>
 
         <!-- Cliente Seleccionado Card -->
@@ -1233,3 +1233,12 @@
     </div>
   </app-modal-shell>
 </app-admin-shell>
+
+<!-- MODAL REGISTRO CLIENTE RÁPIDO (CON TODOS LOS CAMPOS) -->
+<app-cliente-modal
+  [isOpen]="mostrarModalClienteRapido"
+  [sugerenciaNombre]="sugerenciaNombreCliente"
+  [saving]="guardandoClienteRapido"
+  (saved)="guardarClienteRapido($event)"
+  (cancelled)="cancelarModalClienteRapido()"
+></app-cliente-modal>
