@@ -54,8 +54,12 @@ export interface IFiadoRepository {
   crearClienteRapido(data: {
     nombreCliente: string;
     apellidoPatCliente?: string;
+    apellidoMatCliente?: string;
     telefono: string;
+    correoCliente?: string;
     limiteCredito?: number | null;
+    direccion?: string;
+    notas?: string;
   }): Promise<any>;
 }
 
@@ -298,19 +302,26 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
   async crearClienteRapido(data: {
     nombreCliente: string;
     apellidoPatCliente?: string;
+    apellidoMatCliente?: string;
     telefono: string;
+    correoCliente?: string;
     limiteCredito?: number | null;
+    direccion?: string;
+    notas?: string;
   }): Promise<any> {
     const idCliente = await getNextSequence('cliente', 4);
     const now = new Date().toISOString();
-    const telLimpio = data.telefono.replace(/[^0-9]/g, '');
+    const telLimpio = (data.telefono || '').replace(/[^0-9]/g, '');
 
     const item: any = {
       idCliente,
       nombreCliente: data.nombreCliente.trim(),
       apellidoPatCliente: data.apellidoPatCliente?.trim() || '',
-      correoCliente: `vecino_${idCliente}@tienda.local`,
+      apellidoMatCliente: data.apellidoMatCliente?.trim() || '',
+      correoCliente: data.correoCliente?.trim() || `vecino_${idCliente}@tienda.local`,
       telefono: telLimpio,
+      direccion: data.direccion?.trim() || null,
+      notas: data.notas?.trim() || null,
       saldoDeudor: 0,
       limiteCredito: data.limiteCredito ? Number(data.limiteCredito) : null,
       estadoCliente: true,
@@ -324,7 +335,7 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
           Item: {
             ...Keys.cliente(idCliente),
             GSI1PK: 'CLIENTES',
-            GSI1SK: `${item.nombreCliente} ${item.apellidoPatCliente}`.trim(),
+            GSI1SK: [item.nombreCliente, item.apellidoPatCliente, item.apellidoMatCliente].filter(Boolean).join(' '),
             GSI2PK: `TEL#${telLimpio}`,
             GSI2SK: `CLI#${idCliente}`,
             ...item,

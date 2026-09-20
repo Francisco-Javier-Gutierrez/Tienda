@@ -12,6 +12,8 @@ export function normalizarClienteDeudor(c: any) {
     apellidoMat: c.apellidoMatCliente || '',
     correo: c.correoCliente || null,
     telefono: c.telefono || null,
+    direccion: c.direccion || null,
+    notas: c.notas || null,
     saldoDeudor: Number(c.saldoDeudor || 0),
     limiteCredito: c.limiteCredito !== undefined && c.limiteCredito !== null ? Number(c.limiteCredito) : null,
     ultimoAbono: c.ultimoAbono || null,

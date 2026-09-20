@@ -7,10 +7,13 @@ export interface ClienteDeudor {
   apellidoMat?: string;
   telefono?: string | null;
   correo?: string | null;
+  direccion?: string | null;
+  notas?: string | null;
   saldoDeudor: number;
   limiteCredito?: number | null;
   ultimoAbono?: string | null;
   ultimoCargo?: string | null;
+  estadoCliente?: boolean;
 }
 
 export interface MovimientoCuenta {
@@ -52,6 +55,10 @@ export interface RegistrarAbonoDto {
 export interface CrearClienteRapidoDto {
   nombreCliente: string;
   apellidoPatCliente?: string;
+  apellidoMatCliente?: string;
+  correoCliente?: string;
   telefono: string;
   limiteCredito?: number | null;
+  direccion?: string;
+  notas?: string;
 }

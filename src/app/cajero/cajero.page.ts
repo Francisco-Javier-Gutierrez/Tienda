@@ -32,7 +32,7 @@ import { VentaService } from '../services/venta.service';
 import { DialogService } from '../services/dialog.service';
 import { TicketService } from '../services/ticket.service';
 import { FiadoService } from '../services/fiado.service';
-import { ClienteDeudor } from '../models/fiado';
+import { ClienteDeudor, CrearClienteRapidoDto } from '../models/fiado';
 
 @Component({
   selector: 'app-cajero',
@@ -104,6 +104,12 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
   busquedaClienteFiado = '';
 
   esVentaFiada = false;
+
+  mostrarModalClienteRapido = false;
+
+  sugerenciaNombreCliente = '';
+
+  guardandoClienteRapido = false;
 
   get opcionesClientesFiado(): { id: string; label: string; nombre: string }[] {
     return this.clientesFiado.map((c) => ({
@@ -873,75 +879,36 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
     this.abrirModalCobro();
   }
 
-  async crearNuevoClienteFiadoRapido(sugerenciaNombre?: string): Promise<void> {
-    const valorNombre = typeof sugerenciaNombre === 'string' ? sugerenciaNombre.trim() : '';
-    const alert = await this.alertController.create({
-      header: 'Nuevo Cliente para Fiado',
-      subHeader: 'Registra un nuevo cliente para su cuenta corriente',
-      inputs: [
-        {
-          name: 'nombreCompleto',
-          type: 'text',
-          value: valorNombre,
-          placeholder: 'Nombre completo (ej: Doña Martha)',
-        },
-        {
-          name: 'telefono',
-          type: 'tel',
-          placeholder: 'Teléfono / WhatsApp (10 dígitos)',
-        },
-        {
-          name: 'limiteCredito',
-          type: 'number',
-          placeholder: 'Límite de crédito (opcional)',
-          min: 0,
-        },
-      ],
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-        },
-        {
-          text: 'Guardar y Seleccionar',
-          handler: (data) => {
-            const partes = (data.nombreCompleto || '').trim().split(' ');
-            const nombreCliente = partes[0] || '';
-            const apellidoPatCliente = partes.slice(1).join(' ') || undefined;
-            const tel = (data.telefono || '').replace(/[^0-9]/g, '');
+  abrirModalNuevoCliente(sugerenciaNombre?: string): void {
+    this.sugerenciaNombreCliente = typeof sugerenciaNombre === 'string' ? sugerenciaNombre.trim() : '';
+    this.mostrarModalClienteRapido = true;
+  }
 
-            if (nombreCliente.length < 2) {
-              void this.feedback('El nombre debe tener al menos 2 letras', 'warning');
-              return false;
-            }
-            if (tel.length < 10) {
-              void this.feedback('El teléfono debe tener al menos 10 dígitos', 'warning');
-              return false;
-            }
+  cancelarModalClienteRapido(): void {
+    this.mostrarModalClienteRapido = false;
+    this.sugerenciaNombreCliente = '';
+  }
 
-            void (async () => {
-              try {
-                const nuevo = await firstValueFrom(
-                  this.fiadoService.crearClienteRapido({
-                    nombreCliente,
-                    apellidoPatCliente,
-                    telefono: tel,
-                    limiteCredito: data.limiteCredito ? Number(data.limiteCredito) : undefined,
-                  }),
-                );
-                this.clientesFiado.unshift(nuevo);
-                this.seleccionarClienteFiado(nuevo);
-                await this.feedback(`Cliente ${nuevo.nombreCompleto || nuevo.nombre} registrado.`, 'success');
-              } catch (err: any) {
-                await this.feedback(err?.error?.message || 'Error al registrar cliente', 'danger');
-              }
-            })();
-            return true;
-          },
-        },
-      ],
-    });
-    await alert.present();
+  async guardarClienteRapido(dto: CrearClienteRapidoDto): Promise<void> {
+    if (this.guardandoClienteRapido) return;
+    this.guardandoClienteRapido = true;
+
+    try {
+      const nuevo = await firstValueFrom(this.fiadoService.crearClienteRapido(dto));
+      this.clientesFiado.unshift(nuevo);
+      this.seleccionarClienteFiado(nuevo);
+      this.mostrarModalClienteRapido = false;
+      this.sugerenciaNombreCliente = '';
+      await this.feedback(`Cliente ${nuevo.nombreCompleto || nuevo.nombre} registrado con éxito.`, 'success');
+    } catch (err: any) {
+      await this.feedback(err?.error?.message || 'Error al registrar cliente', 'danger');
+    } finally {
+      this.guardandoClienteRapido = false;
+    }
+  }
+
+  crearNuevoClienteFiadoRapido(sugerenciaNombre?: string): void {
+    this.abrirModalNuevoCliente(sugerenciaNombre);
   }
 
   /* =========================================

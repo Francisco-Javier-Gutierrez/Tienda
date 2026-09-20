@@ -20,8 +20,12 @@ export interface IFiadosService {
   crearClienteRapido(data: {
     nombreCliente: string;
     apellidoPatCliente?: string;
+    apellidoMatCliente?: string;
     telefono: string;
+    correoCliente?: string;
     limiteCredito?: number | null;
+    direccion?: string;
+    notas?: string;
   }): Promise<any>;
 }
 
@@ -133,8 +137,12 @@ export class FiadosService implements IFiadosService {
   async crearClienteRapido(data: {
     nombreCliente: string;
     apellidoPatCliente?: string;
+    apellidoMatCliente?: string;
     telefono: string;
+    correoCliente?: string;
     limiteCredito?: number | null;
+    direccion?: string;
+    notas?: string;
   }): Promise<any> {
     const nuevo = await this.fiadoRepo.crearClienteRapido(data);
     return normalizarClienteDeudor(nuevo);

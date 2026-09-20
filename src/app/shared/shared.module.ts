@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { AdminShellComponent } from './admin-shell/admin-shell.component';
 import { CatalogoModalComponent } from './catalogo-modal/catalogo-modal.component';
+import { ClienteModalComponent } from './cliente-modal/cliente-modal.component';
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 import { CustomDatepickerComponent } from './custom-datepicker/custom-datepicker.component';
 import { CustomSelectComponent } from './custom-select/custom-select.component';
@@ -19,6 +20,7 @@ import { ProductCardComponent } from './product-card/product-card.component';
     CustomSelectComponent,
     ModalShellComponent,
     CatalogoModalComponent,
+    ClienteModalComponent,
     ProductCardComponent,
   ],
   imports: [CommonModule, IonicModule, RouterModule, FormsModule],
@@ -29,6 +31,7 @@ import { ProductCardComponent } from './product-card/product-card.component';
     CustomSelectComponent,
     ModalShellComponent,
     CatalogoModalComponent,
+    ClienteModalComponent,
     ProductCardComponent,
   ],
 })

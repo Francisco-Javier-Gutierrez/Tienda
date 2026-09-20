@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
-import { ClienteDeudor, FiadoResumen, MovimientoCuenta } from '../models/fiado';
+import { ClienteDeudor, CrearClienteRapidoDto, FiadoResumen, MovimientoCuenta } from '../models/fiado';
 import { DialogService } from '../services/dialog.service';
 import { FiadoService } from '../services/fiado.service';
 
@@ -144,11 +144,6 @@ export class FiadosPage implements OnInit {
   }
 
   abrirModalNuevoCliente(): void {
-    this.nuevoClienteNombre = '';
-    this.nuevoClienteApellido = '';
-    this.nuevoClienteTelefono = '';
-    this.nuevoClienteLimite = null;
-    this.guardandoCliente = false;
     this.mostrarModalNuevoCliente = true;
   }
 
@@ -156,36 +151,16 @@ export class FiadosPage implements OnInit {
     this.mostrarModalNuevoCliente = false;
   }
 
-  async guardarNuevoCliente(): Promise<void> {
-    const nombre = this.nuevoClienteNombre.trim();
-    const tel = this.nuevoClienteTelefono.replace(/[^0-9]/g, '');
-
-    if (nombre.length < 2) {
-      await this.mostrarFeedback('Ingresa un nombre válido (mínimo 2 letras)', 'warning');
-      return;
-    }
-
-    if (tel.length < 10) {
-      await this.mostrarFeedback('El celular de WhatsApp debe tener al menos 10 dígitos', 'warning');
-      return;
-    }
-
+  async guardarNuevoCliente(dto: CrearClienteRapidoDto): Promise<void> {
     this.guardandoCliente = true;
     try {
-      await firstValueFrom(
-        this.fiadoService.crearClienteRapido({
-          nombreCliente: nombre,
-          apellidoPatCliente: this.nuevoClienteApellido.trim() || undefined,
-          telefono: tel,
-          limiteCredito: this.nuevoClienteLimite ? Number(this.nuevoClienteLimite) : undefined,
-        }),
-      );
+      await firstValueFrom(this.fiadoService.crearClienteRapido(dto));
 
       await this.mostrarFeedback('Cliente registrado con éxito en la libreta', 'success');
       this.cerrarModalNuevoCliente();
       await this.cargarDatos();
     } catch (err: unknown) {
-      console.error('Error al crear cliente rápido:', err);
+      console.error('Error al crear cliente:', err);
       let msg = 'No fue posible registrar al cliente.';
       if (err instanceof HttpErrorResponse && err.error?.message) {
         msg = err.error.message;
