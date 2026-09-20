@@ -234,6 +234,107 @@
           </div>
         </div>
 
+        <!-- CLIENTE / FIADO DIRECTO EN TICKET -->
+        <div class="px-4 py-3 bg-surface-container-low border-t border-surface-variant">
+          <div class="flex items-center justify-between mb-1.5">
+            <label
+              class="font-sans font-semibold text-xs text-on-surface-variant flex items-center gap-1.5 uppercase tracking-wider"
+            >
+              <span class="material-symbols-outlined text-[17px] text-amber-600 dark:text-amber-400">menu_book</span>
+              <span>Cliente / Fiado</span>
+            </label>
+            <button
+              type="button"
+              (click)="crearNuevoClienteFiadoRapido()"
+              class="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center gap-1 group transition-colors cursor-pointer"
+              title="Registrar nuevo cliente"
+            >
+              <span class="material-symbols-outlined text-[14px] group-hover:rotate-90 transition-transform">add</span>
+              <span>Nuevo</span>
+            </button>
+          </div>
+
+          <app-custom-select
+            [ngModel]="clienteFiadoSeleccionadoId"
+            (ngModelChange)="onClienteSeleccionadoChange($event)"
+            [options]="opcionesClientesFiado"
+            valueKey="id"
+            labelKey="label"
+            placeholder="Seleccionar cliente (opcional)..."
+            [searchable]="true"
+            [clearable]="true"
+            [allowCreate]="true"
+            createLabel="Registrar cliente"
+            (createOption)="crearNuevoClienteFiadoRapido($event)"
+          ></app-custom-select>
+
+          <!-- Tarjeta informativa de cliente y fiado si está seleccionado -->
+          <div
+            *ngIf="clienteFiadoSeleccionado"
+            class="mt-2.5 p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-col gap-2"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold text-xs font-heading"
+                >
+                  {{ (clienteFiadoSeleccionado.nombreCompleto || clienteFiadoSeleccionado.nombre).substring(0,
+                  1).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-bold text-xs text-on-surface leading-tight">
+                    {{ clienteFiadoSeleccionado.nombreCompleto || clienteFiadoSeleccionado.nombre }}
+                  </p>
+                  <p class="text-[10px] text-on-surface-variant" *ngIf="clienteFiadoSeleccionado.telefono">
+                    {{ clienteFiadoSeleccionado.telefono }}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="onClienteSeleccionadoChange(null)"
+                class="text-outline hover:text-on-surface p-1 rounded-lg transition-colors cursor-pointer"
+                title="Quitar cliente"
+              >
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between pt-1.5 border-t border-amber-500/20 text-[11px]">
+              <div>
+                <span class="text-on-surface-variant font-medium">Deuda actual: </span>
+                <span class="font-bold text-rose-600 dark:text-rose-400">
+                  {{ clienteFiadoSeleccionado.saldoDeudor | currency:'MXN' }}
+                </span>
+              </div>
+              <div *ngIf="total > 0">
+                <span class="text-amber-800 dark:text-amber-300 font-semibold">Nuevo saldo: </span>
+                <span class="font-bold text-amber-900 dark:text-amber-200">
+                  {{ (clienteFiadoSeleccionado.saldoDeudor + total) | currency:'MXN' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="text-xs font-semibold text-on-surface flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  [checked]="esVentaFiada"
+                  (change)="toggleFiarVenta()"
+                  class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                />
+                <span>Cargar como cuenta fiada</span>
+              </label>
+              <span
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                [ngClass]="esVentaFiada ? 'bg-amber-600 text-white' : 'bg-surface-variant text-on-surface-variant'"
+              >
+                {{ esVentaFiada ? 'FIADO' : 'CONTADO' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="px-4 py-4 bg-surface-container-low md:rounded-b-[24px] border-t border-surface-variant">
           <div class="flex justify-between items-end mb-4">
             <span class="font-sans font-medium text-sm text-on-surface-variant">Total a pagar:</span>
@@ -242,12 +343,15 @@
             >
           </div>
           <button
-            class="w-full bg-primary-container text-on-primary py-3.5 px-4 rounded-xl font-sans font-bold text-base flex items-center justify-center gap-2 shadow-sm hover:bg-primary active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-surface-variant disabled:text-outline"
+            class="w-full py-3.5 px-4 rounded-xl font-sans font-bold text-base flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-surface-variant disabled:text-outline cursor-pointer"
+            [ngClass]="esVentaFiada ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/30' : 'bg-primary-container text-on-primary hover:bg-primary'"
             [disabled]="!carrito.length && (!montoNotaAdicional || montoNotaAdicional <= 0)"
-            (click)="abrirModalCobro()"
+            (click)="procesarCobroBotonTicket()"
           >
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">payments</span>
-            Cobrar Venta
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">
+              {{ esVentaFiada ? 'menu_book' : 'payments' }}
+            </span>
+            {{ esVentaFiada ? 'Registrar Fiado' : 'Cobrar Venta' }}
           </button>
         </div>
       </aside>
@@ -473,50 +577,19 @@
           </button>
         </div>
 
-        <!-- Buscador / Input -->
-        <div class="relative">
-          <input
-            type="text"
-            [(ngModel)]="busquedaClienteFiado"
-            (input)="filtrarClientesFiado()"
-            (focus)="filtrarClientesFiado()"
-            placeholder="Buscar vecino / cliente por nombre o teléfono..."
-            class="w-full text-sm font-sans p-3 rounded-xl bg-surface-container-lowest border border-outline-variant focus:border-amber-500 focus:outline-none text-on-surface transition-colors"
-          />
-          <button
-            *ngIf="clienteFiadoSeleccionado"
-            (click)="clienteFiadoSeleccionado = null; busquedaClienteFiado = ''"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface"
-          >
-            <span class="material-symbols-outlined text-base">close</span>
-          </button>
-
-          <!-- Dropdown sugerencias -->
-          <div
-            *ngIf="!clienteFiadoSeleccionado && clientesFiadoSugeridos.length > 0"
-            class="absolute left-0 right-0 top-full mt-1 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto divide-y divide-surface-variant"
-          >
-            <button
-              *ngFor="let c of clientesFiadoSugeridos"
-              type="button"
-              (click)="seleccionarClienteFiado(c)"
-              class="w-full px-3 py-2.5 text-left flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer"
-            >
-              <div>
-                <p class="font-bold text-sm text-on-surface">{{ c.nombreCompleto || c.nombre }}</p>
-                <p class="text-xs text-on-surface-variant" *ngIf="c.telefono">{{ c.telefono }}</p>
-              </div>
-              <div class="text-right">
-                <span
-                  class="text-xs font-bold px-2 py-0.5 rounded-full"
-                  [ngClass]="c.saldoDeudor > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'"
-                >
-                  {{ c.saldoDeudor > 0 ? ('Debe: ' + (c.saldoDeudor | currency:'MXN')) : 'Al corriente ($0.00)' }}
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
+        <app-custom-select
+          [ngModel]="clienteFiadoSeleccionadoId"
+          (ngModelChange)="onClienteSeleccionadoChange($event)"
+          [options]="opcionesClientesFiado"
+          valueKey="id"
+          labelKey="label"
+          placeholder="Buscar o seleccionar cliente..."
+          [searchable]="true"
+          [clearable]="true"
+          [allowCreate]="true"
+          createLabel="Registrar nuevo cliente"
+          (createOption)="crearNuevoClienteFiadoRapido($event)"
+        ></app-custom-select>
 
         <!-- Cliente Seleccionado Card -->
         <div
@@ -527,10 +600,13 @@
             <div
               class="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-700 dark:text-amber-400 font-bold font-heading"
             >
-              {{ clienteFiadoSeleccionado.nombreCompleto.substring(0, 1).toUpperCase() }}
+              {{ (clienteFiadoSeleccionado.nombreCompleto || clienteFiadoSeleccionado.nombre).substring(0,
+              1).toUpperCase() }}
             </div>
             <div>
-              <p class="font-bold text-sm text-on-surface">{{ clienteFiadoSeleccionado.nombreCompleto }}</p>
+              <p class="font-bold text-sm text-on-surface">
+                {{ clienteFiadoSeleccionado.nombreCompleto || clienteFiadoSeleccionado.nombre }}
+              </p>
               <p class="text-xs text-on-surface-variant" *ngIf="clienteFiadoSeleccionado.telefono">
                 Tel: {{ clienteFiadoSeleccionado.telefono }}
               </p>
