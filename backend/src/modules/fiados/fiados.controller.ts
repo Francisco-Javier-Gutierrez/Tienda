@@ -46,6 +46,17 @@ export class FiadosController {
     res.status(201).json(resultado);
   }
 
+  async registrarCargo(req: Request, res: Response): Promise<void> {
+    if (!req.empleado) {
+      res.status(401).json({ message: 'Sesión no válida' });
+      return;
+    }
+
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const resultado = await this.service.registrarCargo(req.empleado, id, req.body);
+    res.status(201).json(resultado);
+  }
+
   async crearClienteRapido(req: Request, res: Response): Promise<void> {
     if (!req.empleado) {
       res.status(401).json({ message: 'Sesión no válida' });

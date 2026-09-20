@@ -8,6 +8,7 @@ import {
   FiadoResumen,
   MovimientoCuenta,
   RegistrarAbonoDto,
+  RegistrarCargoDto,
 } from '../models/fiado';
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +36,16 @@ export class FiadoService {
   ): Observable<{ abono: MovimientoCuenta; nuevoSaldo: number; mensaje: string }> {
     return this.http.post<{ abono: MovimientoCuenta; nuevoSaldo: number; mensaje: string }>(
       `${this.api}/${idCliente}/abono`,
+      dto,
+    );
+  }
+
+  registrarCargo(
+    idCliente: string | number,
+    dto: RegistrarCargoDto,
+  ): Observable<{ cargo: MovimientoCuenta; nuevoSaldo: number; mensaje: string }> {
+    return this.http.post<{ cargo: MovimientoCuenta; nuevoSaldo: number; mensaje: string }>(
+      `${this.api}/${idCliente}/cargo`,
       dto,
     );
   }

@@ -48,7 +48,7 @@ export interface IFiadoRepository {
     idEmp: number;
     empleadoNombre: string;
     monto: number;
-    idVenta: number;
+    idVenta?: number | null;
     concepto?: string | null;
   }): Promise<MovimientoCuentaEntity>;
   crearClienteRapido(data: {
@@ -58,6 +58,7 @@ export interface IFiadoRepository {
     telefono: string;
     correoCliente?: string;
     limiteCredito?: number | null;
+    deudaInicial?: number | null;
     direccion?: string;
     notas?: string;
   }): Promise<any>;
@@ -233,7 +234,7 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
     idEmp: number;
     empleadoNombre: string;
     monto: number;
-    idVenta: number;
+    idVenta?: number | null;
     concepto?: string | null;
   }): Promise<MovimientoCuentaEntity> {
     const cliente = await this.getClienteById(data.idCliente);
@@ -248,7 +249,11 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
     const idMov = await getNextSequence('movimientoCuenta', 1);
     const now = new Date().toISOString();
     const fecha = now.slice(0, 10);
-    const nombreCliente = [cliente.nombreCliente, cliente.apellidoPatCliente].filter(Boolean).join(' ');
+    const nombreCliente = [cliente.nombreCliente, cliente.apellidoPatCliente, cliente.apellidoMatCliente]
+      .filter(Boolean)
+      .join(' ');
+
+    const conceptoDefault = data.idVenta ? `Compra a crédito - Folio #${data.idVenta}` : 'Cargo a cuenta';
 
     const movItem: MovimientoCuentaEntity = {
       idMov,
@@ -262,8 +267,8 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
       monto,
       saldoAnterior,
       saldoNuevo,
-      idVenta: data.idVenta,
-      concepto: data.concepto || `Compra a crédito - Folio #${data.idVenta}`,
+      idVenta: data.idVenta ? Number(data.idVenta) : null,
+      concepto: data.concepto || conceptoDefault,
       fechaHora: now,
       fecha,
       createdAt: now,
@@ -306,12 +311,14 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
     telefono: string;
     correoCliente?: string;
     limiteCredito?: number | null;
+    deudaInicial?: number | null;
     direccion?: string;
     notas?: string;
   }): Promise<any> {
     const idCliente = await getNextSequence('cliente', 4);
     const now = new Date().toISOString();
     const telLimpio = (data.telefono || '').replace(/[^0-9]/g, '');
+    const deudaIni = Math.max(0, Number(data.deudaInicial || 0));
 
     const item: any = {
       idCliente,
@@ -322,8 +329,9 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
       telefono: telLimpio,
       direccion: data.direccion?.trim() || null,
       notas: data.notas?.trim() || null,
-      saldoDeudor: 0,
+      saldoDeudor: deudaIni,
       limiteCredito: data.limiteCredito ? Number(data.limiteCredito) : null,
+      ultimoCargo: deudaIni > 0 ? now : null,
       estadoCliente: true,
       createdAt: now,
     };
@@ -344,6 +352,44 @@ export class FiadoRepository extends BaseDynamoRepository<any> implements IFiado
         },
       },
     ];
+
+    if (deudaIni > 0) {
+      const idMov = await getNextSequence('movimientoCuenta', 1);
+      const nombreCompleto = [item.nombreCliente, item.apellidoPatCliente, item.apellidoMatCliente]
+        .filter(Boolean)
+        .join(' ');
+      const movInicial: MovimientoCuentaEntity = {
+        idMov,
+        idCliente,
+        clienteNombre: nombreCompleto,
+        clienteTelefono: telLimpio || null,
+        idSuc: 1,
+        idEmp: 1,
+        empleadoNombre: 'Sistema',
+        tipo: 'CARGO',
+        monto: deudaIni,
+        saldoAnterior: 0,
+        saldoNuevo: deudaIni,
+        idVenta: null,
+        concepto: 'Saldo inicial / Deuda previa registrada',
+        fechaHora: now,
+        fecha: now.slice(0, 10),
+        createdAt: now,
+      };
+
+      transactItems.push({
+        Put: {
+          TableName: TABLE_NAME,
+          Item: {
+            ...Keys.movimientoCuenta(idCliente, idMov),
+            GSI1PK: `SUC#1#FIADOS`,
+            GSI1SK: `${now}#MOV#${idMov}`,
+            ...movInicial,
+          },
+          ConditionExpression: 'attribute_not_exists(PK)',
+        },
+      });
+    }
 
     await docClient.send(new TransactWriteCommand({ TransactItems: transactItems }));
     return item;

@@ -111,6 +111,19 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   guardandoClienteRapido = false;
 
+  // Modal Abono en POS
+  mostrarModalAbono = false;
+
+  clienteAbono: ClienteDeudor | null = null;
+
+  montoAbono: number | null = null;
+
+  metodoPagoAbono: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' = 'EFECTIVO';
+
+  conceptoAbono = '';
+
+  guardandoAbono = false;
+
   get opcionesClientesFiado(): { id: string; label: string; nombre: string }[] {
     return this.clientesFiado.map((c) => ({
       id: String(c.id || c.idCliente),
@@ -909,6 +922,90 @@ export class CajeroPage implements OnInit, AfterViewInit, OnDestroy {
 
   crearNuevoClienteFiadoRapido(sugerenciaNombre?: string): void {
     this.abrirModalNuevoCliente(sugerenciaNombre);
+  }
+
+  /* =========================================
+     ABONO DE FIADO EN CAJA
+  ========================================= */
+
+  abrirModalAbono(cliente?: ClienteDeudor | null): void {
+    const c = cliente || this.clienteFiadoSeleccionado;
+    if (!c) return;
+    this.clienteAbono = c;
+    this.montoAbono = Number(c.saldoDeudor || 0) > 0 ? Number(c.saldoDeudor) : null;
+    this.metodoPagoAbono = 'EFECTIVO';
+    this.conceptoAbono = 'Abono a cuenta en caja';
+    this.guardandoAbono = false;
+    this.mostrarModalAbono = true;
+  }
+
+  cerrarModalAbono(): void {
+    this.mostrarModalAbono = false;
+    this.clienteAbono = null;
+    this.montoAbono = null;
+    this.guardandoAbono = false;
+  }
+
+  setMontoAbonoPos(monto: number): void {
+    this.montoAbono = monto;
+  }
+
+  setMontoAbonoTotalPos(): void {
+    if (this.clienteAbono) {
+      this.montoAbono = Number(this.clienteAbono.saldoDeudor || 0);
+    }
+  }
+
+  async guardarAbonoPos(): Promise<void> {
+    if (!this.clienteAbono) return;
+
+    const monto = Number(this.montoAbono);
+    if (isNaN(monto) || monto <= 0) {
+      await this.feedback('Ingresa un monto válido mayor a 0', 'warning');
+      return;
+    }
+
+    this.guardandoAbono = true;
+    try {
+      const res = await firstValueFrom(
+        this.fiadoService.registrarAbono(this.clienteAbono.idCliente || this.clienteAbono.id, {
+          uuidAbono: crypto.randomUUID(),
+          monto,
+          metodoPago: this.metodoPagoAbono,
+          concepto: this.conceptoAbono.trim() || 'Abono a cuenta en caja',
+        }),
+      );
+
+      const nuevoSaldo = Number(res.nuevoSaldo || 0);
+      this.clienteAbono.saldoDeudor = nuevoSaldo;
+      if (
+        this.clienteFiadoSeleccionado &&
+        (this.clienteFiadoSeleccionado.idCliente === this.clienteAbono.idCliente ||
+          this.clienteFiadoSeleccionado.id === this.clienteAbono.id)
+      ) {
+        this.clienteFiadoSeleccionado.saldoDeudor = nuevoSaldo;
+      }
+
+      const idx = this.clientesFiado.findIndex(
+        (c) => c.id === this.clienteAbono!.id || c.idCliente === this.clienteAbono!.idCliente,
+      );
+      if (idx !== -1) {
+        this.clientesFiado[idx].saldoDeudor = nuevoSaldo;
+      }
+
+      if (this.caja && this.metodoPagoAbono === 'EFECTIVO') {
+        this.caja.totalIngresos = Number(this.caja.totalIngresos || 0) + monto;
+        this.caja.totalEfectivo = Number(this.caja.totalEfectivo || 0) + monto;
+      }
+
+      await this.feedback(res.mensaje || `Abono de ${this.moneda(monto)} recibido con éxito`, 'success');
+      this.cerrarModalAbono();
+    } catch (err: any) {
+      console.error('Error al registrar abono en POS:', err);
+      await this.feedback(err?.error?.message || 'Error al registrar abono', 'danger');
+    } finally {
+      this.guardandoAbono = false;
+    }
   }
 
   /* =========================================

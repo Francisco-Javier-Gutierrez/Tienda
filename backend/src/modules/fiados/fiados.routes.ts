@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { fiadosController } from './fiados.controller';
 import { autenticar, rolesPos } from '../../middlewares/auth.middleware';
 import { validarBody } from '../../middlewares/validate.middleware';
-import { registrarAbonoSchema, clienteRapidoSchema } from '../../schemas/fiado.schema';
+import { registrarAbonoSchema, clienteRapidoSchema, registrarCargoSchema } from '../../schemas/fiado.schema';
 
 const router = Router();
 
@@ -15,6 +15,13 @@ router.post(
   rolesPos,
   validarBody(registrarAbonoSchema),
   fiadosController.registrarAbono.bind(fiadosController),
+);
+router.post(
+  '/:id/cargo',
+  autenticar,
+  rolesPos,
+  validarBody(registrarCargoSchema),
+  fiadosController.registrarCargo.bind(fiadosController),
 );
 router.post(
   '/clientes/rapido',

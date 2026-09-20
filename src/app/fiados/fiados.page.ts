@@ -31,6 +31,13 @@ export class FiadosPage implements OnInit {
   conceptoAbono = '';
   guardandoAbono = false;
 
+  // Modal Añadir Deuda / Cargo Manual
+  mostrarModalCargo = false;
+  clienteCargo: ClienteDeudor | null = null;
+  montoCargo: number | null = null;
+  conceptoCargo = '';
+  guardandoCargo = false;
+
   // Modal Nuevo Cliente Rápido
   mostrarModalNuevoCliente = false;
   nuevoClienteNombre = '';
@@ -140,6 +147,60 @@ export class FiadosPage implements OnInit {
       await this.mostrarFeedback(msg, 'danger');
     } finally {
       this.guardandoAbono = false;
+    }
+  }
+
+  abrirModalCargo(cliente: ClienteDeudor): void {
+    this.clienteCargo = cliente;
+    this.montoCargo = null;
+    this.conceptoCargo = '';
+    this.guardandoCargo = false;
+    this.mostrarModalCargo = true;
+  }
+
+  cerrarModalCargo(): void {
+    this.mostrarModalCargo = false;
+    this.clienteCargo = null;
+    this.montoCargo = null;
+    this.conceptoCargo = '';
+  }
+
+  setConceptoCargo(concepto: string): void {
+    this.conceptoCargo = concepto;
+  }
+
+  async guardarCargo(): Promise<void> {
+    if (!this.clienteCargo) return;
+
+    const monto = Number(this.montoCargo);
+    if (isNaN(monto) || monto <= 0) {
+      await this.mostrarFeedback('Ingresa un monto válido mayor a 0', 'warning');
+      return;
+    }
+
+    const concepto = (this.conceptoCargo || '').trim() || 'Cargo manual a cuenta';
+
+    this.guardandoCargo = true;
+    try {
+      const res = await firstValueFrom(
+        this.fiadoService.registrarCargo(this.clienteCargo.idCliente || this.clienteCargo.id, {
+          monto,
+          concepto,
+        }),
+      );
+
+      await this.mostrarFeedback(res.mensaje || 'Cargo registrado con éxito', 'success');
+      this.cerrarModalCargo();
+      await this.cargarDatos();
+    } catch (err: unknown) {
+      console.error('Error al registrar cargo:', err);
+      let msg = 'No fue posible registrar el cargo.';
+      if (err instanceof HttpErrorResponse && err.error?.message) {
+        msg = err.error.message;
+      }
+      await this.mostrarFeedback(msg, 'danger');
+    } finally {
+      this.guardandoCargo = false;
     }
   }
 
